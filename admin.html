@@ -457,6 +457,122 @@
     }
     .btn-new-project:hover { opacity: .85; }
 
+    /* ── Vue Nouveau Projet ──────────────────────────────────── */
+    .np-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 28px 12px; gap: 16px;
+    }
+    .np-title { font-family: var(--serif); font-size: 28px; font-weight: 300; color: var(--cream); }
+    .np-sub { font-size: 13px; color: var(--dim); margin-top: 2px; }
+    .btn-back {
+      padding: 8px 14px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r); color: var(--dim); font-family: var(--sans);
+      font-size: 13px; cursor: pointer; transition: color .15s, border-color .15s;
+    }
+    .btn-back:hover { color: var(--cream); border-color: var(--dim); }
+
+    .np-wrapper { display: grid; grid-template-columns: 1fr 320px; gap: 24px; padding: 20px 28px 40px; }
+    .np-main { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+
+    .np-tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+      background: var(--bg2); overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .np-tab {
+      padding: 14px 18px; background: none; border: none;
+      color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer;
+      border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s;
+    }
+    .np-tab:hover { color: var(--cream); }
+    .np-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .np-section { display: none; padding: 24px 28px; }
+    .np-section.active { display: block; }
+    .np-section-title { font-family: var(--serif); font-size: 18px; font-weight: 400; margin-bottom: 18px; color: var(--cream); }
+
+    .np-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px; }
+    .np-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 16px; }
+
+    .np-field { display: flex; flex-direction: column; gap: 6px; }
+    .np-field.span-2 { grid-column: span 2; }
+    .np-field.span-3 { grid-column: span 3; }
+    .np-field label {
+      font-size: 10px; font-weight: 500; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--dim);
+    }
+    .np-field input, .np-field select, .np-field textarea {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 10px 12px; color: var(--cream); font-family: var(--sans); font-size: 14px;
+      outline: none; transition: border-color .15s; width: 100%;
+    }
+    .np-field input:focus, .np-field select:focus, .np-field textarea:focus { border-color: var(--gold); }
+    .np-field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    .np-field input[type=number] { -moz-appearance: textfield; }
+    .np-field input[type=number]::-webkit-outer-spin-button,
+    .np-field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .np-field-help { font-size: 11px; color: var(--dim); font-style: italic; margin-top: -2px; }
+
+    .np-toggle { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
+    .np-toggle input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
+    .np-toggle label { font-size: 14px; color: var(--cream); cursor: pointer; }
+
+    .np-prefix { position: relative; }
+    .np-prefix input { padding-right: 32px; }
+    .np-prefix-suffix {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 13px; color: var(--dim); pointer-events: none;
+    }
+
+    /* Section 4 — checkboxes équipement */
+    .np-eq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+    .np-eq-item { display: flex; align-items: center; gap: 9px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); cursor: pointer; transition: border-color .15s; }
+    .np-eq-item:hover { border-color: rgba(184,151,90,.4); }
+    .np-eq-item.checked { border-color: var(--gold); background: rgba(184,151,90,.07); }
+    .np-eq-item input { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
+    .np-eq-item span { font-size: 13px; color: var(--cream); }
+
+    /* Footer */
+    .np-footer {
+      border-top: 1px solid var(--border); padding: 18px 28px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .np-footer-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .np-footer-right { display: flex; gap: 10px; }
+    .btn-primary { padding: 10px 20px; background: var(--gold); border: none; border-radius: var(--r); color: var(--bg); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
+    .btn-primary:hover { opacity: .85; }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-secondary { padding: 10px 20px; background: transparent; border: 1px solid var(--border); border-radius: var(--r); color: var(--cream); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: border-color .15s; }
+    .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Sticky calculations panel */
+    .np-calcs {
+      position: sticky; top: 16px; align-self: start;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 22px 22px;
+    }
+    .np-calcs-title { font-family: var(--serif); font-size: 17px; font-weight: 400; color: var(--cream); margin-bottom: 16px; }
+    .calc-row { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px solid rgba(44,43,39,.6); }
+    .calc-row:last-child { border-bottom: none; }
+    .calc-label { font-size: 12px; color: var(--dim); }
+    .calc-value { font-size: 15px; color: var(--cream); font-weight: 500; }
+    .calc-value.calc-big { font-size: 22px; font-family: var(--serif); font-weight: 400; color: var(--gold); }
+    .calc-value.calc-positive { color: var(--green); }
+    .calc-value.calc-negative { color: var(--red); }
+    .calc-hint { font-size: 11px; color: var(--dim); font-style: italic; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); line-height: 1.5; }
+
+    /* Responsive layout */
+    @media (max-width: 1024px) {
+      .np-wrapper { grid-template-columns: 1fr; }
+      .np-calcs { position: static; }
+    }
+    @media (max-width: 640px) {
+      .np-wrapper { padding: 16px; gap: 16px; }
+      .np-header { padding: 16px; flex-wrap: wrap; }
+      .np-grid-2, .np-grid-3 { grid-template-columns: 1fr; }
+      .np-field.span-2, .np-field.span-3 { grid-column: span 1; }
+      .np-eq-grid { grid-template-columns: 1fr; }
+    }
+
     /* ── Send fiche modal ───────────────────────────────────── */
     .fiche-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
     .fiche-overlay.on { display:flex; }
@@ -704,8 +820,236 @@
 
   <!-- ══ VUE NOUVEAU PROJET ════════════════════════════════════ -->
   <div class="view" id="view-new-project">
-    <div style="padding:40px 28px;text-align:center;color:var(--dim)">
-      Vue Nouveau Projet — chargement en Tâche 4…
+    <div class="np-header">
+      <div>
+        <h2 class="np-title">Nouveau projet</h2>
+        <p class="np-sub">Crée une fiche projet à proposer aux leads matchants</p>
+      </div>
+      <button class="btn-back" onclick="setRoute('projects')">← Retour</button>
+    </div>
+
+    <div class="np-wrapper">
+      <div class="np-main">
+        <div class="np-tabs">
+          <button class="np-tab active" data-section="1" onclick="showNpSection(1)">1. Infos générales</button>
+          <button class="np-tab" data-section="2" onclick="showNpSection(2)">2. Financiers</button>
+          <button class="np-tab" data-section="3" onclick="showNpSection(3)">3. Visuels</button>
+          <button class="np-tab" data-section="4" onclick="showNpSection(4)">4. Ameublement</button>
+        </div>
+
+        <!-- Section 1 — Infos générales -->
+        <div class="np-section active" data-section="1">
+          <h3 class="np-section-title">Informations générales</h3>
+          <div class="np-grid-2">
+            <div class="np-field span-2">
+              <label for="np-title">Titre du projet *</label>
+              <input type="text" id="np-title" placeholder="ex: Assomption 16e"/>
+            </div>
+            <div class="np-field span-2">
+              <label for="np-address">Adresse complète</label>
+              <input type="text" id="np-address" placeholder="ex: 25 rue de l'Assomption"/>
+            </div>
+            <div class="np-field">
+              <label for="np-arr">Arrondissement</label>
+              <select id="np-arr">
+                <option value="">—</option>
+                <option value="1e">1er</option>  <option value="2e">2e</option>
+                <option value="3e">3e</option>   <option value="4e">4e</option>
+                <option value="5e">5e</option>   <option value="6e">6e</option>
+                <option value="7e">7e</option>   <option value="8e">8e</option>
+                <option value="9e">9e</option>   <option value="10e">10e</option>
+                <option value="11e">11e</option> <option value="12e">12e</option>
+                <option value="13e">13e</option> <option value="14e">14e</option>
+                <option value="15e">15e</option> <option value="16e">16e</option>
+                <option value="17e">17e</option> <option value="18e">18e</option>
+                <option value="19e">19e</option> <option value="20e">20e</option>
+              </select>
+            </div>
+            <div class="np-field">
+              <label for="np-surface">Surface Carrez (m²)</label>
+              <input type="number" id="np-surface" step="0.1" placeholder="9.1"/>
+            </div>
+            <div class="np-field">
+              <label for="np-floor">Étage</label>
+              <input type="number" id="np-floor" placeholder="8"/>
+            </div>
+            <div class="np-field">
+              <label>Ascenseur</label>
+              <div class="np-toggle"><input type="checkbox" id="np-elevator"/><label for="np-elevator">Présent</label></div>
+            </div>
+            <div class="np-field">
+              <label for="np-metro-dist">Distance métro (m)</label>
+              <input type="number" id="np-metro-dist" placeholder="290"/>
+            </div>
+            <div class="np-field">
+              <label for="np-metro-name">Station métro</label>
+              <input type="text" id="np-metro-name" placeholder="Ranelagh"/>
+            </div>
+            <div class="np-field">
+              <label for="np-dpe-avant">DPE avant travaux</label>
+              <select id="np-dpe-avant">
+                <option value="">—</option><option>A</option><option>B</option><option>C</option>
+                <option>D</option><option>E</option><option>F</option><option>G</option>
+              </select>
+            </div>
+            <div class="np-field">
+              <label for="np-dpe-apres">DPE après travaux</label>
+              <select id="np-dpe-apres">
+                <option value="">—</option><option>A</option><option>B</option><option>C</option>
+                <option>D</option><option>E</option><option>F</option><option>G</option>
+              </select>
+            </div>
+            <div class="np-field span-2">
+              <label for="np-description">Description</label>
+              <textarea id="np-description" maxlength="500" placeholder="Description courte du bien (max 500 caractères)"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2 — Financiers -->
+        <div class="np-section" data-section="2">
+          <h3 class="np-section-title">Éléments financiers</h3>
+          <div class="np-grid-2">
+            <div class="np-field">
+              <label for="np-price-fai">Prix FAI</label>
+              <div class="np-prefix">
+                <input type="number" id="np-price-fai" oninput="recalc()" placeholder="95000"/>
+                <span class="np-prefix-suffix">€</span>
+              </div>
+            </div>
+            <div class="np-field">
+              <label for="np-fees-atom">Frais d'accompagnement Atom</label>
+              <div class="np-prefix">
+                <input type="number" id="np-fees-atom" value="8900" oninput="recalc()"/>
+                <span class="np-prefix-suffix">€</span>
+              </div>
+            </div>
+            <div class="np-field">
+              <label for="np-fees-notaire">Frais de notaire</label>
+              <div class="np-prefix">
+                <input type="number" id="np-fees-notaire" oninput="recalc(true)" placeholder="auto (8,5% du prix)"/>
+                <span class="np-prefix-suffix">€</span>
+              </div>
+              <span class="np-field-help">Auto-calculé à 8,5% du prix FAI si laissé vide</span>
+            </div>
+            <div class="np-field">
+              <label for="np-budget-travaux">Budget travaux</label>
+              <div class="np-prefix">
+                <input type="number" id="np-budget-travaux" value="35000" oninput="recalc()"/>
+                <span class="np-prefix-suffix">€</span>
+              </div>
+            </div>
+            <div class="np-field">
+              <label for="np-budget-meuble">Budget mobilier / électroménager</label>
+              <div class="np-prefix">
+                <input type="number" id="np-budget-meuble" value="3000" oninput="recalc()"/>
+                <span class="np-prefix-suffix">€</span>
+              </div>
+            </div>
+            <div class="np-field">
+              <label for="np-loyer">Loyer Atom proposé</label>
+              <div class="np-prefix">
+                <input type="number" id="np-loyer" oninput="recalc()" placeholder="770"/>
+                <span class="np-prefix-suffix">€/mois</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3 — Visuels (URLs en attendant Supabase Storage) -->
+        <div class="np-section" data-section="3">
+          <h3 class="np-section-title">Visuels</h3>
+          <p style="font-size:13px;color:var(--dim);margin-bottom:18px;font-style:italic">
+            Pour l'instant, colle les URLs des images hébergées ailleurs (Drive public, Imgur, etc.).
+            On migrera vers Supabase Storage à activation.
+          </p>
+          <div class="np-grid-2">
+            <div class="np-field span-2">
+              <label for="np-images">Photos état actuel (URLs séparées par des virgules)</label>
+              <textarea id="np-images" placeholder="https://...image1.jpg, https://...image2.jpg"></textarea>
+            </div>
+            <div class="np-field span-2">
+              <label for="np-images-3d">Projections 3D (URLs séparées par des virgules)</label>
+              <textarea id="np-images-3d" placeholder="https://...3d1.jpg, https://...3d2.jpg"></textarea>
+            </div>
+            <div class="np-field span-2">
+              <label for="np-plan-2d">Plan 2D (1 URL)</label>
+              <input type="text" id="np-plan-2d" placeholder="https://...plan.pdf"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4 — Ameublement -->
+        <div class="np-section" data-section="4">
+          <h3 class="np-section-title">Ameublement</h3>
+          <div class="np-field" style="margin-bottom:18px">
+            <label for="np-ameublement-desc">Description de l'ameublement</label>
+            <textarea id="np-ameublement-desc" placeholder="Détaille les éléments fournis avec le bien…"></textarea>
+          </div>
+          <label style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Équipements inclus</label>
+          <div class="np-eq-grid" id="np-eq-grid">
+            <label class="np-eq-item"><input type="checkbox" data-eq="lit_double"><span>🛏 Lit double</span></label>
+            <label class="np-eq-item"><input type="checkbox" data-eq="cuisine_equipee"><span>🍳 Cuisine équipée</span></label>
+            <label class="np-eq-item"><input type="checkbox" data-eq="douche"><span>🚿 Salle de bain avec douche</span></label>
+            <label class="np-eq-item"><input type="checkbox" data-eq="wc_separes"><span>🚽 WC séparés</span></label>
+            <label class="np-eq-item"><input type="checkbox" data-eq="table"><span>🍽 Table à manger</span></label>
+            <label class="np-eq-item"><input type="checkbox" data-eq="rangements"><span>🗄 Rangements intégrés</span></label>
+            <label class="np-eq-item"><input type="checkbox" data-eq="internet"><span>📶 Internet inclus</span></label>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="np-footer">
+          <div class="np-footer-left">
+            <select class="filter-select" id="np-status" style="padding:9px 30px 9px 12px">
+              <option value="brouillon">Brouillon</option>
+              <option value="disponible" selected>Disponible</option>
+              <option value="en_cours">En cours</option>
+              <option value="vendu">Vendu</option>
+              <option value="archive">Archivé</option>
+            </select>
+            <label class="np-toggle"><input type="checkbox" id="np-public"><label for="np-public" style="font-size:13px;color:var(--dim)">Visible sur le site public</label></label>
+          </div>
+          <div class="np-footer-right">
+            <button class="btn-secondary" onclick="saveProject('brouillon')">Enregistrer brouillon</button>
+            <button class="btn-primary" id="btn-save-project" onclick="saveProject()">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky calculations panel -->
+      <aside class="np-calcs">
+        <h3 class="np-calcs-title">Synthèse financière</h3>
+        <div class="calc-row">
+          <span class="calc-label">Total all-in</span>
+          <strong class="calc-value calc-big" id="calc-total">— €</strong>
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Apport (10%)</span>
+          <span class="calc-value" id="calc-apport">— €</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Emprunt</span>
+          <span class="calc-value" id="calc-emprunt">— €</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Mensualité</span>
+          <span class="calc-value" id="calc-mensu">— €/mois</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Loyer Atom</span>
+          <span class="calc-value" id="calc-loyer">— €/mois</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Cash-flow</span>
+          <span class="calc-value" id="calc-cashflow">—</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Rendement brut</span>
+          <span class="calc-value" id="calc-rendement">—%</span>
+        </div>
+        <p class="calc-hint">Mensualité = 10 % apport, 25 ans, taux fixe 3,60 %</p>
+      </aside>
     </div>
   </div>
 </div><!-- /#dashboard -->
@@ -933,6 +1277,174 @@ function openProject(id) {
 function fmtEuro(n) {
   if (n == null || isNaN(n)) return '—';
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+}
+
+/* ── Vue Nouveau Projet ─────────────────────────────────────── */
+let notaireTouched = false;
+
+function resetNewProjectForm() {
+  // Champs texte/number
+  ['np-title','np-address','np-arr','np-surface','np-floor','np-metro-dist','np-metro-name',
+   'np-dpe-avant','np-dpe-apres','np-description',
+   'np-price-fai','np-fees-notaire','np-loyer',
+   'np-images','np-images-3d','np-plan-2d','np-ameublement-desc'
+  ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  // Valeurs par défaut
+  const fa = document.getElementById('np-fees-atom');     if (fa) fa.value = 8900;
+  const bt = document.getElementById('np-budget-travaux'); if (bt) bt.value = 35000;
+  const bm = document.getElementById('np-budget-meuble');  if (bm) bm.value = 3000;
+  const st = document.getElementById('np-status');         if (st) st.value = 'disponible';
+  // Checkboxes
+  document.getElementById('np-elevator').checked = false;
+  document.getElementById('np-public').checked = false;
+  document.querySelectorAll('#np-eq-grid input[type=checkbox]').forEach(cb => { cb.checked = false; cb.parentElement.classList.remove('checked'); });
+  notaireTouched = false;
+  // Reset section visible
+  showNpSection(1);
+  recalc();
+}
+
+function showNpSection(n) {
+  document.querySelectorAll('.np-tab').forEach(t => t.classList.toggle('active', +t.dataset.section === n));
+  document.querySelectorAll('.np-section').forEach(s => s.classList.toggle('active', +s.dataset.section === n));
+}
+
+// Marquage des équipements cochés
+document.addEventListener('change', (e) => {
+  if (e.target.matches('#np-eq-grid input[type=checkbox]')) {
+    e.target.parentElement.classList.toggle('checked', e.target.checked);
+  }
+});
+
+function recalc(notaireWasEdited) {
+  if (notaireWasEdited) notaireTouched = true;
+  const prix  = num('np-price-fai');
+  const fa    = num('np-fees-atom');
+  const bt    = num('np-budget-travaux');
+  const bm    = num('np-budget-meuble');
+  const loyer = num('np-loyer');
+
+  // Auto-calc frais de notaire si non touché par l'utilisateur
+  let fn = num('np-fees-notaire');
+  if (!notaireTouched && prix > 0) {
+    fn = Math.round(prix * 0.085);
+    document.getElementById('np-fees-notaire').value = fn;
+  }
+
+  const total     = prix + fa + fn + bt + bm;
+  const apport    = Math.round(total * 0.10);
+  const emprunt   = Math.max(0, total - apport);
+  const months    = 25 * 12;
+  const r         = 0.036 / 12;
+  const mensu     = emprunt > 0
+    ? Math.round((emprunt * r) / (1 - Math.pow(1 + r, -months)))
+    : 0;
+  const cashflow  = loyer - mensu;
+  const rendement = total > 0 ? (loyer * 12 / total) * 100 : 0;
+
+  setText('calc-total',     fmtEuro(total));
+  setText('calc-apport',    fmtEuro(apport));
+  setText('calc-emprunt',   fmtEuro(emprunt));
+  setText('calc-mensu',     fmtEuro(mensu) + '/mois');
+  setText('calc-loyer',     loyer > 0 ? fmtEuro(loyer) + '/mois' : '—');
+  const cfEl = document.getElementById('calc-cashflow');
+  if (cfEl) {
+    cfEl.textContent = total > 0
+      ? (cashflow >= 0 ? '+' : '') + fmtEuro(Math.abs(cashflow)) + '/mois'
+      : '—';
+    cfEl.className = 'calc-value' + (total > 0 ? (cashflow >= 0 ? ' calc-positive' : ' calc-negative') : '');
+  }
+  setText('calc-rendement', total > 0 ? rendement.toFixed(2) + '%' : '—');
+}
+
+function num(id) {
+  const v = parseFloat(document.getElementById(id)?.value);
+  return isNaN(v) ? 0 : v;
+}
+function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+function parseImagesList(str) {
+  return String(str || '')
+    .split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+}
+
+function collectEquipement() {
+  const out = {};
+  document.querySelectorAll('#np-eq-grid input[type=checkbox]').forEach(cb => {
+    out[cb.dataset.eq] = cb.checked;
+  });
+  return out;
+}
+
+async function saveProject(forceStatus) {
+  const btn = document.getElementById('btn-save-project');
+  const title = document.getElementById('np-title').value.trim();
+  if (!title) {
+    alert('Le titre du projet est obligatoire.');
+    showNpSection(1);
+    document.getElementById('np-title').focus();
+    return;
+  }
+
+  const payload = {
+    title,
+    address:          document.getElementById('np-address').value.trim() || null,
+    arrondissement:   document.getElementById('np-arr').value || null,
+    surface_carrez:   num('np-surface') || null,
+    floor:            num('np-floor') || null,
+    has_elevator:     document.getElementById('np-elevator').checked,
+    metro_distance:   num('np-metro-dist') || null,
+    metro_name:       document.getElementById('np-metro-name').value.trim() || null,
+    dpe_avant:        document.getElementById('np-dpe-avant').value || null,
+    dpe_apres:        document.getElementById('np-dpe-apres').value || null,
+    description:      document.getElementById('np-description').value.trim() || null,
+    price_fai:        num('np-price-fai') || null,
+    fees_atom:        num('np-fees-atom') || 0,
+    fees_notaire:     num('np-fees-notaire') || null,
+    budget_travaux:   num('np-budget-travaux') || 0,
+    budget_meuble:    num('np-budget-meuble') || 0,
+    loyer_atom:       num('np-loyer') || null,
+    images:           parseImagesList(document.getElementById('np-images').value),
+    images_3d:        parseImagesList(document.getElementById('np-images-3d').value),
+    plan_2d_url:      document.getElementById('np-plan-2d').value.trim() || null,
+    ameublement_desc: document.getElementById('np-ameublement-desc').value.trim() || null,
+    ameublement:      collectEquipement(),
+    status:           forceStatus || document.getElementById('np-status').value,
+    public_visible:   document.getElementById('np-public').checked,
+  };
+
+  if (payload.status === 'disponible' || payload.public_visible) {
+    payload.published_at = new Date().toISOString();
+  }
+
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = 'Enregistrement…';
+
+  const res = await fetch('/api/projects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 401) { logout(); return; }
+
+  const bodyText = await res.text();
+  let data = {};
+  try { data = JSON.parse(bodyText); } catch {}
+
+  if (!res.ok) {
+    btn.disabled = false; btn.textContent = oldText;
+    const err = data?.error || `HTTP ${res.status}`;
+    const detail = data?.detail || bodyText.slice(0, 300);
+    alert(`Erreur à l'enregistrement.\n\n${err}\n${detail}`);
+    return;
+  }
+
+  btn.textContent = '✓ Enregistré';
+  setTimeout(() => {
+    resetNewProjectForm();
+    setRoute('projects');
+  }, 700);
 }
 
 function logout() {
