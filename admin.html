@@ -229,6 +229,48 @@
     .drawer-val { color: var(--cream); text-align: right; word-break: break-all; }
     .drawer-val a { color: var(--gold); text-decoration: none; }
 
+    /* Delete confirm modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); z-index: 200;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    .modal-overlay.on { display: flex; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px 28px 24px;
+      width: 100%; max-width: 360px;
+      animation: fadeUp .2s ease;
+    }
+    .modal-icon { font-size: 28px; margin-bottom: 12px; }
+    .modal-title { font-size: 16px; font-weight: 500; color: var(--cream); margin-bottom: 6px; }
+    .modal-sub   { font-size: 13px; color: var(--dim); margin-bottom: 24px; line-height: 1.5; }
+    .modal-btns  { display: flex; gap: 10px; }
+    .btn-cancel {
+      flex: 1; padding: 11px; background: none; border: 1px solid var(--border);
+      border-radius: 7px; color: var(--dim); font-family: var(--sans);
+      font-size: 14px; cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .btn-cancel:hover { border-color: var(--dim); color: var(--cream); }
+    .btn-confirm-del {
+      flex: 1; padding: 11px; background: var(--red); border: none;
+      border-radius: 7px; color: #fff; font-family: var(--sans);
+      font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity .15s;
+    }
+    .btn-confirm-del:hover { opacity: .85; }
+    .btn-confirm-del:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Delete btn in rows */
+    .btn-del-row {
+      background: none; border: none; color: transparent;
+      font-size: 14px; cursor: pointer; padding: 4px 6px;
+      border-radius: 5px; transition: color .15s, background .15s;
+      line-height: 1;
+    }
+    tbody tr:hover .btn-del-row { color: var(--dim); }
+    .btn-del-row:hover { color: var(--red) !important; background: rgba(217,94,94,.1); }
+
     /* ── iPad (≤ 1024px) ── */
     @media (max-width: 1024px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
@@ -369,6 +411,7 @@
           <th>Budget</th>
           <th>Source</th>
           <th>Campagne</th>
+          <th style="width:40px"></th>
         </tr>
       </thead>
       <tbody id="leads-body">
@@ -381,6 +424,19 @@
   <div class="pagination">
     <span id="page-info">—</span>
     <div class="page-btns" id="page-btns"></div>
+  </div>
+</div>
+
+<!-- ══ DELETE MODAL ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="del-overlay" onclick="if(event.target===this)closeDelModal()">
+  <div class="modal">
+    <div class="modal-icon">🗑</div>
+    <p class="modal-title">Supprimer ce lead ?</p>
+    <p class="modal-sub" id="del-desc">Cette action est irréversible.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDelModal()">Annuler</button>
+      <button class="btn-confirm-del" id="btn-confirm-del" onclick="confirmDelete()">Supprimer</button>
+    </div>
   </div>
 </div>
 
@@ -511,10 +567,16 @@ function renderTable(leads) {
       <td class="muted">${BUDGET[l.capacite] || l.capacite || '—'}</td>
       <td>${srcBadge(l.utm_source)}</td>
       <td class="muted">${esc(l.utm_campaign) || '—'}</td>
+      <td><button class="btn-del-row" title="Supprimer">✕</button></td>
     </tr>
   `).join('');
 
   tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
+    const delBtn = tr.querySelector('.btn-del-row');
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openDelModal(leadsCache[+tr.dataset.idx]);
+    });
     tr.addEventListener('click', () => openDrawer(leadsCache[+tr.dataset.idx]));
   });
 }
@@ -542,6 +604,41 @@ function renderPagination(page, total, pageSize) {
   next.className = 'page-btn'; next.textContent = '→'; next.disabled = page >= pages;
   next.onclick = () => loadLeads(page + 1);
   btns.appendChild(next);
+}
+
+/* ── Delete ─────────────────────────────────────────────────── */
+let pendingDeleteId = null;
+
+function openDelModal(lead) {
+  pendingDeleteId = lead.id;
+  document.getElementById('del-desc').textContent =
+    `${lead.prenom} ${lead.nom} (${lead.email}) — cette action est irréversible.`;
+  const btn = document.getElementById('btn-confirm-del');
+  btn.disabled = false;
+  btn.textContent = 'Supprimer';
+  document.getElementById('del-overlay').classList.add('on');
+}
+
+function closeDelModal() {
+  pendingDeleteId = null;
+  document.getElementById('del-overlay').classList.remove('on');
+}
+
+async function confirmDelete() {
+  if (!pendingDeleteId) return;
+  const btn = document.getElementById('btn-confirm-del');
+  btn.disabled = true;
+  btn.textContent = 'Suppression…';
+
+  const res = await fetch(`/api/delete?id=${pendingDeleteId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 401) { logout(); return; }
+
+  closeDelModal();
+  loadLeads(currentPage);
 }
 
 /* ── Drawer ─────────────────────────────────────────────────── */
