@@ -63,18 +63,26 @@ module.exports = async function handler(req, res) {
 
   // ── Email de notification ──────────────────────────────────
   const notifyEmails = (process.env.NOTIFY_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+  if (!notifyEmails.length)          console.warn('Email: NOTIFY_EMAILS vide ou manquant');
+  if (!process.env.RESEND_API_KEY)   console.warn('Email: RESEND_API_KEY manquant');
+  if (!process.env.RESEND_FROM)      console.warn('Email: RESEND_FROM manquant — fallback onboarding@resend.dev');
+
   if (notifyEmails.length && process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
+    const fromAddr = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
     try {
-      await resend.emails.send({
-        from: process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>',
+      const result = await resend.emails.send({
+        from: fromAddr,
         to: notifyEmails,
         subject: isUpdate
           ? `🔄 Dossier mis à jour — ${leadData.prenom} ${leadData.nom}`
           : `🏠 Nouveau lead — ${leadData.prenom} ${leadData.nom}`,
         html: buildEmail(leadData, isUpdate),
       });
-    } catch (e) { console.error('Email:', e); }
+      console.log('Email envoyé:', result?.id || 'ok', '→', fromAddr, '→', notifyEmails.join(', '));
+    } catch (e) {
+      console.error('Email erreur:', e?.message || e);
+    }
   }
 
   return res.status(200).json({ ok: true, updated: isUpdate });
