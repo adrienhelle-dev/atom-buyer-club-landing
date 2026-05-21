@@ -297,6 +297,25 @@
       border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0;
     }
 
+    /* ── Assigned founder badge ──────────────────────────────── */
+    .founder-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 50%;
+      font-size: 8px; font-weight: 700; margin-left: 5px;
+      vertical-align: middle; flex-shrink: 0; opacity: .9;
+    }
+    .drawer-founder {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .drawer-founder-avatar {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .drawer-founder-info { display: flex; flex-direction: column; gap: 1px; }
+    .drawer-founder-name { font-size: 13px; color: var(--cream); font-weight: 500; }
+    .drawer-founder-role { font-size: 11px; color: var(--dim); }
+
     /* ── CTA buttons ───────────────────────────────────────── */
     .cta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .cta-btn {
@@ -633,7 +652,7 @@ function renderTable(leads) {
   tbody.innerHTML = leads.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td class="muted">${fmtDate(l.created_at)}</td>
-      <td><strong>${statusDot(l.status)}${esc(l.prenom)} ${esc(l.nom)}</strong></td>
+      <td><strong>${statusDot(l.status)}${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</td>
       <td class="muted">${esc(l.email)}</td>
       <td class="muted">${esc(l.tel)}</td>
       <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
@@ -756,6 +775,11 @@ function openDrawer(lead) {
     </div>
 
     <div class="drawer-section">
+      <p class="drawer-section-label">Responsable</p>
+      <div id="drawer-assigned">${founderBlock(lead.assigned_to)}</div>
+    </div>
+
+    <div class="drawer-section">
       <p class="drawer-section-label">Actions</p>
       <div class="cta-grid">
         <a class="cta-btn cta-call" href="tel:${esc(lead.tel)}">
@@ -826,11 +850,25 @@ async function updateLeadStatus(id, status) {
     body: JSON.stringify({ status }),
   });
   if (res.status === 401) { logout(); return; }
+  const data = await res.json();
+
+  // Mettre à jour le dot de couleur dans le drawer
   const s = STATUS_OPTS.find(o => o.v === status) || STATUS_OPTS[0];
   const dot = document.getElementById('status-dot');
   if (dot) dot.style.background = s.c;
+
+  // Mettre à jour le bloc Responsable dans le drawer sans le fermer
+  const assignedEmail = data.assigned_to;
+  const assignedBlock = document.getElementById('drawer-assigned');
+  if (assignedBlock && assignedEmail) assignedBlock.innerHTML = founderBlock(assignedEmail);
+
+  // Mettre à jour le cache local et rafraîchir le tableau
   const lead = leadsCache.find(l => l.id === id);
-  if (lead) { lead.status = status; renderTable(leadsCache); }
+  if (lead) {
+    lead.status = status;
+    if (assignedEmail) lead.assigned_to = assignedEmail;
+    renderTable(leadsCache);
+  }
 }
 
 function scheduleNotesSave(id) {
@@ -898,6 +936,45 @@ function srcBadge(src) {
 function statusDot(status) {
   const s = STATUS_OPTS.find(o => o.v === status) || STATUS_OPTS[0];
   return `<span class="status-dot" style="background:${s.c}"></span>`;
+}
+
+function founderColor(email) {
+  // Couleur déterministe par email
+  const palette = ['#B8975A','#4285f4','#e1306c','#4caf7d','#f4a642','#a06cd5'];
+  if (!email) return '#7a7874';
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) hash = email.charCodeAt(i) + ((hash << 5) - hash);
+  return palette[Math.abs(hash) % palette.length];
+}
+
+function founderInitials(email) {
+  if (!email) return '?';
+  const local = email.split('@')[0];           // ex: "adrien.helle" ou "adrien"
+  const parts = local.split(/[.\-_]/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return local.slice(0, 2).toUpperCase();
+}
+
+function founderBadge(email) {
+  if (!email) return '';
+  const bg = founderColor(email);
+  const initials = founderInitials(email);
+  return `<span class="founder-badge" style="background:${bg}22;color:${bg};border:1px solid ${bg}44" title="${esc(email)}">${initials}</span>`;
+}
+
+function founderBlock(email) {
+  if (!email) return `<span style="color:var(--dim);font-size:13px">Non assigné</span>`;
+  const bg = founderColor(email);
+  const initials = founderInitials(email);
+  const name = email.split('@')[0].split(/[.\-_]/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+  return `
+    <div class="drawer-founder">
+      <span class="drawer-founder-avatar" style="background:${bg}22;color:${bg};border:1px solid ${bg}44">${initials}</span>
+      <div class="drawer-founder-info">
+        <span class="drawer-founder-name">${esc(name)}</span>
+        <span class="drawer-founder-role">${esc(email)}</span>
+      </div>
+    </div>`;
 }
 
 function phoneIntl(tel) {

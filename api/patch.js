@@ -19,8 +19,13 @@ module.exports = async function handler(req, res) {
 
   if (!Object.keys(updates).length) return res.status(400).json({ error: 'Aucun champ valide' });
 
+  // Si le statut change, on assigne automatiquement le lead au founder connecté
+  if ('status' in updates) {
+    updates.assigned_to = payload.email;
+  }
+
   const { error } = await supabase.from('leads').update(updates).eq('id', id);
   if (error) { console.error('Patch error:', error); return res.status(500).json({ error: 'db_error' }); }
 
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, assigned_to: updates.assigned_to || null });
 };
