@@ -281,9 +281,19 @@
 
 <script>
 const params = new URLSearchParams(window.location.search);
-const slug = params.get('slug');
+let slug = params.get('slug');
 const id   = params.get('id');
 let project = null;
+
+// Vercel rewrite is server-side — browser URL stays /projet/my-slug
+// so window.location.search is empty. Parse slug from path as fallback.
+if (!slug && !id) {
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const idx = pathParts.indexOf('projet');
+  if (idx !== -1 && pathParts[idx + 1]) {
+    slug = pathParts[idx + 1];
+  }
+}
 
 const DPE_COLORS = { A: 'dpe-A', B: 'dpe-B', C: 'dpe-C', D: 'dpe-D', E: 'dpe-E', F: 'dpe-F', G: 'dpe-G' };
 
