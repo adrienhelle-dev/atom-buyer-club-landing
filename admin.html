@@ -559,7 +559,7 @@ function renderTable(leads) {
   tbody.innerHTML = leads.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td class="muted">${fmtDate(l.created_at)}</td>
-      <td><strong>${esc(l.prenom)} ${esc(l.nom)}</strong></td>
+      <td><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${l.updated_at ? ' <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4caf7d;vertical-align:middle;margin-left:4px" title="Dossier mis à jour"></span>' : ''}</td>
       <td class="muted">${esc(l.email)}</td>
       <td class="muted">${esc(l.tel)}</td>
       <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
@@ -715,7 +715,8 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
 function fmtDateFull(d) {
-  return new Date(d).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  if (!d) return '—';
+  return new Date(d).toLocaleString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
 function esc(s) {
