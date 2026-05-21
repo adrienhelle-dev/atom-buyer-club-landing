@@ -573,6 +573,35 @@
       .np-eq-grid { grid-template-columns: 1fr; }
     }
 
+    /* ── Projets compatibles (dans drawer lead) ──────────────── */
+    .compat-list { display: flex; flex-direction: column; gap: 8px; }
+    .compat-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 13px; background: var(--bg3);
+      border: 1px solid var(--border); border-radius: var(--r);
+      transition: border-color .15s;
+    }
+    .compat-item:hover { border-color: rgba(184,151,90,.35); }
+    .compat-thumb {
+      width: 48px; height: 48px; border-radius: 6px;
+      background-size: cover; background-position: center;
+      background-color: var(--bg2); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; color: var(--dim);
+    }
+    .compat-body { flex: 1; min-width: 0; }
+    .compat-title { font-size: 13px; font-weight: 500; color: var(--cream); }
+    .compat-meta  { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    .compat-meta strong { color: var(--gold); font-weight: 500; }
+    .compat-send {
+      padding: 7px 12px; background: rgba(184,151,90,.12);
+      border: 1px solid rgba(184,151,90,.3); border-radius: 6px;
+      color: var(--gold); font-family: var(--sans); font-size: 11px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; transition: opacity .15s;
+    }
+    .compat-send:hover { opacity: .8; }
+    .compat-empty { font-size: 12px; color: var(--dim); font-style: italic; padding: 6px 0; }
+
     /* ── Send fiche modal ───────────────────────────────────── */
     .fiche-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
     .fiche-overlay.on { display:flex; }
@@ -1279,6 +1308,42 @@ function fmtEuro(n) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 }
 
+/* ── Moteur de matching lead × projet ──────────────────────── */
+const BUDGET_MAX = {
+  'moins-150k':  150000,
+  '150-250k':    250000,
+  '250-400k':    400000,
+  '400-600k':    600000,
+  '600k-1m':    1000000,
+  'plus-1m':    Infinity,
+};
+
+function leadMaxBudget(lead) {
+  if (lead.financement === 'comptant') return Infinity;
+  return BUDGET_MAX[lead.capacite] ?? Infinity; // null/unknown = pas de plafond
+}
+
+function leadArrSet(lead) {
+  // Extrait les "Ne" (1e, 2e, ..., 20e) du champ arrondissements textuel
+  return new Set(String(lead.arrondissements || '').match(/\d+e/g) || []);
+}
+
+function leadMatchesProject(lead, project) {
+  if (!lead || !project) return false;
+  if (lead.status === 'perdu' || lead.status === 'signe') return false;
+  // 1. Arrondissement
+  if (project.arrondissement) {
+    const arrs = leadArrSet(lead);
+    if (arrs.size > 0 && !arrs.has(project.arrondissement)) return false;
+  }
+  // 2. Budget
+  if (project.total_all_in != null && project.total_all_in > 0) {
+    const maxBudget = leadMaxBudget(lead);
+    if (project.total_all_in > maxBudget) return false;
+  }
+  return true;
+}
+
 /* ── Vue Nouveau Projet ─────────────────────────────────────── */
 let notaireTouched = false;
 
@@ -1665,6 +1730,11 @@ function openDrawer(lead) {
     </div>
 
     <div class="drawer-section">
+      <p class="drawer-section-label">Projets compatibles</p>
+      <div id="drawer-compat" class="compat-empty">Chargement…</div>
+    </div>
+
+    <div class="drawer-section">
       <p class="drawer-section-label">Coordonnées</p>
       <div class="drawer-row"><span class="drawer-key">Email</span><span class="drawer-val"><a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a></span></div>
       <div class="drawer-row"><span class="drawer-key">Téléphone</span><span class="drawer-val"><a href="tel:${esc(lead.tel)}">${esc(lead.tel)}</a></span></div>
@@ -1709,6 +1779,7 @@ function openDrawer(lead) {
   `;
   document.getElementById('drawer-overlay').classList.add('on');
   loadTimeline(lead.id);
+  loadCompatibleProjects(lead);
 }
 
 function closeDrawer(e) {
@@ -1910,6 +1981,58 @@ async function addTimelineEvent(leadId) {
     body: JSON.stringify({ lead_id: leadId, type, content }),
   });
   if (res.ok) loadTimeline(leadId);
+}
+
+/* ── Projets compatibles dans drawer lead ─────────────────── */
+async function loadCompatibleProjects(lead) {
+  const el = document.getElementById('drawer-compat');
+  if (!el) return;
+  // Charge tous les projets disponibles
+  const res = await fetch('/api/projects?status=disponible', { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) { el.innerHTML = '<span class="compat-empty">Impossible de charger les projets</span>'; return; }
+  const { projects } = await res.json();
+  const matching = (projects || []).filter(p => leadMatchesProject(lead, p));
+
+  if (!matching.length) {
+    el.innerHTML = '<div class="compat-empty">Aucun projet disponible ne correspond actuellement aux critères de cet investisseur.</div>';
+    return;
+  }
+
+  el.innerHTML = `<div class="compat-list">${matching.slice(0, 8).map(p => compatItem(p)).join('')}</div>`;
+}
+
+function compatItem(p) {
+  const img = p.images?.[0] || p.images_3d?.[0] || null;
+  const surf = p.surface_carrez ? `${p.surface_carrez}m²` : '';
+  const total = p.total_all_in ? fmtEuro(p.total_all_in) : '—';
+  const loyer = p.loyer_atom ? fmtEuro(p.loyer_atom) + '/mois' : '';
+  const parts = [p.arrondissement, surf, loyer].filter(Boolean).join(' · ');
+  return `
+    <div class="compat-item">
+      <div class="compat-thumb" style="${img ? `background-image:url('${esc(img)}')` : ''}">${img ? '' : '🏠'}</div>
+      <div class="compat-body">
+        <div class="compat-title">${esc(p.title)}</div>
+        <div class="compat-meta">${esc(parts)} · <strong>${total}</strong></div>
+      </div>
+      <button class="compat-send" onclick="sendFicheDirect('${esc(p.id)}')">Envoyer</button>
+    </div>`;
+}
+
+async function sendFicheDirect(projectId) {
+  if (!currentLead) return;
+  if (!confirm('Envoyer cette fiche par email à ' + currentLead.prenom + ' ' + currentLead.nom + ' ?')) return;
+  const res = await fetch('/api/send-fiche', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ lead_id: currentLead.id, project_id: projectId, message: '' }),
+  });
+  if (res.ok) {
+    alert('✅ Fiche envoyée !');
+    loadTimeline(currentLead.id);
+  } else {
+    const d = await res.json().catch(() => ({}));
+    alert('❌ ' + (d.error || 'Erreur d\'envoi'));
+  }
 }
 
 /* ── Send Fiche ─────────────────────────────────────────────── */
