@@ -1046,12 +1046,17 @@ function srcBadge(src) {
 /* ── Score ──────────────────────────────────────────────────── */
 function computeScore(lead) {
   let s = 0;
+  // Horizon (max 4)
   s += ({ asap: 4, '3mois': 3, '6mois': 2, reflexion: 1 }[lead.timing] || 0);
-  if (lead.financement === 'comptant') s += 3;
-  else if (lead.accord === 'oui') s += 3;
-  else if (lead.accord === 'courtier') s += 2;
-  else if (lead.accord === 'non') s += 1;
-  s += ({ 'plus-1m': 3, '600k-1m': 3, '400-600k': 2, '250-400k': 2, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
+  // Financement + Budget (max 6)
+  if (lead.financement === 'comptant') {
+    s += 6; // cash = financement parfait + pas de plafond d'emprunt → max des 2 composantes
+  } else {
+    if      (lead.accord === 'oui')     s += 3;
+    else if (lead.accord === 'courtier') s += 2;
+    else if (lead.accord === 'non')      s += 1;
+    s += ({ 'plus-1m': 3, '600k-1m': 3, '400-600k': 2, '250-400k': 2, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
+  }
   return s; // 0–10
 }
 function scoreBadge(lead) {
