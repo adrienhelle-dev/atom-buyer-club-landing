@@ -360,6 +360,7 @@ let token = null;
 let currentPage = 1;
 let totalLeads = 0;
 let searchTimer = null;
+let leadsCache = [];
 
 /* ── Auth ─────────────────────────────────────────────────── */
 function init() {
@@ -449,13 +450,14 @@ function renderStats(leads, total) {
 }
 
 function renderTable(leads) {
+  leadsCache = leads;
   const tbody = document.getElementById('leads-body');
   if (!leads.length) {
     tbody.innerHTML = '<tr><td colspan="10" class="table-msg">Aucun lead trouvé</td></tr>';
     return;
   }
-  tbody.innerHTML = leads.map(l => `
-    <tr style="cursor:pointer" onclick="openDrawer(${JSON.stringify(l).replace(/"/g,'&quot;')})">
+  tbody.innerHTML = leads.map((l, i) => `
+    <tr style="cursor:pointer" data-idx="${i}">
       <td class="muted">${fmtDate(l.created_at)}</td>
       <td><strong>${esc(l.prenom)} ${esc(l.nom)}</strong></td>
       <td class="muted">${esc(l.email)}</td>
@@ -468,6 +470,10 @@ function renderTable(leads) {
       <td class="muted">${esc(l.utm_campaign) || '—'}</td>
     </tr>
   `).join('');
+
+  tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
+    tr.addEventListener('click', () => openDrawer(leadsCache[+tr.dataset.idx]));
+  });
 }
 
 function renderPagination(page, total, pageSize) {

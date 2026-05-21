@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     try {
       await resend.emails.send({
-        from: 'Atom Buyers Club <leads@atombuyerclub.fr>',
+        from: process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>',
         to: notifyEmails,
         subject: `Nouveau lead — ${lead.prenom} ${lead.nom}`,
         html: buildEmail(lead),
