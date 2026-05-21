@@ -4,6 +4,12 @@
   "rewrites": [
     { "source": "/projet/:slug", "destination": "/projet.html?slug=:slug" }
   ],
+  "functions": {
+    "api/generate-pdf.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "source": "/api/(.*)",

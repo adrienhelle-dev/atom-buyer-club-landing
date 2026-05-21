@@ -441,6 +441,19 @@
     .project-card-price-sub  { font-size: 11px; color: var(--dim); text-align: right; }
     .project-card-price-sub strong { color: var(--cream); font-weight: 500; }
 
+    .project-card-actions {
+      display: flex; gap: 6px; padding: 10px 18px 14px; border-top: 1px solid var(--border);
+    }
+    .pc-action {
+      flex: 1; padding: 7px 8px; font-size: 11px; font-weight: 500;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--cream-dim); cursor: pointer; font-family: var(--sans);
+      transition: border-color .15s, color .15s; text-decoration: none; text-align: center;
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .pc-action:hover { border-color: var(--gold); color: var(--gold); }
+    .pc-action.pc-pdf { background: rgba(184,151,90,.08); color: var(--gold); border-color: rgba(184,151,90,.25); }
+
     .projects-empty {
       text-align: center; padding: 80px 24px; color: var(--dim);
     }
@@ -1270,7 +1283,7 @@ function renderProjects(projects) {
 }
 
 function projectCard(p) {
-  const img    = p.images?.[0] || p.images_3d?.[0] || null;
+  const img    = p.images_3d?.[0] || p.images?.[0] || null;
   const status = PROJECT_STATUS[p.status] || PROJECT_STATUS.disponible;
   const total  = p.total_all_in ? fmtEuro(p.total_all_in) : '—';
   const loyer  = p.loyer_atom   ? fmtEuro(p.loyer_atom) + '/mois' : '—';
@@ -1278,13 +1291,14 @@ function projectCard(p) {
   const floor  = p.floor != null ? `${p.floor}${p.floor === 0 ? 'RDC' : 'e'}` : '';
   const arr    = p.arrondissement || '';
   const meta   = [arr, surf, floor].filter(Boolean).join('|||').split('|||');
+  const slug   = p.slug || p.id;
   return `
-    <div class="project-card" onclick="openProject('${esc(p.id)}')">
-      <div class="project-card-img ${img ? '' : 'empty'}" style="${img ? `background-image:url('${esc(img)}')` : ''}">
+    <div class="project-card">
+      <div class="project-card-img ${img ? '' : 'empty'}" style="${img ? `background-image:url('${esc(img)}')` : ''}" onclick="openProject('${esc(p.id)}')">
         ${img ? '' : '🏠'}
         <span class="project-card-status ${status.cls}">${status.label}</span>
       </div>
-      <div class="project-card-body">
+      <div class="project-card-body" onclick="openProject('${esc(p.id)}')">
         <div class="project-card-title">${esc(p.title || 'Sans titre')}</div>
         <div class="project-card-meta">${meta.map(m => `<span>${esc(m)}</span>`).join('')}</div>
         <div class="project-card-prices">
@@ -1292,7 +1306,39 @@ function projectCard(p) {
           <div class="project-card-price-sub"><strong>${loyer}</strong><br>Loyer Atom</div>
         </div>
       </div>
+      <div class="project-card-actions">
+        ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐 Page publique</a>` : ''}
+        <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 Générer PDF</button>
+      </div>
     </div>`;
+}
+
+async function downloadPdf(projectId, btn) {
+  const original = btn.innerHTML;
+  btn.innerHTML = '⌛ Génération…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/generate-pdf?id=${projectId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert(`Erreur PDF : ${d.error || res.status}\n${d.detail || ''}`);
+      return;
+    }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const filename = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/)?.[1] || 'projet.pdf';
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Erreur lors de la génération : ' + (e?.message || e));
+  } finally {
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
 }
 
 function openProject(id) {
