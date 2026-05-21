@@ -579,7 +579,7 @@
 
         <div class="fields">
           <div>
-            <p class="arr-label">Zone d'investissement <span style="font-weight:300;text-transform:none;letter-spacing:0;opacity:.6">(optionnel)</span></p>
+            <p class="arr-label">Zone d'investissement</p>
 
             <div class="zone-toggles">
               <button type="button" class="zone-btn on" id="zone-paris" onclick="toggleZone('paris')">
@@ -609,6 +609,7 @@
               <input type="text" id="banlieue-input" placeholder="Ex : 92200, 93000, 94100…" autocomplete="off" />
               <p class="arr-hint" style="margin-top:8px">Codes postaux ou communes, séparés par des virgules</p>
             </div>
+            <p class="field-err" id="e-zone" style="margin-top:8px">Sélectionnez une zone et renseignez vos préférences</p>
           </div>
 
           <div class="field" style="margin-top:6px;">
@@ -647,6 +648,7 @@
                 </span>
               </label>
             </div>
+            <p class="field-err" id="e-timing" style="margin-top:6px">Veuillez choisir un horizon de projet</p>
           </div>
         </div>
 
@@ -686,6 +688,7 @@
                 </span>
               </label>
             </div>
+            <p class="field-err" id="e-financement" style="margin-top:6px">Veuillez choisir un mode de financement</p>
           </div>
 
           <!-- 2. [Si emprunt] Statut du dossier bancaire -->
@@ -727,6 +730,7 @@
                   </span>
                 </label>
               </div>
+              <p class="field-err" id="e-accord" style="margin-top:6px">Veuillez indiquer le statut de votre financement</p>
             </div>
 
             <!-- 3. [Si étude validée] Capacité d'emprunt -->
@@ -744,6 +748,7 @@
                     <option value="plus-1m">Plus de 1 000 000 €</option>
                   </select>
                 </div>
+                <p class="field-err" id="e-capacite" style="margin-top:6px">Veuillez sélectionner votre capacité d'emprunt</p>
               </div>
             </div>
           </div>
@@ -835,25 +840,62 @@ seps.forEach(s => io.observe(s));
 
 /* ── Validation ────────────────────────────────────────────── */
 function setErr(id, show) {
-  const span = document.getElementById('e-' + id);
+  const span  = document.getElementById('e-' + id);
   const input = document.getElementById(id);
   span?.classList.toggle('on', show);
   input?.classList.toggle('err', show);
 }
 
+function checkZone() {
+  if (zones.paris   && selected.size > 0) return true;
+  if (zones.banlieue && document.getElementById('banlieue-input').value.trim()) return true;
+  return false;
+}
+
 function validate() {
-  const prenom = document.getElementById('prenom').value.trim();
-  const nom    = document.getElementById('nom').value.trim();
-  const email  = document.getElementById('email').value.trim();
-  const tel    = document.getElementById('tel').value.trim();
+  let ok = true;
+
+  // 01 — Coordonnées
+  const prenom  = document.getElementById('prenom').value.trim();
+  const nom     = document.getElementById('nom').value.trim();
+  const email   = document.getElementById('email').value.trim();
+  const tel     = document.getElementById('tel').value.trim();
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  setErr('prenom', !prenom);   if (!prenom)  ok = false;
+  setErr('nom',    !nom);      if (!nom)     ok = false;
+  setErr('email',  !emailOk);  if (!emailOk) ok = false;
+  setErr('tel',    !tel);      if (!tel)     ok = false;
 
-  setErr('prenom', !prenom);
-  setErr('nom',    !nom);
-  setErr('email',  !emailOk);
-  setErr('tel',    !tel);
+  // 02 — Zone d'investissement
+  const zoneOk = checkZone();
+  setErr('zone', !zoneOk);
+  if (!zoneOk) ok = false;
 
-  return prenom && nom && emailOk && tel;
+  // 02 — Horizon du projet
+  const timing = document.querySelector('input[name="timing"]:checked')?.value;
+  setErr('timing', !timing);
+  if (!timing) ok = false;
+
+  // 03 — Mode de financement
+  const financement = document.querySelector('input[name="financement"]:checked')?.value;
+  setErr('financement', !financement);
+  if (!financement) ok = false;
+
+  // 03 — Statut bancaire (seulement si emprunt)
+  if (financement === 'emprunt') {
+    const accord = document.querySelector('input[name="accord"]:checked')?.value;
+    setErr('accord', !accord);
+    if (!accord) ok = false;
+
+    // Capacité (seulement si étude validée)
+    if (accord === 'oui') {
+      const capacite = document.getElementById('capacite').value;
+      setErr('capacite', !capacite);
+      if (!capacite) ok = false;
+    }
+  }
+
+  return ok;
 }
 
 /* ── UTM capture (on load) ─────────────────────────────────── */
@@ -871,7 +913,8 @@ const _utms = {};
 document.getElementById('form').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!validate()) {
-    document.getElementById('prenom').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const firstErr = document.querySelector('.field-err.on');
+    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
