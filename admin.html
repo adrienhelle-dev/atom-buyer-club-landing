@@ -70,6 +70,25 @@
     /* ── DASHBOARD ─────────────────────────────────────────── */
     #dashboard { display: none; }
 
+    /* ── Nav tabs (SPA routing) ─────────────────────────────── */
+    .nav-tabs {
+      display: flex; gap: 0;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 28px; overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-tab {
+      padding: 14px 18px; font-size: 13px; font-weight: 500;
+      color: var(--dim); cursor: pointer; background: none; border: none;
+      border-bottom: 2px solid transparent; font-family: var(--sans);
+      transition: color .15s, border-color .15s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 7px;
+    }
+    .nav-tab:hover { color: var(--cream); }
+    .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .view { display: none; }
+    .view.active { display: block; }
+
     /* Topbar */
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
@@ -377,6 +396,67 @@
     }
     .tl-add-btn:hover { border-color: var(--gold); color: var(--gold); }
 
+    /* ── Vue Projets ─────────────────────────────────────────── */
+    .projects-toolbar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 18px 28px; border-bottom: 1px solid var(--border); background: var(--bg);
+    }
+    .projects-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px; padding: 24px 28px;
+    }
+    .project-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; cursor: pointer; transition: border-color .15s, transform .1s;
+      display: flex; flex-direction: column;
+    }
+    .project-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .project-card-img {
+      width: 100%; aspect-ratio: 16/10; background: var(--bg3);
+      background-size: cover; background-position: center;
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .project-card-img.empty {
+      background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%);
+      color: var(--dim); font-size: 36px;
+    }
+    .project-card-status {
+      position: absolute; top: 10px; left: 10px;
+      font-size: 10px; font-weight: 600; letter-spacing: .04em;
+      padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(4px);
+      text-transform: uppercase;
+    }
+    .pcs-disponible { background: rgba(76,175,125,.85);  color: white; }
+    .pcs-en_cours   { background: rgba(244,166,66,.85);  color: white; }
+    .pcs-vendu      { background: rgba(122,120,116,.85); color: white; }
+    .pcs-archive    { background: rgba(122,120,116,.5);  color: var(--cream); }
+    .pcs-brouillon  { background: rgba(184,151,90,.85);  color: white; }
+
+    .project-card-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .project-card-title { font-family: var(--serif); font-size: 19px; font-weight: 400; color: var(--cream); line-height: 1.2; }
+    .project-card-meta { font-size: 12px; color: var(--dim); display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
+    .project-card-meta span:not(:last-child)::after { content: '·'; margin-left: 10px; opacity: .5; }
+    .project-card-prices { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .project-card-price-main { font-size: 18px; font-weight: 500; color: var(--gold); }
+    .project-card-price-sub  { font-size: 11px; color: var(--dim); text-align: right; }
+    .project-card-price-sub strong { color: var(--cream); font-weight: 500; }
+
+    .projects-empty {
+      text-align: center; padding: 80px 24px; color: var(--dim);
+    }
+    .projects-empty-icon { font-size: 56px; margin-bottom: 16px; opacity: .4; }
+    .projects-empty-title { font-family: var(--serif); font-size: 22px; color: var(--cream); margin-bottom: 8px; }
+    .projects-empty-sub { font-size: 14px; margin-bottom: 24px; }
+
+    .btn-new-project {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; background: var(--gold); border: none;
+      border-radius: var(--r); color: var(--bg); font-family: var(--sans);
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .15s;
+      text-decoration: none;
+    }
+    .btn-new-project:hover { opacity: .85; }
+
     /* ── Send fiche modal ───────────────────────────────────── */
     .fiche-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
     .fiche-overlay.on { display:flex; }
@@ -425,6 +505,8 @@
       .topbar-left svg { width: 48px; }
       .topbar-badge { font-size: 9px; padding: 2px 8px; }
       .btn-logout { font-size: 11px; padding: 5px 10px; }
+      .nav-tabs { padding: 0 12px; }
+      .nav-tab { padding: 12px 14px; font-size: 12px; }
 
       .stats { grid-template-columns: repeat(2, 1fr); }
       .stat { padding: 14px 16px; }
@@ -501,6 +583,14 @@
     </div>
   </div>
 
+  <!-- ── Nav SPA ─────────────────────────────────────────────── -->
+  <nav class="nav-tabs">
+    <button class="nav-tab" data-view="leads"    onclick="setRoute('leads')">👥 Leads</button>
+    <button class="nav-tab" data-view="projects" onclick="setRoute('projects')">🏠 Projets</button>
+  </nav>
+
+  <!-- ══ VUE LEADS ═════════════════════════════════════════════ -->
+  <div class="view" id="view-leads">
   <!-- Stats -->
   <div class="stats">
     <div class="stat"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total leads</div></div>
@@ -570,7 +660,55 @@
     <span id="page-info">—</span>
     <div class="page-btns" id="page-btns"></div>
   </div>
-</div>
+  </div><!-- /view-leads -->
+
+  <!-- ══ VUE PROJETS ═══════════════════════════════════════════ -->
+  <div class="view" id="view-projects">
+    <div class="projects-toolbar">
+      <div class="search-wrap" style="max-width:280px">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="projects-search" placeholder="Rechercher un projet…" oninput="debounceProjectsSearch()"/>
+      </div>
+      <select class="filter-select" id="projects-status-filter" onchange="loadProjects()">
+        <option value="">Tous les statuts</option>
+        <option value="disponible">Disponible</option>
+        <option value="en_cours">En cours</option>
+        <option value="vendu">Vendu</option>
+        <option value="archive">Archivé</option>
+        <option value="brouillon">Brouillon</option>
+      </select>
+      <select class="filter-select" id="projects-arr-filter" onchange="loadProjects()">
+        <option value="">Tous arrondissements</option>
+        <option value="1e">1er</option>  <option value="2e">2e</option>
+        <option value="3e">3e</option>   <option value="4e">4e</option>
+        <option value="5e">5e</option>   <option value="6e">6e</option>
+        <option value="7e">7e</option>   <option value="8e">8e</option>
+        <option value="9e">9e</option>   <option value="10e">10e</option>
+        <option value="11e">11e</option> <option value="12e">12e</option>
+        <option value="13e">13e</option> <option value="14e">14e</option>
+        <option value="15e">15e</option> <option value="16e">16e</option>
+        <option value="17e">17e</option> <option value="18e">18e</option>
+        <option value="19e">19e</option> <option value="20e">20e</option>
+      </select>
+      <div style="margin-left:auto">
+        <button class="btn-new-project" onclick="setRoute('new-project')">+ Nouveau projet</button>
+      </div>
+    </div>
+    <div id="projects-container">
+      <div class="projects-empty">
+        <div class="projects-empty-icon">🏠</div>
+        <div class="projects-empty-title">Chargement…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VUE NOUVEAU PROJET ════════════════════════════════════ -->
+  <div class="view" id="view-new-project">
+    <div style="padding:40px 28px;text-align:center;color:var(--dim)">
+      Vue Nouveau Projet — chargement en Tâche 4…
+    </div>
+  </div>
+</div><!-- /#dashboard -->
 
 <!-- ══ DELETE MODAL ═══════════════════════════════════════════ -->
 <div class="modal-overlay" id="del-overlay" onclick="if(event.target===this)closeDelModal()">
@@ -679,6 +817,122 @@ function showDashboard(email) {
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('admin-email').textContent = email;
   loadLeads(1);
+  handleRoute(); // applique la vue selon le hash actuel (ou #leads par défaut)
+}
+
+/* ── Routeur SPA par hash ───────────────────────────────────── */
+const VALID_VIEWS = ['leads', 'projects', 'new-project'];
+
+function setRoute(view) {
+  location.hash = '#' + view;
+}
+
+function handleRoute() {
+  const raw  = (location.hash || '').replace(/^#/, '');
+  const view = VALID_VIEWS.includes(raw) ? raw : 'leads';
+  showView(view);
+}
+
+function showView(view) {
+  // Hide all views + tabs
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  // Show the requested one
+  document.getElementById('view-' + view)?.classList.add('active');
+  document.querySelector(`.nav-tab[data-view="${view === 'new-project' ? 'projects' : view}"]`)?.classList.add('active');
+  // Chargement à la demande (sera implémenté dans les tâches suivantes)
+  if (view === 'projects'    && typeof loadProjects        === 'function') loadProjects();
+  if (view === 'new-project' && typeof resetNewProjectForm === 'function') resetNewProjectForm();
+}
+
+window.addEventListener('hashchange', handleRoute);
+
+/* ── Vue Projets ────────────────────────────────────────────── */
+const PROJECT_STATUS = {
+  disponible: { label: 'Disponible', cls: 'pcs-disponible' },
+  en_cours:   { label: 'En cours',   cls: 'pcs-en_cours' },
+  vendu:      { label: 'Vendu',      cls: 'pcs-vendu' },
+  archive:    { label: 'Archivé',    cls: 'pcs-archive' },
+  brouillon:  { label: 'Brouillon',  cls: 'pcs-brouillon' },
+};
+
+let projectsSearchTimer = null;
+let projectsCache = [];
+
+function debounceProjectsSearch() {
+  clearTimeout(projectsSearchTimer);
+  projectsSearchTimer = setTimeout(loadProjects, 300);
+}
+
+async function loadProjects() {
+  const container = document.getElementById('projects-container');
+  if (!container) return;
+  const search = document.getElementById('projects-search')?.value.trim() || '';
+  const status = document.getElementById('projects-status-filter')?.value || '';
+  const arr    = document.getElementById('projects-arr-filter')?.value || '';
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (status) params.set('status', status);
+  if (arr)    params.set('arrondissement', arr);
+  const res = await fetch(`/api/projects?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (res.status === 401) { logout(); return; }
+  const { projects } = await res.json();
+  projectsCache = projects || [];
+  renderProjects(projectsCache);
+}
+
+function renderProjects(projects) {
+  const container = document.getElementById('projects-container');
+  if (!projects.length) {
+    container.innerHTML = `
+      <div class="projects-empty">
+        <div class="projects-empty-icon">🏠</div>
+        <div class="projects-empty-title">Aucun projet pour l'instant</div>
+        <div class="projects-empty-sub">Crée ta première fiche pour la proposer aux leads matchants.</div>
+        <button class="btn-new-project" onclick="setRoute('new-project')">+ Créer un projet</button>
+      </div>`;
+    return;
+  }
+  container.innerHTML = `<div class="projects-grid">${projects.map(projectCard).join('')}</div>`;
+}
+
+function projectCard(p) {
+  const img    = p.images?.[0] || p.images_3d?.[0] || null;
+  const status = PROJECT_STATUS[p.status] || PROJECT_STATUS.disponible;
+  const total  = p.total_all_in ? fmtEuro(p.total_all_in) : '—';
+  const loyer  = p.loyer_atom   ? fmtEuro(p.loyer_atom) + '/mois' : '—';
+  const surf   = p.surface_carrez ? `${p.surface_carrez} m²` : '';
+  const floor  = p.floor != null ? `${p.floor}${p.floor === 0 ? 'RDC' : 'e'}` : '';
+  const arr    = p.arrondissement || '';
+  const meta   = [arr, surf, floor].filter(Boolean).join('|||').split('|||');
+  return `
+    <div class="project-card" onclick="openProject('${esc(p.id)}')">
+      <div class="project-card-img ${img ? '' : 'empty'}" style="${img ? `background-image:url('${esc(img)}')` : ''}">
+        ${img ? '' : '🏠'}
+        <span class="project-card-status ${status.cls}">${status.label}</span>
+      </div>
+      <div class="project-card-body">
+        <div class="project-card-title">${esc(p.title || 'Sans titre')}</div>
+        <div class="project-card-meta">${meta.map(m => `<span>${esc(m)}</span>`).join('')}</div>
+        <div class="project-card-prices">
+          <div class="project-card-price-main">${total}</div>
+          <div class="project-card-price-sub"><strong>${loyer}</strong><br>Loyer Atom</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function openProject(id) {
+  // TODO Tâche 4 : ouvrir la fiche édition / détail
+  setRoute('new-project');
+  // Pour l'instant, le formulaire d'édition n'est pas implémenté
+  // → on l'ajoutera dans la Tâche 4 (vue Nouveau/Éditer projet)
+  setTimeout(() => alert('Édition de projet : à implémenter en Tâche 4.\nProjet ID : ' + id), 100);
+}
+
+function fmtEuro(n) {
+  if (n == null || isNaN(n)) return '—';
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 }
 
 function logout() {
@@ -1138,7 +1392,7 @@ async function openFicheModal() {
   document.getElementById('fiche-overlay').classList.add('on');
   const projectList = document.getElementById('project-list');
   projectList.innerHTML = '<div class="project-empty">Chargement…</div>';
-  const res = await fetch('/api/projects', { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch('/api/projects?status=disponible', { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) { projectList.innerHTML = '<div class="project-empty">Erreur de chargement</div>'; return; }
   const { projects } = await res.json();
   if (!projects.length) {
