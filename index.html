@@ -254,6 +254,35 @@
     .arr-btn:hover { border-color: var(--cream-dim); color: var(--cream); }
     .arr-btn.on { border-color: var(--gold); background: rgba(184,151,90,.1); color: var(--gold); }
 
+    /* ── Zone toggles ────────────────────────────────────────── */
+    .zone-toggles {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
+    }
+    .zone-btn {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+      padding: 13px 15px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--r); cursor: pointer; text-align: left; width: 100%;
+      transition: border-color var(--t), background var(--t);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .zone-btn.on { border-color: var(--gold); background: rgba(184,151,90,.08); }
+    .zone-btn-header { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .zone-btn-tick {
+      width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--border);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      transition: border-color var(--t), background var(--t);
+      font-size: 9px; color: transparent; line-height: 1;
+    }
+    .zone-btn.on .zone-btn-tick { border-color: var(--gold); background: var(--gold); color: var(--bg); }
+    .zone-btn-name { font-size: 14px; font-weight: 500; color: var(--cream); }
+    .zone-btn-sub  { font-size: 11px; color: var(--cream-dim); padding-left: 23px; }
+
+    .zone-panel {
+      overflow: hidden; max-height: 0; opacity: 0;
+      transition: max-height .4s ease, opacity .3s ease;
+    }
+    .zone-panel.open { max-height: 380px; opacity: 1; margin-bottom: 12px; }
+
     /* ── Choice cards ────────────────────────────────────────── */
     .choices { display: flex; flex-direction: column; gap: 9px; }
     .choices.row { flex-direction: row; flex-wrap: wrap; }
@@ -543,9 +572,36 @@
 
         <div class="fields">
           <div>
-            <p class="arr-label">Arrondissements souhaités <span style="font-weight:300;text-transform:none;letter-spacing:0;opacity:.6">(optionnel)</span></p>
-            <div class="arr-grid" id="arr-grid"></div>
-            <p class="arr-hint">Plusieurs choix possibles</p>
+            <p class="arr-label">Zone d'investissement <span style="font-weight:300;text-transform:none;letter-spacing:0;opacity:.6">(optionnel)</span></p>
+
+            <div class="zone-toggles">
+              <button type="button" class="zone-btn on" id="zone-paris" onclick="toggleZone('paris')">
+                <div class="zone-btn-header">
+                  <span class="zone-btn-tick">✓</span>
+                  <span class="zone-btn-name">Paris</span>
+                </div>
+                <span class="zone-btn-sub">1<sup>er</sup> – 20<sup>e</sup> arr.</span>
+              </button>
+              <button type="button" class="zone-btn" id="zone-banlieue" onclick="toggleZone('banlieue')">
+                <div class="zone-btn-header">
+                  <span class="zone-btn-tick">✓</span>
+                  <span class="zone-btn-name">Banlieue</span>
+                </div>
+                <span class="zone-btn-sub">Petite &amp; grande couronne</span>
+              </button>
+            </div>
+
+            <!-- Paris : grille arrondissements (ouverte par défaut) -->
+            <div class="zone-panel open" id="paris-panel">
+              <div class="arr-grid" id="arr-grid"></div>
+              <p class="arr-hint">Tous sélectionnés — cliquez pour en retirer</p>
+            </div>
+
+            <!-- Banlieue : saisie libre codes postaux -->
+            <div class="zone-panel" id="banlieue-panel">
+              <input type="text" id="banlieue-input" placeholder="Ex : 92200, 93000, 94100…" autocomplete="off" />
+              <p class="arr-hint" style="margin-top:8px">Codes postaux ou communes, séparés par des virgules</p>
+            </div>
           </div>
 
           <div class="field" style="margin-top:6px;">
@@ -678,20 +734,41 @@
 </div>
 
 <script>
-/* ── Arrondissements ───────────────────────────────────────── */
-const selected = new Set();
+/* ── Zones & arrondissements ───────────────────────────────── */
+const zones    = { paris: true, banlieue: false };
+const selected = new Set([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]);
+
+function toggleZone(zone) {
+  zones[zone] = !zones[zone];
+  document.getElementById('zone-'  + zone).classList.toggle('on',   zones[zone]);
+  document.getElementById(zone + '-panel').classList.toggle('open', zones[zone]);
+}
+
 const grid = document.getElementById('arr-grid');
 for (let i = 1; i <= 20; i++) {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = 'arr-btn';
+  b.className = 'arr-btn on';   // tous sélectionnés par défaut
   b.dataset.v = i;
   b.textContent = (i < 10 ? '0' : '') + i + 'e';
   b.addEventListener('click', () => {
-    selected.has(i) ? (selected.delete(i), b.classList.remove('on'))
-                    : (selected.add(i),    b.classList.add('on'));
+    if (selected.has(i)) { selected.delete(i); b.classList.remove('on'); }
+    else                 { selected.add(i);    b.classList.add('on'); }
   });
   grid.appendChild(b);
+}
+
+function buildArrondissements() {
+  const parts = [];
+  if (zones.paris) {
+    const arr = [...selected].sort((a, b) => a - b).map(i => `${i}e`).join(', ');
+    if (arr) parts.push(arr);
+  }
+  if (zones.banlieue) {
+    const txt = document.getElementById('banlieue-input').value.trim();
+    if (txt) parts.push('Banlieue — ' + txt);
+  }
+  return parts.join(' · ') || null;
 }
 
 /* ── Budget toggle ─────────────────────────────────────────── */
@@ -758,7 +835,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     nom:             document.getElementById('nom').value.trim(),
     email:           document.getElementById('email').value.trim(),
     tel:             document.getElementById('tel').value.trim(),
-    arrondissements: [...selected].sort((a,b)=>a-b).map(i=>`${i}e`).join(', ') || null,
+    arrondissements: buildArrondissements(),
     timing:          document.querySelector('input[name="timing"]:checked')?.value || null,
     accord:          document.querySelector('input[name="accord"]:checked')?.value || null,
     financement:     document.querySelector('input[name="financement"]:checked')?.value || null,
