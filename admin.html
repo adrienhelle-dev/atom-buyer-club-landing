@@ -272,6 +272,60 @@
     tbody tr:hover .btn-del-row { color: var(--dim); }
     .btn-del-row:hover { color: var(--red) !important; background: rgba(217,94,94,.1); }
 
+    /* ── Status pipeline ──────────────────────────────────── */
+    .status-select-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .status-dot-inline {
+      display: inline-block; width: 10px; height: 10px;
+      border-radius: 50%; flex-shrink: 0; transition: background .2s;
+    }
+    .status-select {
+      flex: 1; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 10px 30px 10px 12px;
+      color: var(--cream); font-family: var(--sans); font-size: 14px;
+      outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7874'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+      transition: border-color .15s;
+    }
+    .status-select:focus { border-color: var(--gold); }
+
+    /* Status dot in table */
+    .status-dot {
+      display: inline-block; width: 7px; height: 7px;
+      border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0;
+    }
+
+    /* ── CTA buttons ───────────────────────────────────────── */
+    .cta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .cta-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      padding: 12px 8px; border-radius: var(--r); font-family: var(--sans);
+      font-size: 12px; font-weight: 500; text-decoration: none;
+      border: 1px solid; cursor: pointer; transition: opacity .15s, transform .1s;
+      white-space: nowrap;
+    }
+    .cta-btn:hover { opacity: .82; transform: translateY(-1px); }
+    .cta-icon { font-size: 18px; }
+    .cta-call     { background: rgba(76,175,125,.1);   color: #4caf7d; border-color: rgba(76,175,125,.25); }
+    .cta-whatsapp { background: rgba(37,211,102,.1);   color: #25d366; border-color: rgba(37,211,102,.25); }
+    .cta-email    { background: rgba(184,151,90,.1);   color: var(--gold); border-color: rgba(184,151,90,.2); }
+
+    /* ── Notes textarea ────────────────────────────────────── */
+    .notes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .notes-header .drawer-section-label { margin: 0; padding: 0; border: none; }
+    #notes-status { font-size: 11px; color: var(--dim); transition: color .3s; }
+    #drawer-notes {
+      width: 100%; min-height: 110px;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 11px 12px; color: var(--cream); font-family: var(--sans);
+      font-size: 13px; line-height: 1.6; resize: vertical;
+      outline: none; transition: border-color .15s;
+    }
+    #drawer-notes:focus { border-color: var(--gold); }
+    #drawer-notes::placeholder { color: var(--dim); font-style: italic; }
+
     /* ── iPad (≤ 1024px) ── */
     @media (max-width: 1024px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
@@ -389,6 +443,15 @@
       <option value="meta">Meta Ads</option>
       <option value="organic">Organique</option>
     </select>
+    <select class="filter-select" id="status-filter" onchange="loadLeads(1)">
+      <option value="">Tous les statuts</option>
+      <option value="nouveau">Nouveau</option>
+      <option value="contacte">Contacté</option>
+      <option value="en_cours">En cours</option>
+      <option value="qualifie">Qualifié</option>
+      <option value="signe">Signé</option>
+      <option value="perdu">Non retenu</option>
+    </select>
     <div class="toolbar-right">
       <button class="btn-refresh" onclick="loadLeads(currentPage)" title="Actualiser">↻</button>
       <button class="btn-export" onclick="exportCSV()">
@@ -455,12 +518,21 @@ const FIN    = { comptant:'Comptant', emprunt:'Emprunt bancaire' };
 const BUDGET = { 'moins-150k':'< 150 k€','150-250k':'150–250 k€','250-400k':'250–400 k€','400-600k':'400–600 k€','600k-1m':'600 k€–1 M€','plus-1m':'> 1 M€' };
 const SRC_LABELS = { google:'Google Ads', instagram:'Instagram Ads', facebook:'Facebook Ads', meta:'Meta Ads', organic:'Organique', email:'Email' };
 const SRC_CLASS  = { google:'badge-google', instagram:'badge-instagram', facebook:'badge-facebook', meta:'badge-meta', organic:'badge-organic' };
+const STATUS_OPTS = [
+  { v: 'nouveau',  l: 'Nouveau',      c: '#7a7874' },
+  { v: 'contacte', l: 'Contacté',     c: '#4285f4' },
+  { v: 'en_cours', l: 'En cours',     c: '#f4a642' },
+  { v: 'qualifie', l: 'Qualifié',     c: '#B8975A' },
+  { v: 'signe',    l: 'Signé ✓',      c: '#4caf7d' },
+  { v: 'perdu',    l: 'Non retenu',   c: '#d95e5e' },
+];
 
 let token = null;
 let currentPage = 1;
 let totalLeads = 0;
 let searchTimer = null;
-let leadsCache = [];
+let notesTimer  = null;
+let leadsCache  = [];
 
 /* ── Auth ─────────────────────────────────────────────────── */
 function init() {
@@ -515,10 +587,12 @@ async function loadLeads(page) {
   currentPage = page;
   const search = document.getElementById('search-input').value.trim();
   const source = document.getElementById('src-filter').value;
+  const status = document.getElementById('status-filter').value;
 
   const params = new URLSearchParams({ page, pageSize: 50 });
   if (search) params.set('search', search);
   if (source) params.set('source', source);
+  if (status) params.set('status', status);
 
   const res = await fetch(`/api/leads?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -559,7 +633,7 @@ function renderTable(leads) {
   tbody.innerHTML = leads.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td class="muted">${fmtDate(l.created_at)}</td>
-      <td><strong>${esc(l.prenom)} ${esc(l.nom)}</strong></td>
+      <td><strong>${statusDot(l.status)}${esc(l.prenom)} ${esc(l.nom)}</strong></td>
       <td class="muted">${esc(l.email)}</td>
       <td class="muted">${esc(l.tel)}</td>
       <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
@@ -644,7 +718,23 @@ async function confirmDelete() {
 
 /* ── Drawer ─────────────────────────────────────────────────── */
 function openDrawer(lead) {
+  clearTimeout(notesTimer);
   const src = lead.utm_source ? (SRC_LABELS[lead.utm_source.toLowerCase()] || lead.utm_source) : '—';
+  const curStatus = STATUS_OPTS.find(o => o.v === (lead.status || 'nouveau')) || STATUS_OPTS[0];
+  const phone = phoneIntl(lead.tel);
+
+  const waText = encodeURIComponent(
+    `Bonjour ${lead.prenom} 👋\n\nJe suis de l'équipe Atom Buyers Club.\n\nSuite à votre inscription sur notre plateforme, j'aimerais échanger avec vous sur votre projet immobilier à Paris.\n\nÊtes-vous disponible pour un appel dans les prochains jours ?\n\nCordialement,\nL'équipe Atom Buyers Club`
+  );
+  const mailSubject = encodeURIComponent(`Atom Buyers Club — Vos opportunités immobilières à Paris`);
+  const mailBody = encodeURIComponent(
+    `Bonjour ${lead.prenom},\n\nSuite à votre inscription sur Atom Buyers Club, nous souhaitions prendre contact avec vous.\n\nNous avons des opportunités immobilières correspondant à vos critères et aimerions vous les présenter.\n\nPourriez-vous nous indiquer vos disponibilités pour un échange ?\n\nCordialement,\nL'équipe Atom Buyers Club`
+  );
+
+  const statusOptions = STATUS_OPTS.map(o =>
+    `<option value="${o.v}"${o.v === (lead.status || 'nouveau') ? ' selected' : ''}>${o.l}</option>`
+  ).join('');
+
   document.getElementById('drawer-content').innerHTML = `
     <h3 class="drawer-title">
       ${esc(lead.prenom)} ${esc(lead.nom)}
@@ -654,6 +744,31 @@ function openDrawer(lead) {
       Créé le ${fmtDateFull(lead.created_at)}
       ${lead.updated_at ? `· <span style="color:#4caf7d">Modifié le ${fmtDateFull(lead.updated_at)}</span>` : ''}
     </p>
+
+    <div class="drawer-section">
+      <p class="drawer-section-label">Statut du dossier</p>
+      <div class="status-select-wrap">
+        <span class="status-dot-inline" id="status-dot" style="background:${curStatus.c}"></span>
+        <select class="status-select" id="status-select" onchange="updateLeadStatus('${esc(lead.id)}', this.value)">
+          ${statusOptions}
+        </select>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <p class="drawer-section-label">Actions</p>
+      <div class="cta-grid">
+        <a class="cta-btn cta-call" href="tel:${esc(lead.tel)}">
+          <span class="cta-icon">📞</span><span>Appeler</span>
+        </a>
+        <a class="cta-btn cta-whatsapp" href="https://wa.me/${phone}?text=${waText}" target="_blank" rel="noopener noreferrer">
+          <span class="cta-icon">💬</span><span>WhatsApp</span>
+        </a>
+        <a class="cta-btn cta-email" href="mailto:${esc(lead.email)}?subject=${mailSubject}&body=${mailBody}">
+          <span class="cta-icon">✉</span><span>Email</span>
+        </a>
+      </div>
+    </div>
 
     <div class="drawer-section">
       <p class="drawer-section-label">Coordonnées</p>
@@ -669,7 +784,7 @@ function openDrawer(lead) {
 
     <div class="drawer-section">
       <p class="drawer-section-label">Financement</p>
-      <div class="drawer-row"><span class="drawer-key">Financement bancaire</span><span class="drawer-val">${lead.accord === 'oui' ? '✅ Étude validée' : lead.accord === 'courtier' ? '🤝 Courtier souhaité' : lead.accord === 'non' ? 'Gère seul' : '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Étude bancaire</span><span class="drawer-val">${lead.accord === 'oui' ? '✅ Étude validée' : lead.accord === 'courtier' ? '🤝 Courtier souhaité' : lead.accord === 'non' ? 'Gère seul' : '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Mode</span><span class="drawer-val">${FIN[lead.financement] || lead.financement || '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Budget emprunt</span><span class="drawer-val">${BUDGET[lead.capacite] || lead.capacite || '—'}</span></div>
     </div>
@@ -680,9 +795,17 @@ function openDrawer(lead) {
       <div class="drawer-row"><span class="drawer-key">Medium</span><span class="drawer-val">${esc(lead.utm_medium) || '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Campagne</span><span class="drawer-val">${esc(lead.utm_campaign) || '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Contenu</span><span class="drawer-val">${esc(lead.utm_content) || '—'}</span></div>
-      ${lead.gclid ? `<div class="drawer-row"><span class="drawer-key">GCLID</span><span class="drawer-val">${esc(lead.gclid)}</span></div>` : ''}
+      ${lead.gclid  ? `<div class="drawer-row"><span class="drawer-key">GCLID</span><span class="drawer-val">${esc(lead.gclid)}</span></div>` : ''}
       ${lead.fbclid ? `<div class="drawer-row"><span class="drawer-key">FBCLID</span><span class="drawer-val">${esc(lead.fbclid)}</span></div>` : ''}
       <div class="drawer-row"><span class="drawer-key">Référent</span><span class="drawer-val">${esc(lead.referrer) || '—'}</span></div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="notes-header">
+        <p class="drawer-section-label">Notes internes</p>
+        <span id="notes-status"></span>
+      </div>
+      <textarea id="drawer-notes" placeholder="Observations, points de contact, étapes suivantes…" oninput="scheduleNotesSave('${esc(lead.id)}')">${esc(lead.notes || '')}</textarea>
     </div>
   `;
   document.getElementById('drawer-overlay').classList.add('on');
@@ -690,9 +813,50 @@ function openDrawer(lead) {
 
 function closeDrawer(e) {
   if (!e || e.target === document.getElementById('drawer-overlay')) {
+    clearTimeout(notesTimer);
     document.getElementById('drawer-overlay').classList.remove('on');
   }
 }
+
+/* ── Status & Notes ─────────────────────────────────────────── */
+async function updateLeadStatus(id, status) {
+  const res = await fetch(`/api/patch?id=${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ status }),
+  });
+  if (res.status === 401) { logout(); return; }
+  const s = STATUS_OPTS.find(o => o.v === status) || STATUS_OPTS[0];
+  const dot = document.getElementById('status-dot');
+  if (dot) dot.style.background = s.c;
+  const lead = leadsCache.find(l => l.id === id);
+  if (lead) { lead.status = status; renderTable(leadsCache); }
+}
+
+function scheduleNotesSave(id) {
+  clearTimeout(notesTimer);
+  const statusEl = document.getElementById('notes-status');
+  if (statusEl) statusEl.textContent = '';
+  notesTimer = setTimeout(() => saveNotes(id), 1200);
+}
+
+async function saveNotes(id) {
+  const textarea = document.getElementById('drawer-notes');
+  if (!textarea) return;
+  const notes = textarea.value;
+  const statusEl = document.getElementById('notes-status');
+  if (statusEl) { statusEl.textContent = 'Sauvegarde…'; statusEl.style.color = 'var(--dim)'; }
+  const res = await fetch(`/api/patch?id=${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ notes }),
+  });
+  if (res.status === 401) { logout(); return; }
+  const lead = leadsCache.find(l => l.id === id);
+  if (lead) lead.notes = notes;
+  if (statusEl) { statusEl.textContent = 'Sauvegardé ✓'; statusEl.style.color = 'var(--green)'; }
+}
+
 
 /* ── Export ─────────────────────────────────────────────────── */
 async function exportCSV() {
@@ -729,6 +893,19 @@ function srcBadge(src) {
   const cls = SRC_CLASS[src.toLowerCase()] || 'badge-default';
   const lbl = SRC_LABELS[src.toLowerCase()] || src;
   return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+function statusDot(status) {
+  const s = STATUS_OPTS.find(o => o.v === status) || STATUS_OPTS[0];
+  return `<span class="status-dot" style="background:${s.c}"></span>`;
+}
+
+function phoneIntl(tel) {
+  const c = (tel || '').replace(/[\s\-\.()]/g, '');
+  if (c.startsWith('+')) return c.slice(1);
+  if (c.startsWith('00')) return c.slice(2);
+  if (c.startsWith('0')) return '33' + c.slice(1);
+  return c;
 }
 
 init();

@@ -12,11 +12,13 @@ module.exports = async function handler(req, res) {
   const pageSize = Math.min(100, parseInt(req.query.pageSize) || 50);
   const source   = req.query.source   || null;
   const search   = req.query.search   || null;
+  const status   = req.query.status   || null;
   const from     = (page - 1) * pageSize;
 
   let q = supabase.from('leads').select('*', { count: 'exact' }).order('created_at', { ascending: false });
 
   if (source) q = q.eq('utm_source', source);
+  if (status) q = q.eq('status', status);
   if (search) q = q.or(`email.ilike.%${search}%,nom.ilike.%${search}%,prenom.ilike.%${search}%`);
 
   q = q.range(from, from + pageSize - 1);
