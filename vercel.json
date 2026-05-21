@@ -2,7 +2,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/projet/:slug", "destination": "/projet.html?slug=:slug" }
+    { "source": "/projet/:slug", "destination": "/projet?slug=:slug" }
   ],
   "functions": {
     "api/generate-pdf.js": {
