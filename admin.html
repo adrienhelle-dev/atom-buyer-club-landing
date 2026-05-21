@@ -70,6 +70,25 @@
     /* ── DASHBOARD ─────────────────────────────────────────── */
     #dashboard { display: none; }
 
+    /* ── Nav tabs (SPA routing) ─────────────────────────────── */
+    .nav-tabs {
+      display: flex; gap: 0;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 28px; overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-tab {
+      padding: 14px 18px; font-size: 13px; font-weight: 500;
+      color: var(--dim); cursor: pointer; background: none; border: none;
+      border-bottom: 2px solid transparent; font-family: var(--sans);
+      transition: color .15s, border-color .15s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 7px;
+    }
+    .nav-tab:hover { color: var(--cream); }
+    .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .view { display: none; }
+    .view.active { display: block; }
+
     /* Topbar */
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
@@ -425,6 +444,8 @@
       .topbar-left svg { width: 48px; }
       .topbar-badge { font-size: 9px; padding: 2px 8px; }
       .btn-logout { font-size: 11px; padding: 5px 10px; }
+      .nav-tabs { padding: 0 12px; }
+      .nav-tab { padding: 12px 14px; font-size: 12px; }
 
       .stats { grid-template-columns: repeat(2, 1fr); }
       .stat { padding: 14px 16px; }
@@ -501,6 +522,14 @@
     </div>
   </div>
 
+  <!-- ── Nav SPA ─────────────────────────────────────────────── -->
+  <nav class="nav-tabs">
+    <button class="nav-tab" data-view="leads"    onclick="setRoute('leads')">👥 Leads</button>
+    <button class="nav-tab" data-view="projects" onclick="setRoute('projects')">🏠 Projets</button>
+  </nav>
+
+  <!-- ══ VUE LEADS ═════════════════════════════════════════════ -->
+  <div class="view" id="view-leads">
   <!-- Stats -->
   <div class="stats">
     <div class="stat"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total leads</div></div>
@@ -570,7 +599,22 @@
     <span id="page-info">—</span>
     <div class="page-btns" id="page-btns"></div>
   </div>
-</div>
+  </div><!-- /view-leads -->
+
+  <!-- ══ VUE PROJETS ═══════════════════════════════════════════ -->
+  <div class="view" id="view-projects">
+    <div style="padding:40px 28px;text-align:center;color:var(--dim)">
+      Vue Projets — chargement en Tâche 3…
+    </div>
+  </div>
+
+  <!-- ══ VUE NOUVEAU PROJET ════════════════════════════════════ -->
+  <div class="view" id="view-new-project">
+    <div style="padding:40px 28px;text-align:center;color:var(--dim)">
+      Vue Nouveau Projet — chargement en Tâche 4…
+    </div>
+  </div>
+</div><!-- /#dashboard -->
 
 <!-- ══ DELETE MODAL ═══════════════════════════════════════════ -->
 <div class="modal-overlay" id="del-overlay" onclick="if(event.target===this)closeDelModal()">
@@ -679,7 +723,35 @@ function showDashboard(email) {
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('admin-email').textContent = email;
   loadLeads(1);
+  handleRoute(); // applique la vue selon le hash actuel (ou #leads par défaut)
 }
+
+/* ── Routeur SPA par hash ───────────────────────────────────── */
+const VALID_VIEWS = ['leads', 'projects', 'new-project'];
+
+function setRoute(view) {
+  location.hash = '#' + view;
+}
+
+function handleRoute() {
+  const raw  = (location.hash || '').replace(/^#/, '');
+  const view = VALID_VIEWS.includes(raw) ? raw : 'leads';
+  showView(view);
+}
+
+function showView(view) {
+  // Hide all views + tabs
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  // Show the requested one
+  document.getElementById('view-' + view)?.classList.add('active');
+  document.querySelector(`.nav-tab[data-view="${view === 'new-project' ? 'projects' : view}"]`)?.classList.add('active');
+  // Chargement à la demande (sera implémenté dans les tâches suivantes)
+  if (view === 'projects'    && typeof loadProjects        === 'function') loadProjects();
+  if (view === 'new-project' && typeof resetNewProjectForm === 'function') resetNewProjectForm();
+}
+
+window.addEventListener('hashchange', handleRoute);
 
 function logout() {
   localStorage.removeItem('abc_admin_token');
