@@ -667,9 +667,9 @@
 
       <!-- ── SUCCESS ─────────────────────────────────────────── -->
       <div id="success">
-        <div class="success-icon">✦</div>
-        <h2 class="success-title">Demande envoyée !</h2>
-        <p class="success-sub">Merci <strong id="s-name"></strong>. Notre équipe vous contactera dans les 24h pour discuter de votre projet.</p>
+        <div class="success-icon" id="s-icon">✦</div>
+        <h2 class="success-title" id="s-title">Demande envoyée !</h2>
+        <p class="success-sub" id="s-sub">Merci <strong id="s-name"></strong>. Notre équipe vous contactera dans les 24h pour discuter de votre projet.</p>
         <a href="https://www.atombuyersclub.fr" target="_blank" class="success-link">Découvrir nos projets →</a>
       </div>
 
@@ -767,6 +767,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     ..._utms,
   };
 
+  let isUpdate = false;
   try {
     const res = await fetch('/api/submit', {
       method: 'POST',
@@ -774,6 +775,8 @@ document.getElementById('form').addEventListener('submit', async (e) => {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error('server_error');
+    const data = await res.json();
+    isUpdate = !!data.updated;
   } catch {
     btn.disabled = false;
     btn.textContent = 'Envoyer ma demande ✦';
@@ -784,6 +787,14 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   document.getElementById('form').style.display = 'none';
   document.querySelector('.form-header').style.display = 'none';
   document.getElementById('s-name').textContent = payload.prenom;
+
+  if (isUpdate) {
+    document.getElementById('s-icon').textContent  = '↻';
+    document.getElementById('s-title').textContent = 'Dossier mis à jour !';
+    document.getElementById('s-sub').innerHTML =
+      `Merci <strong>${payload.prenom}</strong>. Vos nouvelles informations ont été enregistrées. Notre équipe en prendra note.`;
+  }
+
   document.getElementById('success').classList.add('on');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
