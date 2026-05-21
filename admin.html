@@ -347,14 +347,73 @@
     #drawer-notes:focus { border-color: var(--gold); }
     #drawer-notes::placeholder { color: var(--dim); font-style: italic; }
 
+    /* ── Score ─────────────────────────────────────────────── */
+    .score-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .score-high { background: rgba(76,175,125,.18);  color: #4caf7d; }
+    .score-mid  { background: rgba(184,151,90,.18);  color: #B8975A; }
+    .score-low  { background: rgba(122,120,116,.12); color: #7a7874; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: var(--cream); }
+    th.sortable .sort-arrow { margin-left: 4px; opacity: .5; }
+    th.sortable.sorted .sort-arrow { opacity: 1; color: var(--gold); }
+
+    /* ── Timeline ───────────────────────────────────────────── */
+    .timeline { display: flex; flex-direction: column; }
+    .tl-item  { display: flex; gap: 12px; padding: 10px 0; position: relative; }
+    .tl-item + .tl-item::before { content:''; position: absolute; left: 14px; top: -10px; height: 10px; width: 1px; background: var(--border); }
+    .tl-dot   { width: 28px; height: 28px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .tl-body  { flex: 1; padding-top: 4px; }
+    .tl-title { font-size: 13px; color: var(--cream); line-height: 1.4; }
+    .tl-meta  { font-size: 11px; color: var(--dim); margin-top: 3px; }
+    .tl-add-btn {
+      width: 100%; margin-top: 10px; padding: 9px; background: none;
+      border: 1px dashed var(--border); border-radius: var(--r);
+      color: var(--dim); font-family: var(--sans); font-size: 12px;
+      cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .tl-add-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Send fiche modal ───────────────────────────────────── */
+    .fiche-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
+    .fiche-overlay.on { display:flex; }
+    .fiche-modal { width:100%; max-width:500px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:24px; animation:fadeUp .2s ease; max-height:85vh; overflow-y:auto; }
+    @keyframes fadeUp { from { transform: translateY(16px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    .fiche-modal-title { font-family:var(--serif); font-size:20px; font-weight:300; margin-bottom:4px; }
+    .fiche-modal-sub   { font-size:13px; color:var(--dim); margin-bottom:20px; }
+    .fiche-modal-label { font-size:10px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin-bottom:8px; display:block; }
+    .project-list  { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+    .project-item  { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color .15s, background .15s; }
+    .project-item:hover   { border-color: rgba(184,151,90,.4); }
+    .project-item.selected { border-color:var(--gold); background:rgba(184,151,90,.07); }
+    .project-icon  { font-size:22px; }
+    .project-info  { flex:1; }
+    .project-title { font-size:13px; font-weight:500; color:var(--cream); }
+    .project-addr  { font-size:11px; color:var(--dim); margin-top:2px; }
+    .project-prix  { font-size:11px; color:var(--gold); margin-top:1px; }
+    .project-pdf-link { font-size:11px; color:var(--dim); text-decoration:underline; margin-top:4px; }
+    .fiche-msg-wrap { margin-bottom:20px; }
+    #fiche-message { width:100%; min-height:90px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--r); padding:11px 12px; color:var(--cream); font-family:var(--sans); font-size:13px; line-height:1.6; resize:vertical; outline:none; transition:border-color .15s; }
+    #fiche-message:focus { border-color:var(--gold); }
+    #fiche-message::placeholder { color:var(--dim); font-style:italic; }
+    .fiche-btns { display:flex; gap:10px; margin-top:4px; }
+    .btn-send-fiche { flex:1; padding:12px; background:var(--gold); border:none; border-radius:var(--r); color:var(--bg); font-family:var(--sans); font-size:14px; font-weight:500; cursor:pointer; transition:opacity .15s; }
+    .btn-send-fiche:hover { opacity:.85; }
+    .btn-send-fiche:disabled { opacity:.4; cursor:not-allowed; }
+    .fiche-status { font-size:13px; margin-top:12px; text-align:center; min-height:20px; }
+    .project-empty { text-align:center; padding:24px; color:var(--dim); font-size:13px; }
+
     /* ── iPad (≤ 1024px) ── */
     @media (max-width: 1024px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       /* Hide less critical columns: Budget, Campagne */
-      thead th:nth-child(8),
-      thead th:nth-child(10),
-      td:nth-child(8),
-      td:nth-child(10) { display: none; }
+      thead th:nth-child(9),
+      thead th:nth-child(11),
+      td:nth-child(9),
+      td:nth-child(11) { display: none; }
       .toolbar { gap: 8px; }
       .search-wrap { max-width: 220px; }
     }
@@ -376,19 +435,19 @@
       .filter-select { flex: 1; }
       .toolbar-right { width: 100%; justify-content: flex-end; }
 
-      /* Mobile table: show only Date, Nom, Horizon, Source */
-      thead th:nth-child(3),
+      /* Mobile table: show Date, Score, Nom, Horizon, Source */
       thead th:nth-child(4),
       thead th:nth-child(5),
-      thead th:nth-child(7),
+      thead th:nth-child(6),
       thead th:nth-child(8),
-      thead th:nth-child(10),
-      td:nth-child(3),
+      thead th:nth-child(9),
+      thead th:nth-child(11),
       td:nth-child(4),
       td:nth-child(5),
-      td:nth-child(7),
+      td:nth-child(6),
       td:nth-child(8),
-      td:nth-child(10) { display: none; }
+      td:nth-child(9),
+      td:nth-child(11) { display: none; }
 
       table { min-width: unset; width: 100%; }
       td, thead th { padding: 10px 10px; font-size: 12px; }
@@ -487,6 +546,7 @@
       <thead>
         <tr>
           <th>Date</th>
+          <th class="sortable" id="th-score" onclick="toggleScoreSort()">Score <span class="sort-arrow">↕</span></th>
           <th>Nom</th>
           <th>Email</th>
           <th>Téléphone</th>
@@ -500,7 +560,7 @@
         </tr>
       </thead>
       <tbody id="leads-body">
-        <tr><td colspan="10" class="table-msg">Chargement…</td></tr>
+        <tr><td colspan="12" class="table-msg">Chargement…</td></tr>
       </tbody>
     </table>
   </div>
@@ -522,6 +582,32 @@
       <button class="btn-cancel" onclick="closeDelModal()">Annuler</button>
       <button class="btn-confirm-del" id="btn-confirm-del" onclick="confirmDelete()">Supprimer</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ SEND FICHE MODAL ══════════════════════════════════════ -->
+<div class="fiche-overlay" id="fiche-overlay" onclick="if(event.target===this)closeFicheModal()">
+  <div class="fiche-modal">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <h3 class="fiche-modal-title">Envoyer une fiche projet</h3>
+        <p class="fiche-modal-sub" id="fiche-modal-sub">Choisissez un projet à envoyer par email</p>
+      </div>
+      <button style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 0 0 12px" onclick="closeFicheModal()">✕</button>
+    </div>
+    <span class="fiche-modal-label">Sélectionner un projet</span>
+    <div class="project-list" id="project-list">
+      <div class="project-empty">Chargement…</div>
+    </div>
+    <div class="fiche-msg-wrap">
+      <span class="fiche-modal-label">Message personnalisé (optionnel)</span>
+      <textarea id="fiche-message" placeholder="Bonjour, suite à notre échange je vous partage cette sélection…"></textarea>
+    </div>
+    <div class="fiche-btns">
+      <button class="btn-cancel" onclick="closeFicheModal()">Annuler</button>
+      <button class="btn-send-fiche" id="btn-send-fiche" onclick="sendFiche()">📄 Envoyer par email</button>
+    </div>
+    <p class="fiche-status" id="fiche-status"></p>
   </div>
 </div>
 
@@ -552,8 +638,9 @@ let token = null;
 let currentPage = 1;
 let totalLeads = 0;
 let searchTimer = null;
-let notesTimer  = null;
-let leadsCache  = [];
+let notesTimer   = null;
+let leadsCache   = [];
+let currentLead  = null;
 
 /* ── Auth ─────────────────────────────────────────────────── */
 function init() {
@@ -646,14 +733,19 @@ function renderStats(leads, total) {
 
 function renderTable(leads) {
   leadsCache = leads;
+  // Tri par score si activé
+  const sorted = sortByScore
+    ? [...leads].sort((a, b) => sortScoreDir === 'desc' ? computeScore(b) - computeScore(a) : computeScore(a) - computeScore(b))
+    : leads;
   const tbody = document.getElementById('leads-body');
-  if (!leads.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="table-msg">Aucun lead trouvé</td></tr>';
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="12" class="table-msg">Aucun lead trouvé</td></tr>';
     return;
   }
-  tbody.innerHTML = leads.map((l, i) => `
+  tbody.innerHTML = sorted.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td class="muted">${fmtDate(l.created_at)}</td>
+      <td style="text-align:center">${scoreBadge(l)}</td>
       <td>${statusBadge(l.status)}<strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</td>
       <td class="muted">${esc(l.email)}</td>
       <td class="muted">${esc(l.tel)}</td>
@@ -671,9 +763,9 @@ function renderTable(leads) {
     const delBtn = tr.querySelector('.btn-del-row');
     delBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      openDelModal(leadsCache[+tr.dataset.idx]);
+      openDelModal(sorted[+tr.dataset.idx]);
     });
-    tr.addEventListener('click', () => openDrawer(leadsCache[+tr.dataset.idx]));
+    tr.addEventListener('click', () => openDrawer(sorted[+tr.dataset.idx]));
   });
 }
 
@@ -739,6 +831,7 @@ async function confirmDelete() {
 
 /* ── Drawer ─────────────────────────────────────────────────── */
 function openDrawer(lead) {
+  currentLead = lead;
   clearTimeout(notesTimer);
   const src = lead.utm_source ? (SRC_LABELS[lead.utm_source.toLowerCase()] || lead.utm_source) : '—';
   const curStatus = STATUS_OPTS.find(o => o.v === (lead.status || 'nouveau')) || STATUS_OPTS[0];
@@ -756,11 +849,17 @@ function openDrawer(lead) {
     `<option value="${o.v}"${o.v === (lead.status || 'nouveau') ? ' selected' : ''}>${o.l}</option>`
   ).join('');
 
+  const score = computeScore(lead);
+  const sc = score >= 8 ? '#4caf7d' : score >= 5 ? '#B8975A' : '#7a7874';
+
   document.getElementById('drawer-content').innerHTML = `
-    <h3 class="drawer-title">
-      ${esc(lead.prenom)} ${esc(lead.nom)}
-      ${lead.updated_at ? `<span class="badge-updated">Mis à jour</span>` : ''}
-    </h3>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px">
+      <h3 class="drawer-title" style="margin:0">${esc(lead.prenom)} ${esc(lead.nom)}</h3>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:${sc}1a;color:${sc};font-size:14px;font-weight:700;border:1px solid ${sc}44">${score}</span>
+        ${lead.updated_at ? `<span class="badge-updated">Mis à jour</span>` : ''}
+      </div>
+    </div>
     <p class="drawer-date">
       Créé le ${fmtDateFull(lead.created_at)}
       ${lead.updated_at ? `· <span style="color:#4caf7d">Modifié le ${fmtDateFull(lead.updated_at)}</span>` : ''}
@@ -783,7 +882,7 @@ function openDrawer(lead) {
 
     <div class="drawer-section">
       <p class="drawer-section-label">Actions</p>
-      <div class="cta-grid">
+      <div class="cta-grid" style="grid-template-columns:repeat(2,1fr)">
         <a class="cta-btn cta-call" href="tel:${esc(lead.tel)}">
           <span class="cta-icon">📞</span><span>Appeler</span>
         </a>
@@ -793,6 +892,9 @@ function openDrawer(lead) {
         <a class="cta-btn cta-email" href="mailto:${esc(lead.email)}?subject=${mailSubject}&body=${mailBody}">
           <span class="cta-icon">✉</span><span>Email</span>
         </a>
+        <button class="cta-btn" style="background:rgba(184,151,90,.1);color:var(--gold);border-color:rgba(184,151,90,.2)" onclick="openFicheModal()">
+          <span class="cta-icon">📄</span><span>Envoyer fiche</span>
+        </button>
       </div>
     </div>
 
@@ -833,8 +935,14 @@ function openDrawer(lead) {
       </div>
       <textarea id="drawer-notes" placeholder="Observations, points de contact, étapes suivantes…" oninput="scheduleNotesSave('${esc(lead.id)}')">${esc(lead.notes || '')}</textarea>
     </div>
+
+    <div class="drawer-section">
+      <p class="drawer-section-label">Timeline</p>
+      <div id="drawer-timeline" style="color:var(--dim);font-size:13px;padding:8px 0">Chargement…</div>
+    </div>
   `;
   document.getElementById('drawer-overlay').classList.add('on');
+  loadTimeline(lead.id);
 }
 
 function closeDrawer(e) {
@@ -933,6 +1041,149 @@ function srcBadge(src) {
   const cls = SRC_CLASS[src.toLowerCase()] || 'badge-default';
   const lbl = SRC_LABELS[src.toLowerCase()] || src;
   return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+/* ── Score ──────────────────────────────────────────────────── */
+function computeScore(lead) {
+  let s = 0;
+  s += ({ asap: 4, '3mois': 3, '6mois': 2, reflexion: 1 }[lead.timing] || 0);
+  if (lead.financement === 'comptant') s += 3;
+  else if (lead.accord === 'oui') s += 3;
+  else if (lead.accord === 'courtier') s += 2;
+  else if (lead.accord === 'non') s += 1;
+  s += ({ 'plus-1m': 3, '600k-1m': 3, '400-600k': 2, '250-400k': 2, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
+  return s; // 0–10
+}
+function scoreBadge(lead) {
+  const s = computeScore(lead);
+  const cls = s >= 8 ? 'score-high' : s >= 5 ? 'score-mid' : 'score-low';
+  return `<span class="score-badge ${cls}">${s}</span>`;
+}
+let sortByScore = false;
+let sortScoreDir = 'desc';
+function toggleScoreSort() {
+  if (!sortByScore) { sortByScore = true; sortScoreDir = 'desc'; }
+  else { sortScoreDir = sortScoreDir === 'desc' ? 'asc' : 'desc'; }
+  const th = document.getElementById('th-score');
+  if (th) { th.classList.add('sorted'); th.querySelector('.sort-arrow').textContent = sortScoreDir === 'desc' ? '↓' : '↑'; }
+  renderTable(leadsCache);
+}
+
+/* ── Timeline ───────────────────────────────────────────────── */
+const TL_INFO = {
+  inscription:   { icon: '📝', label: ()  => 'Formulaire soumis' },
+  resoumission:  { icon: '🔄', label: ()  => 'Dossier mis à jour' },
+  status_change: { icon: '🏷', label: (c) => { try { const d=JSON.parse(c); return 'Statut → '+(STATUS_OPTS.find(o=>o.v===d.status)?.l||d.status); } catch { return 'Changement de statut'; } } },
+  fiche_envoyee: { icon: '📄', label: (c) => { try { return 'Fiche envoyée — '+JSON.parse(c).titre; } catch { return 'Fiche envoyée'; } } },
+  rdv:           { icon: '📅', label: (c) => c || 'RDV pris' },
+  note:          { icon: '💬', label: (c) => c || 'Note' },
+};
+async function loadTimeline(leadId) {
+  const el = document.getElementById('drawer-timeline');
+  if (!el) return;
+  const res = await fetch(`/api/events?lead_id=${leadId}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) { el.innerHTML = `<span style="color:var(--dim);font-size:12px">Impossible de charger la timeline</span>`; return; }
+  const { events } = await res.json();
+  renderTimeline(events, leadId, el);
+}
+function renderTimeline(events, leadId, el) {
+  if (!events.length) {
+    el.innerHTML = `<div style="color:var(--dim);font-size:13px;padding:4px 0">Aucun événement pour l'instant</div>
+    <button class="tl-add-btn" onclick="addTimelineEvent('${leadId}')">+ Ajouter un RDV / note</button>`;
+    return;
+  }
+  const items = events.map(e => {
+    const info = TL_INFO[e.type] || { icon: '•', label: () => e.type };
+    const label = info.label(e.content);
+    const author = e.author ? ' · ' + e.author.split('@')[0] : '';
+    return `<div class="tl-item">
+      <div class="tl-dot">${info.icon}</div>
+      <div class="tl-body">
+        <div class="tl-title">${esc(label)}</div>
+        <div class="tl-meta">${fmtDateFull(e.created_at)}${esc(author)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="timeline">${items}</div>
+  <button class="tl-add-btn" onclick="addTimelineEvent('${leadId}')">+ Ajouter un RDV / note</button>`;
+}
+async function addTimelineEvent(leadId) {
+  const t = prompt('Type : 1. RDV  2. Note\n\nEntrez 1 ou 2 :');
+  const type = t === '1' ? 'rdv' : t === '2' ? 'note' : null;
+  if (!type) return;
+  const content = prompt('Détails (optionnel) :') || '';
+  const res = await fetch('/api/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ lead_id: leadId, type, content }),
+  });
+  if (res.ok) loadTimeline(leadId);
+}
+
+/* ── Send Fiche ─────────────────────────────────────────────── */
+let selectedProjectId = null;
+async function openFicheModal() {
+  if (!currentLead) return;
+  selectedProjectId = null;
+  document.getElementById('fiche-modal-sub').textContent = `Pour ${currentLead.prenom} ${currentLead.nom} · ${currentLead.email}`;
+  document.getElementById('fiche-message').value = '';
+  document.getElementById('fiche-status').textContent = '';
+  document.getElementById('btn-send-fiche').disabled = true;
+  document.getElementById('btn-send-fiche').textContent = '📄 Envoyer par email';
+  document.getElementById('fiche-overlay').classList.add('on');
+  const projectList = document.getElementById('project-list');
+  projectList.innerHTML = '<div class="project-empty">Chargement…</div>';
+  const res = await fetch('/api/projects', { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) { projectList.innerHTML = '<div class="project-empty">Erreur de chargement</div>'; return; }
+  const { projects } = await res.json();
+  if (!projects.length) {
+    projectList.innerHTML = '<div class="project-empty">Aucun projet dans la bibliothèque.<br><span style="font-size:11px;margin-top:6px;display:block">Ajoutez des projets dans Supabase → table <em>projects</em></span></div>';
+    return;
+  }
+  projectList.innerHTML = projects.map(p => `
+    <div class="project-item" data-id="${esc(p.id)}" onclick="selectProject('${esc(p.id)}')">
+      <span class="project-icon">🏠</span>
+      <div class="project-info">
+        <div class="project-title">${esc(p.titre)}</div>
+        ${p.adresse ? `<div class="project-addr">📍 ${esc(p.adresse)}</div>` : ''}
+        ${p.prix ? `<div class="project-prix">${esc(p.prix)}</div>` : ''}
+        ${p.pdf_url ? `<a class="project-pdf-link" href="${esc(p.pdf_url)}" target="_blank" onclick="event.stopPropagation()">Aperçu PDF ↗</a>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+function selectProject(id) {
+  selectedProjectId = id;
+  document.querySelectorAll('.project-item').forEach(el => el.classList.toggle('selected', el.dataset.id === id));
+  document.getElementById('btn-send-fiche').disabled = false;
+}
+function closeFicheModal() {
+  document.getElementById('fiche-overlay').classList.remove('on');
+  selectedProjectId = null;
+}
+async function sendFiche() {
+  if (!selectedProjectId || !currentLead) return;
+  const btn = document.getElementById('btn-send-fiche');
+  const statusEl = document.getElementById('fiche-status');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  statusEl.textContent = ''; statusEl.style.color = 'var(--dim)';
+  const res = await fetch('/api/send-fiche', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ lead_id: currentLead.id, project_id: selectedProjectId, message: document.getElementById('fiche-message').value.trim() }),
+  });
+  btn.textContent = '📄 Envoyer par email';
+  if (res.ok) {
+    statusEl.textContent = '✅ Fiche envoyée avec succès !';
+    statusEl.style.color = 'var(--green)';
+    setTimeout(closeFicheModal, 1800);
+    loadTimeline(currentLead.id);
+  } else {
+    const d = await res.json().catch(() => ({}));
+    statusEl.textContent = '❌ ' + (d.error || 'Erreur inconnue');
+    statusEl.style.color = 'var(--red)';
+    btn.disabled = false;
+  }
 }
 
 function statusBadge(status) {

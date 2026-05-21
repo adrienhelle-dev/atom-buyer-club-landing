@@ -27,5 +27,15 @@ module.exports = async function handler(req, res) {
   const { error } = await supabase.from('leads').update(updates).eq('id', id);
   if (error) { console.error('Patch error:', error); return res.status(500).json({ error: 'db_error' }); }
 
+  // Auto-log dans la timeline si le statut a changé
+  if ('status' in updates) {
+    supabase.from('lead_events').insert([{
+      lead_id: id,
+      type: 'status_change',
+      content: JSON.stringify({ status: updates.status }),
+      author: payload.email,
+    }]).catch(e => console.error('Event log status:', e));
+  }
+
   return res.status(200).json({ ok: true, assigned_to: updates.assigned_to || null });
 };
