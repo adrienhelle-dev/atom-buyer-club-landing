@@ -58,12 +58,15 @@ module.exports = async function handler(req, res) {
     isUpdate = true;
   } else {
     // Nouveau lead
-    const { data: inserted, error } = await supabase.from('leads').insert([leadData]).select('id').single();
+    const { error } = await supabase.from('leads').insert([leadData]);
     if (error) { console.error('DB insert:', error); return res.status(500).json({ error: 'db_error' }); }
-    // Log inscription dans la timeline
-    supabase.from('lead_events').insert([{
-      lead_id: inserted.id, type: 'inscription', content: null, author: null,
-    }]).catch(e => console.error('Event inscription:', e));
+    // Log inscription dans la timeline (async, ne bloque pas la réponse)
+    supabase.from('leads').select('id').eq('email', emailNorm)
+      .order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        const leadId = data?.[0]?.id;
+        if (leadId) supabase.from('lead_events').insert([{ lead_id: leadId, type: 'inscription', content: null, author: null }]).catch(console.error);
+      }).catch(console.error);
   }
 
   // ── Email de notification ──────────────────────────────────
