@@ -38,11 +38,12 @@ module.exports = async function handler(req, res) {
     ip,
   };
 
-  // ── Cherche un lead existant (email ou téléphone) ──────────
+  // ── Cherche un lead existant par email uniquement ───────────
+  // (le téléphone peut être partagé dans un foyer → trop de faux positifs)
   const { data: existing } = await supabase
     .from('leads')
-    .select('id, email, tel')
-    .or(`email.eq.${emailNorm},tel.eq.${b.tel.trim()}`)
+    .select('id, email')
+    .eq('email', emailNorm)
     .maybeSingle();
 
   let isUpdate = false;
