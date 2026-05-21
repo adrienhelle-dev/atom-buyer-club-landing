@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>Admin · Atom Buyers Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:     #0f0e0c;
+      --bg2:    #161512;
+      --bg3:    #1e1d1a;
+      --border: #2c2b27;
+      --cream:  #F5F2ED;
+      --dim:    #7a7874;
+      --gold:   #B8975A;
+      --green:  #4caf7d;
+      --red:    #d95e5e;
+      --r:      8px;
+      --sans:   'DM Sans', system-ui, sans-serif;
+      --serif:  'Cormorant Garamond', Georgia, serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--cream); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    /* ── LOGIN ─────────────────────────────────────────────── */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(184,151,90,.07) 0%, transparent 60%);
+    }
+    .login-box {
+      width: 100%;
+      max-width: 380px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 36px 32px;
+    }
+    .login-logo { margin-bottom: 28px; }
+    .login-logo svg { width: 76px; height: auto; }
+    .login-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 6px; }
+    .login-sub   { font-size: 13px; color: var(--dim); margin-bottom: 28px; }
+
+    .login-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .login-field label { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+    .login-field input {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 12px 14px; color: var(--cream); font-family: var(--sans); font-size: 16px;
+      outline: none; transition: border-color .15s;
+    }
+    .login-field input:focus { border-color: var(--gold); }
+
+    .login-err { font-size: 12px; color: var(--red); margin-bottom: 14px; display: none; }
+    .login-err.on { display: block; }
+
+    .btn-login {
+      width: 100%; padding: 13px; background: var(--cream); color: var(--bg);
+      border: none; border-radius: var(--r); font-family: var(--sans); font-size: 15px;
+      font-weight: 500; cursor: pointer; margin-top: 4px; transition: background .15s;
+    }
+    .btn-login:hover { background: #dedad4; }
+    .btn-login:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── DASHBOARD ─────────────────────────────────────────── */
+    #dashboard { display: none; }
+
+    /* Topbar */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 28px; background: var(--bg2); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 20px; }
+    .topbar-left svg { width: 60px; height: auto; }
+    .topbar-badge {
+      font-size: 10px; font-weight: 500; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--dim); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .topbar-email { font-size: 12px; color: var(--dim); }
+    .btn-logout {
+      font-size: 12px; color: var(--dim); background: none; border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: color .15s, border-color .15s;
+    }
+    .btn-logout:hover { color: var(--cream); border-color: var(--dim); }
+
+    /* Stats */
+    .stats {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat {
+      background: var(--bg2); padding: 20px 24px;
+    }
+    .stat-value { font-family: var(--serif); font-size: 32px; font-weight: 300; color: var(--cream); line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--dim); margin-top: 4px; letter-spacing: .04em; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 16px 28px; border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+    .search-wrap input {
+      width: 100%; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 9px 14px 9px 36px; color: var(--cream);
+      font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .15s;
+    }
+    .search-wrap input:focus { border-color: var(--gold); }
+    .search-wrap input::placeholder { color: var(--dim); }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 13px; }
+
+    .filter-select {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 9px 30px 9px 12px; color: var(--cream); font-family: var(--sans);
+      font-size: 13px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7874'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+
+    .toolbar-right { margin-left: auto; display: flex; gap: 10px; }
+
+    .btn-export {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 16px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r); color: var(--cream); font-family: var(--sans);
+      font-size: 13px; cursor: pointer; transition: border-color .15s;
+    }
+    .btn-export:hover { border-color: var(--gold); color: var(--gold); }
+
+    .btn-refresh {
+      padding: 9px 12px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r); color: var(--dim); font-family: var(--sans);
+      font-size: 13px; cursor: pointer; transition: color .15s;
+    }
+    .btn-refresh:hover { color: var(--cream); }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left; padding: 11px 14px;
+      font-size: 10px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--dim); border-bottom: 1px solid var(--border);
+      white-space: nowrap; background: var(--bg);
+      position: sticky; top: 57px;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:hover { background: var(--bg2); }
+    td { padding: 12px 14px; color: var(--cream); vertical-align: middle; white-space: nowrap; }
+    td.muted { color: var(--dim); }
+    td.wrap  { white-space: normal; max-width: 180px; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 500; padding: 3px 9px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .badge-google   { background: rgba(66,133,244,.15); color: #4285f4; }
+    .badge-instagram{ background: rgba(225,48,108,.15);  color: #e1306c; }
+    .badge-facebook { background: rgba(24,119,242,.15);  color: #1877f2; }
+    .badge-meta     { background: rgba(24,119,242,.15);  color: #1877f2; }
+    .badge-organic  { background: rgba(76,175,125,.15);  color: #4caf7d; }
+    .badge-default  { background: rgba(184,151,90,.1);   color: var(--gold); }
+
+    .timing-badge {
+      font-size: 11px; padding: 3px 8px; border-radius: 4px;
+      background: rgba(184,151,90,.1); color: var(--gold);
+    }
+    .timing-asap { background: rgba(76,175,125,.12); color: #4caf7d; }
+
+    /* Pagination */
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--dim);
+    }
+    .page-btns { display: flex; gap: 6px; }
+    .page-btn {
+      padding: 6px 12px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--dim); cursor: pointer; font-size: 12px;
+      transition: color .15s, border-color .15s;
+    }
+    .page-btn:hover:not(:disabled) { color: var(--cream); border-color: var(--dim); }
+    .page-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .page-btn.active { border-color: var(--gold); color: var(--gold); }
+
+    /* Empty / loading */
+    .table-msg {
+      text-align: center; padding: 60px 24px;
+      color: var(--dim); font-size: 14px;
+    }
+
+    /* Detail drawer */
+    .drawer-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 100; backdrop-filter: blur(2px);
+    }
+    .drawer-overlay.on { display: flex; align-items: flex-start; justify-content: flex-end; }
+    .drawer {
+      width: 100%; max-width: 420px; height: 100vh;
+      background: var(--bg2); border-left: 1px solid var(--border);
+      overflow-y: auto; padding: 28px;
+      animation: slideIn .2s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .drawer-close {
+      float: right; background: none; border: none; color: var(--dim);
+      font-size: 18px; cursor: pointer; padding: 0 0 16px 16px;
+    }
+    .drawer-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 4px; }
+    .drawer-date  { font-size: 12px; color: var(--dim); margin-bottom: 24px; }
+    .drawer-section { margin-bottom: 20px; }
+    .drawer-section-label {
+      font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .drawer-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 7px 0; font-size: 13px; border-bottom: 1px solid rgba(44,43,39,.6); }
+    .drawer-row:last-child { border-bottom: none; }
+    .drawer-key { color: var(--dim); flex-shrink: 0; }
+    .drawer-val { color: var(--cream); text-align: right; word-break: break-all; }
+    .drawer-val a { color: var(--gold); text-decoration: none; }
+
+    @media (max-width: 768px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .topbar-email { display: none; }
+      thead th:nth-child(n+6) { display: none; }
+      td:nth-child(n+6) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <path d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144ZM20.4549 19.7444C17.5149 19.7444 16.1349 17.5544 16.1349 14.7344L16.1349 5.43444 14.2449 5.43444 14.2449 5.01444C16.6449 4.77444 18.5049 3.24444 18.9849 0.514443L19.4049 0.514443 19.4049 4.23444 23.8749 4.23444 23.3649 5.43444 19.4049 5.43444 19.4049 14.4044C19.4049 16.4144 20.3049 17.8544 21.8049 17.8544 23.0949 17.8544 23.8449 16.8044 24.0849 15.6944L24.4449 15.7544C24.1749 17.9144 22.6149 19.7444 20.4549 19.7444ZM31.8887 19.7444C27.6287 19.7444 24.2687 16.2644 24.2687 11.7644 24.2687 7.02444 27.7487 3.93444 31.8287 3.93444 35.9687 3.93444 39.3887 7.23445 39.3887 11.8244 39.3887 16.5044 36.0587 19.7444 31.8887 19.7444ZM27.7787 12.4244C28.3187 16.5944 30.3287 19.4744 32.8187 19.1444 35.3387 18.8144 36.4187 15.3344 35.8487 11.1044 35.3087 6.93444 33.2987 4.17444 30.8687 4.53444 28.3487 4.89444 27.2687 8.34445 27.7787 12.4244ZM58.6606 19.4444L58.6606 19.0544C60.1306 19.0544 61.1806 18.4844 60.9106 16.4444L59.9506 9.57444C59.5906 7.05444 58.5406 5.73444 56.8306 5.73444 55.0604 5.73444 54.0704 7.14444 53.8604 8.73444 53.8904 9.03444 53.9204 9.36445 53.9204 9.69445L53.9204 16.4144C53.9204 18.4844 54.8204 19.0544 56.0206 19.0544L56.0206 19.4444 48.7004 19.4444 48.7004 19.0544C49.8704 19.0544 50.7104 18.4844 50.7104 16.4144L50.7104 10.2044C50.7104 7.29445 49.5404 5.70444 47.5604 5.70444 45.9104 5.70444 44.6504 7.08444 44.4704 8.52444L44.4704 16.4144C44.4704 18.4844 45.3104 19.0544 46.4804 19.0544L46.4804 19.4444 39.1304 19.4444 39.1304 19.0544C40.3304 19.0544 41.2304 18.4844 41.2304 16.4144L41.2304 7.50445C41.2304 6.03444 40.6304 5.55444 39.2504 5.52445L39.2504 5.13444C40.8404 5.01444 42.6404 4.68444 44.2004 3.96444L44.4704 4.11444 44.4704 7.32444C45.0704 5.58444 46.7804 3.93444 49.0004 3.93444 51.2204 3.93444 53.0804 5.28444 53.7104 7.77445 54.1904 5.76444 55.8706 3.93444 58.3006 3.93444 60.8806 3.93444 62.6506 5.55444 63.2206 9.48445L64.2406 16.4444C64.5406 18.4844 65.4106 19.0544 66.6406 19.0544L66.6406 19.4444Z" fill="#F5F2ED"/>
+      </svg>
+    </div>
+    <h2 class="login-title">Panel Admin</h2>
+    <p class="login-sub">Accès réservé aux fondateurs</p>
+    <p class="login-err" id="login-err"></p>
+    <form id="login-form">
+      <div class="login-field">
+        <label for="l-email">Email</label>
+        <input type="email" id="l-email" placeholder="prenom@atom-capital.fr" autocomplete="email" inputmode="email" required/>
+      </div>
+      <div class="login-field">
+        <label for="l-pass">Mot de passe</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" required/>
+      </div>
+      <button type="submit" class="btn-login" id="btn-login">Se connecter</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══════════════════════════════════════════════ -->
+<div id="dashboard">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <svg viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <path d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144ZM20.4549 19.7444C17.5149 19.7444 16.1349 17.5544 16.1349 14.7344L16.1349 5.43444 14.2449 5.43444 14.2449 5.01444C16.6449 4.77444 18.5049 3.24444 18.9849 0.514443L19.4049 0.514443 19.4049 4.23444 23.8749 4.23444 23.3649 5.43444 19.4049 5.43444 19.4049 14.4044C19.4049 16.4144 20.3049 17.8544 21.8049 17.8544 23.0949 17.8544 23.8449 16.8044 24.0849 15.6944L24.4449 15.7544C24.1749 17.9144 22.6149 19.7444 20.4549 19.7444ZM31.8887 19.7444C27.6287 19.7444 24.2687 16.2644 24.2687 11.7644 24.2687 7.02444 27.7487 3.93444 31.8287 3.93444 35.9687 3.93444 39.3887 7.23445 39.3887 11.8244 39.3887 16.5044 36.0587 19.7444 31.8887 19.7444ZM27.7787 12.4244C28.3187 16.5944 30.3287 19.4744 32.8187 19.1444 35.3387 18.8144 36.4187 15.3344 35.8487 11.1044 35.3087 6.93444 33.2987 4.17444 30.8687 4.53444 28.3487 4.89444 27.2687 8.34445 27.7787 12.4244ZM58.6606 19.4444L58.6606 19.0544C60.1306 19.0544 61.1806 18.4844 60.9106 16.4444L59.9506 9.57444C59.5906 7.05444 58.5406 5.73444 56.8306 5.73444 55.0604 5.73444 54.0704 7.14444 53.8604 8.73444 53.8904 9.03444 53.9204 9.36445 53.9204 9.69445L53.9204 16.4144C53.9204 18.4844 54.8204 19.0544 56.0206 19.0544L56.0206 19.4444 48.7004 19.4444 48.7004 19.0544C49.8704 19.0544 50.7104 18.4844 50.7104 16.4144L50.7104 10.2044C50.7104 7.29445 49.5404 5.70444 47.5604 5.70444 45.9104 5.70444 44.6504 7.08444 44.4704 8.52444L44.4704 16.4144C44.4704 18.4844 45.3104 19.0544 46.4804 19.0544L46.4804 19.4444 39.1304 19.4444 39.1304 19.0544C40.3304 19.0544 41.2304 18.4844 41.2304 16.4144L41.2304 7.50445C41.2304 6.03444 40.6304 5.55444 39.2504 5.52445L39.2504 5.13444C40.8404 5.01444 42.6404 4.68444 44.2004 3.96444L44.4704 4.11444 44.4704 7.32444C45.0704 5.58444 46.7804 3.93444 49.0004 3.93444 51.2204 3.93444 53.0804 5.28444 53.7104 7.77445 54.1904 5.76444 55.8706 3.93444 58.3006 3.93444 60.8806 3.93444 62.6506 5.55444 63.2206 9.48445L64.2406 16.4444C64.5406 18.4844 65.4106 19.0544 66.6406 19.0544L66.6406 19.4444Z" fill="#F5F2ED"/>
+      </svg>
+      <span class="topbar-badge">Admin</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-email" id="admin-email"></span>
+      <button class="btn-logout" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total leads</div></div>
+    <div class="stat"><div class="stat-value" id="s-today">—</div><div class="stat-label">Aujourd'hui</div></div>
+    <div class="stat"><div class="stat-value" id="s-week">—</div><div class="stat-label">Cette semaine</div></div>
+    <div class="stat"><div class="stat-value" id="s-top-src">—</div><div class="stat-label">Meilleure source</div></div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" placeholder="Rechercher nom, email…" oninput="debounceSearch()" />
+    </div>
+    <select class="filter-select" id="src-filter" onchange="loadLeads(1)">
+      <option value="">Toutes les sources</option>
+      <option value="google">Google Ads</option>
+      <option value="instagram">Instagram</option>
+      <option value="facebook">Facebook</option>
+      <option value="meta">Meta Ads</option>
+      <option value="organic">Organique</option>
+    </select>
+    <div class="toolbar-right">
+      <button class="btn-refresh" onclick="loadLeads(currentPage)" title="Actualiser">↻</button>
+      <button class="btn-export" onclick="exportCSV()">
+        <span>↓</span> Exporter CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table id="leads-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Téléphone</th>
+          <th>Arrond.</th>
+          <th>Horizon</th>
+          <th>Financement</th>
+          <th>Budget</th>
+          <th>Source</th>
+          <th>Campagne</th>
+        </tr>
+      </thead>
+      <tbody id="leads-body">
+        <tr><td colspan="10" class="table-msg">Chargement…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <span id="page-info">—</span>
+    <div class="page-btns" id="page-btns"></div>
+  </div>
+</div>
+
+<!-- ══ DETAIL DRAWER ══════════════════════════════════════════ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer(event)">
+  <div class="drawer" id="drawer">
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    <div id="drawer-content"></div>
+  </div>
+</div>
+
+<script>
+const TIMING = { asap:'Dès que possible', '3mois':'Dans 3 mois', '6mois':'Dans 6 mois', reflexion:'En réflexion' };
+const FIN    = { comptant:'Comptant', emprunt:'Emprunt bancaire' };
+const BUDGET = { 'moins-150k':'< 150 k€','150-250k':'150–250 k€','250-400k':'250–400 k€','400-600k':'400–600 k€','600k-1m':'600 k€–1 M€','plus-1m':'> 1 M€' };
+const SRC_LABELS = { google:'Google Ads', instagram:'Instagram Ads', facebook:'Facebook Ads', meta:'Meta Ads', organic:'Organique', email:'Email' };
+const SRC_CLASS  = { google:'badge-google', instagram:'badge-instagram', facebook:'badge-facebook', meta:'badge-meta', organic:'badge-organic' };
+
+let token = null;
+let currentPage = 1;
+let totalLeads = 0;
+let searchTimer = null;
+
+/* ── Auth ─────────────────────────────────────────────────── */
+function init() {
+  token = localStorage.getItem('abc_admin_token');
+  if (token) showDashboard(localStorage.getItem('abc_admin_email') || '');
+}
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-login');
+  const err = document.getElementById('login-err');
+  btn.disabled = true; btn.textContent = 'Connexion…'; err.classList.remove('on');
+
+  const res = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: document.getElementById('l-email').value,
+      password: document.getElementById('l-pass').value,
+    }),
+  });
+
+  const data = await res.json();
+  btn.disabled = false; btn.textContent = 'Se connecter';
+
+  if (!res.ok) { err.textContent = data.error || 'Erreur'; err.classList.add('on'); return; }
+
+  token = data.token;
+  localStorage.setItem('abc_admin_token', token);
+  localStorage.setItem('abc_admin_email', data.email);
+  showDashboard(data.email);
+});
+
+function showDashboard(email) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('admin-email').textContent = email;
+  loadLeads(1);
+}
+
+function logout() {
+  localStorage.removeItem('abc_admin_token');
+  localStorage.removeItem('abc_admin_email');
+  token = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('l-pass').value = '';
+}
+
+/* ── Leads ─────────────────────────────────────────────────── */
+async function loadLeads(page) {
+  currentPage = page;
+  const search = document.getElementById('search-input').value.trim();
+  const source = document.getElementById('src-filter').value;
+
+  const params = new URLSearchParams({ page, pageSize: 50 });
+  if (search) params.set('search', search);
+  if (source) params.set('source', source);
+
+  const res = await fetch(`/api/leads?${params}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 401) { logout(); return; }
+  const { leads, total } = await res.json();
+
+  totalLeads = total;
+  renderStats(leads, total);
+  renderTable(leads);
+  renderPagination(page, total, 50);
+}
+
+function renderStats(leads, total) {
+  document.getElementById('s-total').textContent = total;
+  const today = new Date().toDateString();
+  const todayCount = leads.filter(l => new Date(l.created_at).toDateString() === today).length;
+  document.getElementById('s-today').textContent = todayCount;
+
+  const weekAgo = new Date(Date.now() - 7 * 864e5);
+  const weekCount = leads.filter(l => new Date(l.created_at) >= weekAgo).length;
+  document.getElementById('s-week').textContent = weekCount;
+
+  const srcCounts = {};
+  leads.forEach(l => { if (l.utm_source) srcCounts[l.utm_source] = (srcCounts[l.utm_source] || 0) + 1; });
+  const topSrc = Object.entries(srcCounts).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('s-top-src').textContent = topSrc ? (SRC_LABELS[topSrc[0]] || topSrc[0]) : '—';
+}
+
+function renderTable(leads) {
+  const tbody = document.getElementById('leads-body');
+  if (!leads.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="table-msg">Aucun lead trouvé</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(l => `
+    <tr style="cursor:pointer" onclick="openDrawer(${JSON.stringify(l).replace(/"/g,'&quot;')})">
+      <td class="muted">${fmtDate(l.created_at)}</td>
+      <td><strong>${esc(l.prenom)} ${esc(l.nom)}</strong></td>
+      <td class="muted">${esc(l.email)}</td>
+      <td class="muted">${esc(l.tel)}</td>
+      <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
+      <td>${l.timing ? `<span class="timing-badge ${l.timing === 'asap' ? 'timing-asap' : ''}">${TIMING[l.timing] || l.timing}</span>` : '<span class="muted">—</span>'}</td>
+      <td class="muted">${FIN[l.financement] || l.financement || '—'}</td>
+      <td class="muted">${BUDGET[l.capacite] || l.capacite || '—'}</td>
+      <td>${srcBadge(l.utm_source)}</td>
+      <td class="muted">${esc(l.utm_campaign) || '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderPagination(page, total, pageSize) {
+  const pages = Math.ceil(total / pageSize);
+  document.getElementById('page-info').textContent = `${total} lead${total > 1 ? 's' : ''} · Page ${page}/${pages}`;
+
+  const btns = document.getElementById('page-btns');
+  btns.innerHTML = '';
+
+  const prev = document.createElement('button');
+  prev.className = 'page-btn'; prev.textContent = '←'; prev.disabled = page <= 1;
+  prev.onclick = () => loadLeads(page - 1);
+  btns.appendChild(prev);
+
+  for (let p = Math.max(1, page-1); p <= Math.min(pages, page+1); p++) {
+    const b = document.createElement('button');
+    b.className = `page-btn ${p === page ? 'active' : ''}`;
+    b.textContent = p; b.onclick = () => loadLeads(p);
+    btns.appendChild(b);
+  }
+
+  const next = document.createElement('button');
+  next.className = 'page-btn'; next.textContent = '→'; next.disabled = page >= pages;
+  next.onclick = () => loadLeads(page + 1);
+  btns.appendChild(next);
+}
+
+/* ── Drawer ─────────────────────────────────────────────────── */
+function openDrawer(lead) {
+  const src = lead.utm_source ? (SRC_LABELS[lead.utm_source.toLowerCase()] || lead.utm_source) : '—';
+  document.getElementById('drawer-content').innerHTML = `
+    <h3 class="drawer-title">${esc(lead.prenom)} ${esc(lead.nom)}</h3>
+    <p class="drawer-date">${fmtDateFull(lead.created_at)}</p>
+
+    <div class="drawer-section">
+      <p class="drawer-section-label">Coordonnées</p>
+      <div class="drawer-row"><span class="drawer-key">Email</span><span class="drawer-val"><a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a></span></div>
+      <div class="drawer-row"><span class="drawer-key">Téléphone</span><span class="drawer-val"><a href="tel:${esc(lead.tel)}">${esc(lead.tel)}</a></span></div>
+    </div>
+
+    <div class="drawer-section">
+      <p class="drawer-section-label">Projet</p>
+      <div class="drawer-row"><span class="drawer-key">Arrondissements</span><span class="drawer-val">${esc(lead.arrondissements) || '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Horizon</span><span class="drawer-val">${TIMING[lead.timing] || lead.timing || '—'}</span></div>
+    </div>
+
+    <div class="drawer-section">
+      <p class="drawer-section-label">Financement</p>
+      <div class="drawer-row"><span class="drawer-key">Accord bancaire</span><span class="drawer-val">${lead.accord === 'oui' ? '✓ Oui' : lead.accord === 'non' ? 'Non' : '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Mode</span><span class="drawer-val">${FIN[lead.financement] || lead.financement || '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Budget emprunt</span><span class="drawer-val">${BUDGET[lead.capacite] || lead.capacite || '—'}</span></div>
+    </div>
+
+    <div class="drawer-section">
+      <p class="drawer-section-label">Tracking campagne</p>
+      <div class="drawer-row"><span class="drawer-key">Source</span><span class="drawer-val">${src}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Medium</span><span class="drawer-val">${esc(lead.utm_medium) || '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Campagne</span><span class="drawer-val">${esc(lead.utm_campaign) || '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Contenu</span><span class="drawer-val">${esc(lead.utm_content) || '—'}</span></div>
+      ${lead.gclid ? `<div class="drawer-row"><span class="drawer-key">GCLID</span><span class="drawer-val">${esc(lead.gclid)}</span></div>` : ''}
+      ${lead.fbclid ? `<div class="drawer-row"><span class="drawer-key">FBCLID</span><span class="drawer-val">${esc(lead.fbclid)}</span></div>` : ''}
+      <div class="drawer-row"><span class="drawer-key">Référent</span><span class="drawer-val">${esc(lead.referrer) || '—'}</span></div>
+    </div>
+  `;
+  document.getElementById('drawer-overlay').classList.add('on');
+}
+
+function closeDrawer(e) {
+  if (!e || e.target === document.getElementById('drawer-overlay')) {
+    document.getElementById('drawer-overlay').classList.remove('on');
+  }
+}
+
+/* ── Export ─────────────────────────────────────────────────── */
+async function exportCSV() {
+  const res = await fetch('/api/export', { headers: { Authorization: `Bearer ${token}` } });
+  if (res.status === 401) { logout(); return; }
+  const blob = await res.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `leads_abc_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+/* ── Helpers ────────────────────────────────────────────────── */
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadLeads(1), 350);
+}
+
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+function fmtDateFull(d) {
+  return new Date(d).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function srcBadge(src) {
+  if (!src) return '<span class="muted">—</span>';
+  const cls = SRC_CLASS[src.toLowerCase()] || 'badge-default';
+  const lbl = SRC_LABELS[src.toLowerCase()] || src;
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+init();
+</script>
+</body>
+</html>

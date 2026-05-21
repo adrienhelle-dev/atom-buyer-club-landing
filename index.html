@@ -730,6 +730,17 @@ function validate() {
   return prenom && nom && emailOk && tel;
 }
 
+/* ── UTM capture (on load) ─────────────────────────────────── */
+const _utms = {};
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'].forEach(k => {
+    const v = p.get(k);
+    if (v) { _utms[k] = v; sessionStorage.setItem('utm_' + k, v); }
+    else { const s = sessionStorage.getItem('utm_' + k); if (s) _utms[k] = s; }
+  });
+})();
+
 /* ── Submit ────────────────────────────────────────────────── */
 document.getElementById('form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -742,25 +753,37 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Envoi en cours…';
 
-  const data = {
-    prenom:       document.getElementById('prenom').value.trim(),
-    nom:          document.getElementById('nom').value.trim(),
-    email:        document.getElementById('email').value.trim(),
-    tel:          document.getElementById('tel').value.trim(),
+  const payload = {
+    prenom:          document.getElementById('prenom').value.trim(),
+    nom:             document.getElementById('nom').value.trim(),
+    email:           document.getElementById('email').value.trim(),
+    tel:             document.getElementById('tel').value.trim(),
     arrondissements: [...selected].sort((a,b)=>a-b).map(i=>`${i}e`).join(', ') || null,
-    timing:       document.querySelector('input[name="timing"]:checked')?.value || null,
-    accord:       document.querySelector('input[name="accord"]:checked')?.value || null,
-    financement:  document.querySelector('input[name="financement"]:checked')?.value || null,
-    capacite:     document.getElementById('capacite').value || null,
+    timing:          document.querySelector('input[name="timing"]:checked')?.value || null,
+    accord:          document.querySelector('input[name="accord"]:checked')?.value || null,
+    financement:     document.querySelector('input[name="financement"]:checked')?.value || null,
+    capacite:        document.getElementById('capacite').value || null,
+    referrer:        document.referrer || null,
+    ..._utms,
   };
 
-  console.log('Lead:', data); // → replace with your webhook / API call
-
-  await new Promise(r => setTimeout(r, 900));
+  try {
+    const res = await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('server_error');
+  } catch {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer ma demande ✦';
+    alert('Une erreur est survenue. Veuillez réessayer.');
+    return;
+  }
 
   document.getElementById('form').style.display = 'none';
   document.querySelector('.form-header').style.display = 'none';
-  document.getElementById('s-name').textContent = data.prenom;
+  document.getElementById('s-name').textContent = payload.prenom;
   document.getElementById('success').classList.add('on');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
