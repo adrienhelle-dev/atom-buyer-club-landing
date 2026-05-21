@@ -2,553 +2,458 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Atom Buyers Club — Qualifiez votre projet</title>
   <meta name="description" content="Investissement immobilier clé-en-main à Paris. Partagez votre projet, on s'occupe du reste." />
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
 
   <style>
-    /* ── Reset & tokens ─────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+    /* ── Tokens ──────────────────────────────────────────────── */
     :root {
-      --bg:        #0A0A08;
-      --bg-card:   #141412;
-      --bg-input:  #1C1C19;
-      --border:    #2A2A26;
-      --border-focus: #EDEEE8;
-      --cream:     #EDEEE8;
-      --cream-dim: #9A9B95;
-      --gold:      #C8A96E;
-      --gold-dim:  #8C7048;
-      --danger:    #E05252;
-      --radius:    10px;
-      --radius-lg: 16px;
-      --transition: 200ms ease;
-      --font-sans: 'Inter', system-ui, sans-serif;
-      --font-serif: 'DM Serif Display', Georgia, serif;
+      --bg:        #0f0e0c;
+      --bg-card:   #161512;
+      --bg-input:  #1e1d1a;
+      --border:    #2c2b27;
+      --border-focus: #d4b483;
+      --cream:     #F5F2ED;
+      --cream-dim: #8a8880;
+      --gold:      #B8975A;
+      --gold-dim:  #7a6338;
+      --danger:    #d95e5e;
+      --r:         8px;
+      --r-lg:      14px;
+      --t:         180ms ease;
+      --sans:      'DM Sans', system-ui, sans-serif;
+      --serif:     'Cormorant Garamond', Georgia, serif;
     }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-
     body {
-      font-family: var(--font-sans);
+      font-family: var(--sans);
       background: var(--bg);
       color: var(--cream);
       min-height: 100svh;
       -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
     }
 
-    /* ── Layout ────────────────────────────────────────────────── */
+    /* ── Page shell ───────────────────────────────────────────── */
     .page {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 380px 1fr;
       min-height: 100svh;
     }
 
-    /* ── Left panel ─────────────────────────────────────────────── */
+    /* ══ LEFT PANEL ═══════════════════════════════════════════ */
     .panel-left {
       position: sticky;
       top: 0;
       height: 100svh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 48px 52px;
+      padding: 48px 44px;
       background: var(--bg-card);
       border-right: 1px solid var(--border);
       overflow: hidden;
     }
 
-    .panel-left::before {
+    .panel-left::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(200,169,110,0.08) 0%, transparent 70%);
+      background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(184,151,90,.09) 0%, transparent 65%);
       pointer-events: none;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-    }
+    .logo { display: flex; align-items: flex-start; gap: 0; text-decoration: none; margin-bottom: auto; }
+    .logo svg { width: 88px; height: auto; }
 
-    .logo svg { width: 80px; height: auto; }
-
-    .logo-tagline {
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--cream-dim);
-      margin-top: 2px;
-    }
-
-    .left-body { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 40px 0; }
+    .left-content { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 0; }
 
     .left-eyebrow {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.15em;
+      letter-spacing: .18em;
       text-transform: uppercase;
       color: var(--gold);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .left-headline {
-      font-family: var(--font-serif);
-      font-size: clamp(28px, 2.8vw, 40px);
+      font-family: var(--serif);
+      font-size: clamp(26px, 2.4vw, 36px);
+      font-weight: 300;
       line-height: 1.15;
       color: var(--cream);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
-
-    .left-headline em {
-      font-style: italic;
-      color: var(--gold);
-    }
+    .left-headline em { font-style: italic; color: var(--gold); }
 
     .left-desc {
-      font-size: 15px;
-      line-height: 1.65;
+      font-size: 14px;
+      line-height: 1.7;
       color: var(--cream-dim);
-      max-width: 380px;
-      margin-bottom: 40px;
+      margin-bottom: 36px;
     }
 
-    .trust-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .trust-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 13px;
-      color: var(--cream-dim);
-    }
-
-    .trust-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-size: 12px;
+    .trust-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .trust-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--cream-dim); }
+    .trust-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0;
     }
 
     .left-footer {
       font-size: 11px;
       color: var(--cream-dim);
-      opacity: 0.5;
+      opacity: .4;
+      padding-top: 32px;
     }
 
-    /* ── Right panel (form) ──────────────────────────────────────── */
+    /* ══ RIGHT PANEL ══════════════════════════════════════════ */
     .panel-right {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 48px 24px;
+      justify-content: center;
+      padding: 56px 32px 80px;
       overflow-y: auto;
     }
 
-    .form-wrapper {
+    .form-shell {
       width: 100%;
-      max-width: 500px;
+      max-width: 520px;
     }
 
-    /* ── Progress ────────────────────────────────────────────────── */
-    .progress-header {
+    /* ── Form header ─────────────────────────────────────────── */
+    .form-header { margin-bottom: 40px; }
+    .form-title {
+      font-family: var(--serif);
+      font-size: clamp(22px, 2vw, 30px);
+      font-weight: 300;
+      color: var(--cream);
+      margin-bottom: 8px;
+    }
+    .form-sub { font-size: 14px; color: var(--cream-dim); line-height: 1.5; }
+
+    /* ── Section separator (the "slide-down" divider) ───────── */
+    .section-sep {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 32px;
+      gap: 14px;
+      margin: 36px 0 28px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .5s ease, transform .5s ease;
     }
+    .section-sep.visible { opacity: 1; transform: translateY(0); }
 
-    .progress-label {
+    .sep-num {
+      font-family: var(--serif);
       font-size: 11px;
+      font-weight: 400;
+      letter-spacing: .12em;
+      color: var(--gold);
+      white-space: nowrap;
+    }
+    .sep-line { flex: 1; height: 1px; background: var(--border); }
+    .sep-label {
+      font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.1em;
+      letter-spacing: .16em;
       text-transform: uppercase;
       color: var(--cream-dim);
+      white-space: nowrap;
     }
 
-    .progress-steps {
-      font-size: 11px;
-      color: var(--cream-dim);
-    }
-
-    .progress-bar-track {
-      width: 100%;
-      height: 2px;
-      background: var(--border);
-      border-radius: 2px;
-      margin-top: 10px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: var(--gold);
-      border-radius: 2px;
-      transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* ── Step ────────────────────────────────────────────────────── */
-    .step { display: none; }
-    .step.active { display: block; animation: fadeSlideIn 300ms ease; }
-
-    @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .step-title {
-      font-family: var(--font-serif);
-      font-size: clamp(20px, 2vw, 26px);
-      color: var(--cream);
-      margin-bottom: 6px;
-    }
-
-    .step-subtitle {
-      font-size: 13px;
-      color: var(--cream-dim);
-      margin-bottom: 28px;
-      line-height: 1.5;
-    }
-
-    /* ── Fields ──────────────────────────────────────────────────── */
-    .field-group { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+    /* ── Fields ─────────────────────────────────────────────── */
+    .fields { display: flex; flex-direction: column; gap: 14px; }
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
 
     label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.08em;
+      letter-spacing: .12em;
       text-transform: uppercase;
       color: var(--cream-dim);
     }
 
+    /* font-size 16px minimum = no iOS zoom */
     input[type="text"],
     input[type="email"],
     input[type="tel"],
-    select {
+    select,
+    textarea {
       width: 100%;
       background: var(--bg-input);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 13px 16px;
+      border-radius: var(--r);
+      padding: 13px 15px;
       color: var(--cream);
-      font-family: var(--font-sans);
-      font-size: 14px;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.3;
       outline: none;
-      transition: border-color var(--transition), box-shadow var(--transition);
       -webkit-appearance: none;
       appearance: none;
+      transition: border-color var(--t), box-shadow var(--t);
     }
 
-    input::placeholder { color: #4A4A45; }
+    input::placeholder, textarea::placeholder { color: #4a4843; }
 
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px rgba(237,238,232,0.06);
+      box-shadow: 0 0 0 3px rgba(184,151,90,.1);
     }
+    input.err, select.err { border-color: var(--danger); }
 
-    input.error, select.error {
-      border-color: var(--danger);
-    }
+    .field-err { font-size: 11px; color: var(--danger); display: none; margin-top: 2px; }
+    .field-err.on { display: block; }
 
-    .field-error {
-      font-size: 11px;
-      color: var(--danger);
-      display: none;
-    }
-
-    .field-error.show { display: block; }
-
-    /* Select custom arrow */
-    .select-wrap { position: relative; }
-    .select-wrap::after {
+    /* Select arrow */
+    .sel-wrap { position: relative; }
+    .sel-wrap::after {
       content: '';
       position: absolute;
-      right: 16px;
-      top: 50%;
+      right: 14px; top: 50%;
       transform: translateY(-50%);
-      width: 0;
-      height: 0;
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
+      border: 4px solid transparent;
       border-top: 5px solid var(--cream-dim);
       pointer-events: none;
     }
-
     select option { background: var(--bg-card); color: var(--cream); }
 
-    /* ── Radio / Card choices ─────────────────────────────────── */
-    .choices { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
-    .choices-row { flex-direction: row; flex-wrap: wrap; }
-    .choices-row .choice-card { flex: 1; min-width: 120px; }
+    /* ── Arrondissements grid ────────────────────────────────── */
+    .arr-label { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--cream-dim); margin-bottom: 10px; }
+    .arr-hint  { font-size: 11px; color: var(--cream-dim); margin-top: 8px; opacity: .6; }
 
-    .choice-card {
-      position: relative;
-      cursor: pointer;
-    }
-
-    .choice-card input[type="radio"],
-    .choice-card input[type="checkbox"] {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .choice-label {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 14px;
-      color: var(--cream);
-      transition: border-color var(--transition), background var(--transition);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .choice-icon {
-      font-size: 16px;
-      flex-shrink: 0;
-      width: 20px;
-      text-align: center;
-    }
-
-    .choice-inner { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-    .choice-name { font-size: 14px; font-weight: 500; }
-    .choice-desc { font-size: 12px; color: var(--cream-dim); }
-
-    .choice-check {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: border-color var(--transition), background var(--transition);
-    }
-
-    .choice-check::after {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--bg);
-      opacity: 0;
-      transition: opacity var(--transition);
-    }
-
-    .choice-card input:checked + .choice-label {
-      border-color: var(--gold);
-      background: rgba(200,169,110,0.07);
-    }
-
-    .choice-card input:checked + .choice-label .choice-check {
-      border-color: var(--gold);
-      background: var(--gold);
-    }
-
-    .choice-card input:checked + .choice-label .choice-check::after {
-      opacity: 1;
-    }
-
-    /* ── Arrondissements multi-select ────────────────────────── */
     .arr-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 7px;
     }
 
     .arr-btn {
       background: var(--bg-input);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 6px;
+      border-radius: 7px;
+      padding: 10px 4px;
       color: var(--cream-dim);
-      font-family: var(--font-sans);
+      font-family: var(--sans);
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       text-align: center;
-      transition: border-color var(--transition), color var(--transition), background var(--transition);
+      transition: border-color var(--t), color var(--t), background var(--t);
+      -webkit-tap-highlight-color: transparent;
+      min-height: 40px;
     }
-
     .arr-btn:hover { border-color: var(--cream-dim); color: var(--cream); }
+    .arr-btn.on { border-color: var(--gold); background: rgba(184,151,90,.1); color: var(--gold); }
 
-    .arr-btn.selected {
+    /* ── Choice cards ────────────────────────────────────────── */
+    .choices { display: flex; flex-direction: column; gap: 9px; }
+    .choices.row { flex-direction: row; flex-wrap: wrap; }
+    .choices.row .choice { flex: 1; min-width: 120px; }
+
+    .choice { position: relative; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .choice input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+    .choice-body {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 15px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      transition: border-color var(--t), background var(--t);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .choice input:checked + .choice-body {
       border-color: var(--gold);
-      background: rgba(200,169,110,0.1);
-      color: var(--gold);
+      background: rgba(184,151,90,.08);
     }
 
-    .arr-hint {
-      font-size: 11px;
-      color: var(--cream-dim);
-      margin-bottom: 28px;
-    }
+    .choice-ico { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+    .choice-txt { flex: 1; }
+    .choice-name { font-size: 14px; font-weight: 500; color: var(--cream); }
+    .choice-desc { font-size: 12px; color: var(--cream-dim); margin-top: 1px; }
 
-    /* ── Buttons ─────────────────────────────────────────────── */
-    .btn-primary {
+    .choice-tick {
+      width: 17px; height: 17px; border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: border-color var(--t), background var(--t);
+    }
+    .choice-tick::after {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--bg); opacity: 0;
+      transition: opacity var(--t);
+    }
+    .choice input:checked + .choice-body .choice-tick {
+      border-color: var(--gold); background: var(--gold);
+    }
+    .choice input:checked + .choice-body .choice-tick::after { opacity: 1; }
+
+    /* Compact yes/no */
+    .choice.compact .choice-body {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px 12px;
+    }
+    .choice.compact .choice-ico { font-size: 18px; margin-bottom: 4px; }
+    .choice.compact .choice-tick { display: none; }
+
+    /* ── Budget field (conditional) ─────────────────────────── */
+    #budget-row {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height .35s ease, opacity .3s ease, margin .3s ease;
+      margin-top: 0;
+    }
+    #budget-row.open { max-height: 100px; opacity: 1; margin-top: 14px; }
+
+    /* ── Submit button ───────────────────────────────────────── */
+    .submit-wrap { margin-top: 44px; }
+
+    .btn-submit {
       width: 100%;
-      padding: 15px 24px;
+      padding: 16px 24px;
       background: var(--cream);
       color: var(--bg);
       border: none;
-      border-radius: var(--radius);
-      font-family: var(--font-sans);
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
+      border-radius: var(--r);
+      font-family: var(--sans);
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: .02em;
       cursor: pointer;
-      transition: background var(--transition), transform var(--transition);
+      transition: background var(--t), transform var(--t);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      min-height: 52px;
     }
+    .btn-submit:hover:not(:disabled) { background: #dedad4; }
+    .btn-submit:active:not(:disabled) { transform: scale(.99); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
 
-    .btn-primary:hover { background: #D8D9D3; }
-    .btn-primary:active { transform: scale(0.99); }
-
-    .btn-back {
-      background: none;
-      border: none;
-      color: var(--cream-dim);
-      font-family: var(--font-sans);
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 0;
-      margin-bottom: 24px;
-      transition: color var(--transition);
-    }
-
-    .btn-back:hover { color: var(--cream); }
-
-    .btn-actions { display: flex; flex-direction: column; gap: 12px; }
-
-    /* ── Disclaimer ──────────────────────────────────────────── */
     .disclaimer {
-      margin-top: 16px;
+      margin-top: 14px;
       font-size: 11px;
       color: var(--cream-dim);
-      opacity: 0.5;
+      opacity: .45;
       text-align: center;
       line-height: 1.5;
     }
 
-    /* ── Success screen ──────────────────────────────────────── */
-    .success-screen {
+    /* ── Success ─────────────────────────────────────────────── */
+    #success {
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 60px 0;
-      gap: 20px;
+      padding: 80px 0;
+      gap: 18px;
     }
-
-    .success-screen.show { display: flex; animation: fadeSlideIn 400ms ease; }
+    #success.on { display: flex; animation: fadeUp .4s ease; }
 
     .success-icon {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: 1.5px solid var(--gold);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      margin-bottom: 8px;
+      width: 60px; height: 60px; border-radius: 50%;
+      border: 1px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 6px;
     }
-
-    .success-title {
-      font-family: var(--font-serif);
-      font-size: 26px;
-      color: var(--cream);
-    }
-
-    .success-subtitle {
-      font-size: 14px;
-      color: var(--cream-dim);
-      max-width: 340px;
-      line-height: 1.6;
-    }
-
-    .success-cta {
-      margin-top: 16px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
+    .success-title { font-family: var(--serif); font-size: 28px; font-weight: 300; }
+    .success-sub { font-size: 14px; color: var(--cream-dim); max-width: 320px; line-height: 1.6; }
+    .success-link {
+      margin-top: 12px;
+      padding: 11px 22px;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--r);
       color: var(--cream-dim);
       font-size: 13px;
       text-decoration: none;
-      transition: border-color var(--transition), color var(--transition);
+      transition: border-color var(--t), color var(--t);
+    }
+    .success-link:hover { border-color: var(--cream); color: var(--cream); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .success-cta:hover { border-color: var(--cream); color: var(--cream); }
+    /* ══ MOBILE ═══════════════════════════════════════════════ */
+    @media (max-width: 860px) {
+      .page { grid-template-columns: 1fr; min-height: auto; }
 
-    /* ── Mobile ──────────────────────────────────────────────── */
-    @media (max-width: 900px) {
-      .page { grid-template-columns: 1fr; }
       .panel-left {
         position: relative;
         height: auto;
-        padding: 32px 24px 28px;
+        padding: 28px 20px 24px;
         border-right: none;
         border-bottom: 1px solid var(--border);
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0;
       }
-      .left-body { padding: 24px 0 16px; }
-      .left-headline { font-size: 24px; }
-      .left-desc { font-size: 14px; margin-bottom: 24px; }
-      .trust-list { flex-direction: row; flex-wrap: wrap; gap: 10px; }
-      .trust-item { font-size: 12px; }
-      .left-footer { display: none; }
-      .panel-right { padding: 32px 20px 60px; }
+
+      .panel-left::after { display: none; }
+
+      .logo { margin-bottom: 0; margin-right: auto; }
+      .logo svg { width: 72px; }
+
+      .left-content { display: none; }
+      .left-footer   { display: none; }
+
+      /* Mobile trust strip under logo */
+      .mobile-strip {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        width: 100%;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+      .mobile-strip-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--cream-dim);
+      }
+      .mobile-strip-dot {
+        width: 4px; height: 4px;
+        border-radius: 50%; background: var(--gold); flex-shrink: 0;
+      }
+
+      .panel-right { padding: 32px 20px 80px; }
+      .form-shell { max-width: 100%; }
+
       .arr-grid { grid-template-columns: repeat(4, 1fr); }
+      .field-row { grid-template-columns: 1fr; }
+
+      .section-sep { margin: 28px 0 22px; }
     }
 
-    @media (max-width: 480px) {
-      .panel-left { padding: 24px 20px 20px; }
-      .left-headline { font-size: 21px; }
-      .field-row { grid-template-columns: 1fr; }
-      .arr-grid { grid-template-columns: repeat(4, 1fr); }
-      .choices-row { flex-direction: column; }
+    @media (max-width: 400px) {
+      .arr-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+      .arr-btn { font-size: 11px; padding: 9px 3px; }
     }
   </style>
 </head>
@@ -556,441 +461,309 @@
 
 <div class="page">
 
-  <!-- ══ LEFT PANEL ══════════════════════════════════════════════ -->
+  <!-- ══ LEFT ══════════════════════════════════════════════════ -->
   <aside class="panel-left">
-
-    <a href="https://www.atombuyersclub.fr" target="_blank" class="logo">
-      <svg width="69" height="20" viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <path d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144ZM20.4549 19.7444C17.5149 19.7444 16.1349 17.5544 16.1349 14.7344L16.1349 5.43444 14.2449 5.43444 14.2449 5.01444C16.6449 4.77444 18.5049 3.24444 18.9849 0.514443L19.4049 0.514443 19.4049 4.23444 23.8749 4.23444 23.3649 5.43444 19.4049 5.43444 19.4049 14.4044C19.4049 16.4144 20.3049 17.8544 21.8049 17.8544 23.0949 17.8544 23.8449 16.8044 24.0849 15.6944L24.4449 15.7544C24.1749 17.9144 22.6149 19.7444 20.4549 19.7444ZM31.8887 19.7444C27.6287 19.7444 24.2687 16.2644 24.2687 11.7644 24.2687 7.02444 27.7487 3.93444 31.8287 3.93444 35.9687 3.93444 39.3887 7.23445 39.3887 11.8244 39.3887 16.5044 36.0587 19.7444 31.8887 19.7444ZM27.7787 12.4244C28.3187 16.5944 30.3287 19.4744 32.8187 19.1444 35.3387 18.8144 36.4187 15.3344 35.8487 11.1044 35.3087 6.93444 33.2987 4.17444 30.8687 4.53444 28.3487 4.89444 27.2687 8.34445 27.7787 12.4244ZM58.6606 19.4444L58.6606 19.0544C60.1306 19.0544 61.1806 18.4844 60.9106 16.4444L59.9506 9.57444C59.5906 7.05444 58.5406 5.73444 56.8306 5.73444 55.0604 5.73444 54.0704 7.14444 53.8604 8.73444 53.8904 9.03444 53.9204 9.36445 53.9204 9.69445L53.9204 16.4144C53.9204 18.4844 54.8204 19.0544 56.0206 19.0544L56.0206 19.4444 48.7004 19.4444 48.7004 19.0544C49.8704 19.0544 50.7104 18.4844 50.7104 16.4144L50.7104 10.2044C50.7104 7.29445 49.5404 5.70444 47.5604 5.70444 45.9104 5.70444 44.6504 7.08444 44.4704 8.52444L44.4704 16.4144C44.4704 18.4844 45.3104 19.0544 46.4804 19.0544L46.4804 19.4444 39.1304 19.4444 39.1304 19.0544C40.3304 19.0544 41.2304 18.4844 41.2304 16.4144L41.2304 7.50445C41.2304 6.03444 40.6304 5.55444 39.2504 5.52445L39.2504 5.13444C40.8404 5.01444 42.6404 4.68444 44.2004 3.96444L44.4704 4.11444 44.4704 7.32444C45.0704 5.58444 46.7804 3.93444 49.0004 3.93444 51.2204 3.93444 53.0804 5.28444 53.7104 7.77445 54.1904 5.76444 55.8706 3.93444 58.3006 3.93444 60.8806 3.93444 62.6506 5.55444 63.2206 9.48445L64.2406 16.4444C64.5406 18.4844 65.4106 19.0544 66.6406 19.0544L66.6406 19.4444Z" fill="#EDEEE8"/>
+    <a href="https://www.atombuyersclub.fr" target="_blank" class="logo" aria-label="Atom Buyers Club">
+      <svg width="88" height="25" viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <path d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144ZM20.4549 19.7444C17.5149 19.7444 16.1349 17.5544 16.1349 14.7344L16.1349 5.43444 14.2449 5.43444 14.2449 5.01444C16.6449 4.77444 18.5049 3.24444 18.9849 0.514443L19.4049 0.514443 19.4049 4.23444 23.8749 4.23444 23.3649 5.43444 19.4049 5.43444 19.4049 14.4044C19.4049 16.4144 20.3049 17.8544 21.8049 17.8544 23.0949 17.8544 23.8449 16.8044 24.0849 15.6944L24.4449 15.7544C24.1749 17.9144 22.6149 19.7444 20.4549 19.7444ZM31.8887 19.7444C27.6287 19.7444 24.2687 16.2644 24.2687 11.7644 24.2687 7.02444 27.7487 3.93444 31.8287 3.93444 35.9687 3.93444 39.3887 7.23445 39.3887 11.8244 39.3887 16.5044 36.0587 19.7444 31.8887 19.7444ZM27.7787 12.4244C28.3187 16.5944 30.3287 19.4744 32.8187 19.1444 35.3387 18.8144 36.4187 15.3344 35.8487 11.1044 35.3087 6.93444 33.2987 4.17444 30.8687 4.53444 28.3487 4.89444 27.2687 8.34445 27.7787 12.4244ZM58.6606 19.4444L58.6606 19.0544C60.1306 19.0544 61.1806 18.4844 60.9106 16.4444L59.9506 9.57444C59.5906 7.05444 58.5406 5.73444 56.8306 5.73444 55.0604 5.73444 54.0704 7.14444 53.8604 8.73444 53.8904 9.03444 53.9204 9.36445 53.9204 9.69445L53.9204 16.4144C53.9204 18.4844 54.8204 19.0544 56.0206 19.0544L56.0206 19.4444 48.7004 19.4444 48.7004 19.0544C49.8704 19.0544 50.7104 18.4844 50.7104 16.4144L50.7104 10.2044C50.7104 7.29445 49.5404 5.70444 47.5604 5.70444 45.9104 5.70444 44.6504 7.08444 44.4704 8.52444L44.4704 16.4144C44.4704 18.4844 45.3104 19.0544 46.4804 19.0544L46.4804 19.4444 39.1304 19.4444 39.1304 19.0544C40.3304 19.0544 41.2304 18.4844 41.2304 16.4144L41.2304 7.50445C41.2304 6.03444 40.6304 5.55444 39.2504 5.52445L39.2504 5.13444C40.8404 5.01444 42.6404 4.68444 44.2004 3.96444L44.4704 4.11444 44.4704 7.32444C45.0704 5.58444 46.7804 3.93444 49.0004 3.93444 51.2204 3.93444 53.0804 5.28444 53.7104 7.77445 54.1904 5.76444 55.8706 3.93444 58.3006 3.93444 60.8806 3.93444 62.6506 5.55444 63.2206 9.48445L64.2406 16.4444C64.5406 18.4844 65.4106 19.0544 66.6406 19.0544L66.6406 19.4444Z" fill="#F5F2ED"/>
       </svg>
     </a>
 
-    <div class="left-body">
+    <div class="left-content">
       <p class="left-eyebrow">Investissement clé-en-main</p>
-      <h1 class="left-headline">
-        Votre projet immobilier,<br>
-        <em>sans les imprévus.</em>
-      </h1>
-      <p class="left-desc">
-        Partagez-nous votre projet en 2 minutes. Notre équipe vous contacte pour vous présenter les opportunités qui correspondent à votre profil.
-      </p>
-
+      <h1 class="left-headline">Votre projet immobilier,<br><em>sans les imprévus.</em></h1>
+      <p class="left-desc">Partagez-nous votre projet en 2 minutes. Notre équipe vous contacte pour vous présenter les opportunités qui correspondent à votre profil.</p>
       <ul class="trust-list">
-        <li class="trust-item">
-          <span class="trust-icon">✦</span>
-          0% marge sur les travaux
-        </li>
-        <li class="trust-item">
-          <span class="trust-icon">✦</span>
-          Neutralité totale & transparence
-        </li>
-        <li class="trust-item">
-          <span class="trust-icon">✦</span>
-          Accompagnement de A à Z
-        </li>
-        <li class="trust-item">
-          <span class="trust-icon">✦</span>
-          Sourcing exclusif hors marché
-        </li>
+        <li class="trust-item"><span class="trust-dot"></span>0% marge sur les travaux</li>
+        <li class="trust-item"><span class="trust-dot"></span>Neutralité totale & transparence</li>
+        <li class="trust-item"><span class="trust-dot"></span>Accompagnement de A à Z</li>
+        <li class="trust-item"><span class="trust-dot"></span>Sourcing exclusif hors marché</li>
       </ul>
     </div>
 
-    <p class="left-footer">© 2025 Atom Buyers Club — Tous droits réservés</p>
+    <!-- Mobile only trust strip -->
+    <div class="mobile-strip">
+      <span class="mobile-strip-item"><span class="mobile-strip-dot"></span>0% marge travaux</span>
+      <span class="mobile-strip-item"><span class="mobile-strip-dot"></span>Clé-en-main</span>
+      <span class="mobile-strip-item"><span class="mobile-strip-dot"></span>Sourcing exclusif</span>
+    </div>
+
+    <p class="left-footer">© 2025 Atom Buyers Club</p>
   </aside>
 
-  <!-- ══ RIGHT PANEL ══════════════════════════════════════════════ -->
+  <!-- ══ RIGHT (form) ══════════════════════════════════════════ -->
   <main class="panel-right">
-    <div class="form-wrapper">
+    <div class="form-shell">
 
-      <!-- Progress -->
-      <div class="progress-header">
-        <span class="progress-label" id="step-label">Vos coordonnées</span>
-        <span class="progress-steps" id="step-counter">1 / 4</span>
-      </div>
-      <div class="progress-bar-track">
-        <div class="progress-bar-fill" id="progress-fill" style="width: 25%"></div>
+      <div class="form-header">
+        <h2 class="form-title">Parlez-nous de votre projet</h2>
+        <p class="form-sub">Quelques informations pour personnaliser votre accompagnement.</p>
       </div>
 
-      <form id="lead-form" style="margin-top: 36px;" novalidate>
+      <form id="form" novalidate>
 
-        <!-- ── ÉTAPE 1 — Identité ──────────────────────────────── -->
-        <div class="step active" id="step-1">
-          <h2 class="step-title">Faisons connaissance</h2>
-          <p class="step-subtitle">Ces informations nous permettent de personnaliser votre accompagnement.</p>
+        <!-- ── 01 · COORDONNÉES ─────────────────────────────── -->
+        <div class="section-sep visible" id="sep-1">
+          <span class="sep-num">01</span>
+          <span class="sep-line"></span>
+          <span class="sep-label">Vos coordonnées</span>
+        </div>
 
-          <div class="field-group">
-            <div class="field-row">
-              <div class="field">
-                <label for="prenom">Prénom</label>
-                <input type="text" id="prenom" name="prenom" placeholder="Jean" autocomplete="given-name" />
-                <span class="field-error" id="err-prenom">Prénom requis</span>
+        <div class="fields">
+          <div class="field-row">
+            <div class="field">
+              <label for="prenom">Prénom</label>
+              <input type="text" id="prenom" name="prenom" placeholder="Jean" autocomplete="given-name" />
+              <span class="field-err" id="e-prenom">Prénom requis</span>
+            </div>
+            <div class="field">
+              <label for="nom">Nom</label>
+              <input type="text" id="nom" name="nom" placeholder="Dupont" autocomplete="family-name" />
+              <span class="field-err" id="e-nom">Nom requis</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="jean@exemple.com" autocomplete="email" inputmode="email" />
+            <span class="field-err" id="e-email">Email valide requis</span>
+          </div>
+          <div class="field">
+            <label for="tel">Téléphone</label>
+            <input type="tel" id="tel" name="tel" placeholder="06 00 00 00 00" autocomplete="tel" inputmode="tel" />
+            <span class="field-err" id="e-tel">Numéro requis</span>
+          </div>
+        </div>
+
+        <!-- ── 02 · PROJET ──────────────────────────────────── -->
+        <div class="section-sep" id="sep-2">
+          <span class="sep-num">02</span>
+          <span class="sep-line"></span>
+          <span class="sep-label">Votre projet</span>
+        </div>
+
+        <div class="fields">
+          <div>
+            <p class="arr-label">Arrondissements souhaités <span style="font-weight:300;text-transform:none;letter-spacing:0;opacity:.6">(optionnel)</span></p>
+            <div class="arr-grid" id="arr-grid"></div>
+            <p class="arr-hint">Plusieurs choix possibles</p>
+          </div>
+
+          <div class="field" style="margin-top:6px;">
+            <label>Horizon du projet</label>
+            <div class="choices">
+              <label class="choice">
+                <input type="radio" name="timing" value="asap" />
+                <span class="choice-body">
+                  <span class="choice-ico">⚡</span>
+                  <span class="choice-txt"><span class="choice-name">Dès que possible</span><span class="choice-desc">Je suis prêt à démarrer</span></span>
+                  <span class="choice-tick"></span>
+                </span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="timing" value="3mois" />
+                <span class="choice-body">
+                  <span class="choice-ico">📅</span>
+                  <span class="choice-txt"><span class="choice-name">Dans 3 mois</span><span class="choice-desc">Je finalise mes démarches</span></span>
+                  <span class="choice-tick"></span>
+                </span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="timing" value="6mois" />
+                <span class="choice-body">
+                  <span class="choice-ico">🗓</span>
+                  <span class="choice-txt"><span class="choice-name">Dans 6 mois</span><span class="choice-desc">Je me prépare</span></span>
+                  <span class="choice-tick"></span>
+                </span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="timing" value="reflexion" />
+                <span class="choice-body">
+                  <span class="choice-ico">💭</span>
+                  <span class="choice-txt"><span class="choice-name">Je réfléchis encore</span><span class="choice-desc">En phase d'exploration</span></span>
+                  <span class="choice-tick"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 03 · FINANCEMENT ─────────────────────────────── -->
+        <div class="section-sep" id="sep-3">
+          <span class="sep-num">03</span>
+          <span class="sep-line"></span>
+          <span class="sep-label">Votre financement</span>
+        </div>
+
+        <div class="fields">
+          <div class="field">
+            <label>Accord de financement bancaire ?</label>
+            <div class="choices row" style="margin-top:4px;">
+              <label class="choice compact">
+                <input type="radio" name="accord" value="oui" />
+                <span class="choice-body">
+                  <span class="choice-ico">✓</span>
+                  <span class="choice-name">Oui</span>
+                </span>
+              </label>
+              <label class="choice compact">
+                <input type="radio" name="accord" value="non" />
+                <span class="choice-body">
+                  <span class="choice-ico">✗</span>
+                  <span class="choice-name">Non</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Mode de financement</label>
+            <div class="choices" style="margin-top:4px;">
+              <label class="choice">
+                <input type="radio" name="financement" value="comptant" onchange="toggleBudget()" />
+                <span class="choice-body">
+                  <span class="choice-ico">💰</span>
+                  <span class="choice-txt"><span class="choice-name">Paiement comptant</span><span class="choice-desc">Achat sans emprunt</span></span>
+                  <span class="choice-tick"></span>
+                </span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="financement" value="emprunt" onchange="toggleBudget()" />
+                <span class="choice-body">
+                  <span class="choice-ico">🏦</span>
+                  <span class="choice-txt"><span class="choice-name">Emprunt bancaire</span><span class="choice-desc">Financement via crédit</span></span>
+                  <span class="choice-tick"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div id="budget-row">
+            <div class="field">
+              <label for="capacite">Capacité d'emprunt estimée</label>
+              <div class="sel-wrap">
+                <select id="capacite" name="capacite">
+                  <option value="" disabled selected>Sélectionnez une tranche</option>
+                  <option value="moins-150k">Moins de 150 000 €</option>
+                  <option value="150-250k">150 000 € — 250 000 €</option>
+                  <option value="250-400k">250 000 € — 400 000 €</option>
+                  <option value="400-600k">400 000 € — 600 000 €</option>
+                  <option value="600k-1m">600 000 € — 1 000 000 €</option>
+                  <option value="plus-1m">Plus de 1 000 000 €</option>
+                </select>
               </div>
-              <div class="field">
-                <label for="nom">Nom</label>
-                <input type="text" id="nom" name="nom" placeholder="Dupont" autocomplete="family-name" />
-                <span class="field-error" id="err-nom">Nom requis</span>
-              </div>
             </div>
-
-            <div class="field">
-              <label for="email">Adresse email</label>
-              <input type="email" id="email" name="email" placeholder="jean@exemple.com" autocomplete="email" />
-              <span class="field-error" id="err-email">Email valide requis</span>
-            </div>
-
-            <div class="field">
-              <label for="tel">Téléphone</label>
-              <input type="tel" id="tel" name="tel" placeholder="06 00 00 00 00" autocomplete="tel" />
-              <span class="field-error" id="err-tel">Numéro requis</span>
-            </div>
-          </div>
-
-          <div class="btn-actions">
-            <button type="button" class="btn-primary" onclick="goNext(1)">
-              Continuer <span>→</span>
-            </button>
-          </div>
-          <p class="disclaimer">Vos données sont confidentielles et ne seront jamais partagées.</p>
-        </div>
-
-        <!-- ── ÉTAPE 2 — Projet ───────────────────────────────── -->
-        <div class="step" id="step-2">
-          <button type="button" class="btn-back" onclick="goBack(2)">← Retour</button>
-          <h2 class="step-title">Votre projet</h2>
-          <p class="step-subtitle">Sélectionnez le ou les arrondissements qui vous intéressent.</p>
-
-          <div class="arr-grid" id="arr-grid">
-            <!-- Paris 1er–20ème -->
-          </div>
-          <p class="arr-hint">Plusieurs choix possibles · Laissez vide si indifférent</p>
-
-          <div class="field-group">
-            <div class="field">
-              <label>Quand souhaitez-vous réaliser ce projet ?</label>
-            </div>
-          </div>
-
-          <div class="choices" id="timing-choices">
-            <label class="choice-card">
-              <input type="radio" name="timing" value="asap" />
-              <span class="choice-label">
-                <span class="choice-icon">⚡</span>
-                <span class="choice-inner">
-                  <span class="choice-name">Dès que possible</span>
-                  <span class="choice-desc">Je suis prêt à démarrer maintenant</span>
-                </span>
-                <span class="choice-check"></span>
-              </span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" name="timing" value="3mois" />
-              <span class="choice-label">
-                <span class="choice-icon">📅</span>
-                <span class="choice-inner">
-                  <span class="choice-name">Dans 3 mois</span>
-                  <span class="choice-desc">Je finalise mes démarches</span>
-                </span>
-                <span class="choice-check"></span>
-              </span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" name="timing" value="6mois" />
-              <span class="choice-label">
-                <span class="choice-icon">🗓</span>
-                <span class="choice-inner">
-                  <span class="choice-name">Dans 6 mois</span>
-                  <span class="choice-desc">Je me prépare</span>
-                </span>
-                <span class="choice-check"></span>
-              </span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" name="timing" value="reflexion" />
-              <span class="choice-label">
-                <span class="choice-icon">💭</span>
-                <span class="choice-inner">
-                  <span class="choice-name">Je réfléchis encore</span>
-                  <span class="choice-desc">En phase d'exploration</span>
-                </span>
-                <span class="choice-check"></span>
-              </span>
-            </label>
-          </div>
-
-          <div class="btn-actions">
-            <button type="button" class="btn-primary" onclick="goNext(2)">
-              Continuer <span>→</span>
-            </button>
           </div>
         </div>
 
-        <!-- ── ÉTAPE 3 — Financement ──────────────────────────── -->
-        <div class="step" id="step-3">
-          <button type="button" class="btn-back" onclick="goBack(3)">← Retour</button>
-          <h2 class="step-title">Votre financement</h2>
-          <p class="step-subtitle">Pour vous proposer les bons projets, nous avons besoin de comprendre votre capacité d'investissement.</p>
-
-          <div class="field-group">
-            <div class="field">
-              <label>Avez-vous un accord de financement bancaire ?</label>
-            </div>
-          </div>
-
-          <div class="choices choices-row" style="margin-bottom: 20px;">
-            <label class="choice-card">
-              <input type="radio" name="accord_banque" value="oui" id="accord-oui" onchange="toggleFinancement()" />
-              <span class="choice-label" style="flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 18px;">
-                <span class="choice-icon" style="font-size: 20px;">✓</span>
-                <span class="choice-name" style="margin-top: 6px;">Oui</span>
-                <span class="choice-check" style="display:none"></span>
-              </span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" name="accord_banque" value="non" id="accord-non" onchange="toggleFinancement()" />
-              <span class="choice-label" style="flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 18px;">
-                <span class="choice-icon" style="font-size: 20px;">✗</span>
-                <span class="choice-name" style="margin-top: 6px;">Non</span>
-                <span class="choice-check" style="display:none"></span>
-              </span>
-            </label>
-          </div>
-
-          <div class="field-group" id="financement-type-section" style="margin-bottom:0;">
-            <div class="field">
-              <label>Mode de financement & budget</label>
-            </div>
-          </div>
-
-          <div class="choices" id="financement-choices" style="margin-bottom:28px;">
-            <label class="choice-card">
-              <input type="radio" name="financement" value="comptant" onchange="toggleBudget()" />
-              <span class="choice-label">
-                <span class="choice-icon">💰</span>
-                <span class="choice-inner">
-                  <span class="choice-name">Paiement comptant</span>
-                  <span class="choice-desc">Achat sans recours à l'emprunt</span>
-                </span>
-                <span class="choice-check"></span>
-              </span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" name="financement" value="emprunt" onchange="toggleBudget()" />
-              <span class="choice-label">
-                <span class="choice-icon">🏦</span>
-                <span class="choice-inner">
-                  <span class="choice-name">Emprunt bancaire</span>
-                  <span class="choice-desc">Financement via crédit immobilier</span>
-                </span>
-                <span class="choice-check"></span>
-              </span>
-            </label>
-          </div>
-
-          <div class="field" id="budget-field" style="display:none; margin-bottom: 28px;">
-            <label for="capacite">Capacité d'emprunt estimée</label>
-            <div class="select-wrap">
-              <select id="capacite" name="capacite">
-                <option value="" disabled selected>Sélectionnez une tranche</option>
-                <option value="moins-150k">Moins de 150 000 €</option>
-                <option value="150-250k">150 000 € — 250 000 €</option>
-                <option value="250-400k">250 000 € — 400 000 €</option>
-                <option value="400-600k">400 000 € — 600 000 €</option>
-                <option value="600k-1m">600 000 € — 1 000 000 €</option>
-                <option value="plus-1m">Plus de 1 000 000 €</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="btn-actions">
-            <button type="button" class="btn-primary" onclick="goNext(3)">
-              Continuer <span>→</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- ── ÉTAPE 4 — Confirmation ─────────────────────────── -->
-        <div class="step" id="step-4">
-          <button type="button" class="btn-back" onclick="goBack(4)">← Retour</button>
-          <h2 class="step-title">Récapitulatif</h2>
-          <p class="step-subtitle">Vérifiez vos informations avant d'envoyer.</p>
-
-          <div id="recap" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 28px; display: flex; flex-direction: column; gap: 14px;"></div>
-
-          <div class="btn-actions">
-            <button type="submit" class="btn-primary" id="submit-btn">
-              Envoyer ma demande ✦
-            </button>
-          </div>
-          <p class="disclaimer">En soumettant ce formulaire, vous acceptez d'être contacté par notre équipe. Pas de spam, jamais.</p>
+        <!-- ── SUBMIT ────────────────────────────────────────── -->
+        <div class="submit-wrap">
+          <button type="submit" class="btn-submit" id="btn-submit">
+            Envoyer ma demande &nbsp;✦
+          </button>
+          <p class="disclaimer">Vos données sont confidentielles. Pas de spam, jamais.</p>
         </div>
 
       </form>
 
       <!-- ── SUCCESS ─────────────────────────────────────────── -->
-      <div class="success-screen" id="success-screen">
+      <div id="success">
         <div class="success-icon">✦</div>
         <h2 class="success-title">Demande envoyée !</h2>
-        <p class="success-subtitle">
-          Merci <strong id="success-name"></strong>. Notre équipe vous contactera dans les 24h pour discuter de votre projet.
-        </p>
-        <a href="https://www.atombuyersclub.fr" target="_blank" class="success-cta">
-          Découvrir nos projets →
-        </a>
+        <p class="success-sub">Merci <strong id="s-name"></strong>. Notre équipe vous contactera dans les 24h pour discuter de votre projet.</p>
+        <a href="https://www.atombuyersclub.fr" target="_blank" class="success-link">Découvrir nos projets →</a>
       </div>
 
-    </div><!-- /form-wrapper -->
+    </div>
   </main>
-
-</div><!-- /page -->
+</div>
 
 <script>
-  /* ── Arrondissements ────────────────────────────────────────── */
-  const arrGrid = document.getElementById('arr-grid');
-  const selected = new Set();
-
-  for (let i = 1; i <= 20; i++) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'arr-btn';
-    btn.dataset.arr = i;
-    btn.textContent = i < 10 ? `0${i}e` : `${i}e`;
-    btn.addEventListener('click', () => {
-      if (selected.has(i)) { selected.delete(i); btn.classList.remove('selected'); }
-      else { selected.add(i); btn.classList.add('selected'); }
-    });
-    arrGrid.appendChild(btn);
-  }
-
-  /* ── Financement toggles ─────────────────────────────────── */
-  function toggleBudget() {
-    const val = document.querySelector('input[name="financement"]:checked')?.value;
-    document.getElementById('budget-field').style.display = val === 'emprunt' ? 'block' : 'none';
-  }
-
-  function toggleFinancement() { /* no-op, kept for extensibility */ }
-
-  /* ── Step navigation ─────────────────────────────────────── */
-  const STEPS = 4;
-  const LABELS = ['Vos coordonnées', 'Votre projet', 'Votre financement', 'Récapitulatif'];
-  let currentStep = 1;
-
-  function setStep(n) {
-    document.querySelector('.step.active')?.classList.remove('active');
-    document.getElementById(`step-${n}`).classList.add('active');
-    document.getElementById('step-label').textContent = LABELS[n - 1];
-    document.getElementById('step-counter').textContent = `${n} / ${STEPS}`;
-    document.getElementById('progress-fill').style.width = `${(n / STEPS) * 100}%`;
-    currentStep = n;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    // On mobile, scroll form into view
-    document.querySelector('.panel-right').scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function goBack(n) { setStep(n - 1); }
-
-  function goNext(n) {
-    if (!validateStep(n)) return;
-    if (n === STEPS - 1) buildRecap();
-    setStep(n + 1);
-  }
-
-  /* ── Validation ──────────────────────────────────────────── */
-  function setError(id, show) {
-    const el = document.getElementById(id);
-    const input = el?.previousElementSibling;
-    el?.classList.toggle('show', show);
-    input?.classList.toggle('error', show);
-  }
-
-  function validateStep(n) {
-    if (n === 1) {
-      const prenom = document.getElementById('prenom').value.trim();
-      const nom = document.getElementById('nom').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const tel = document.getElementById('tel').value.trim();
-
-      let ok = true;
-      setError('err-prenom', !prenom); if (!prenom) ok = false;
-      setError('err-nom', !nom); if (!nom) ok = false;
-      setError('err-email', !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ok = false;
-      setError('err-tel', !tel); if (!tel) ok = false;
-      return ok;
-    }
-    if (n === 2) { return true; } // arrondissements & timing optionnels
-    if (n === 3) { return true; } // financement optionnel
-    return true;
-  }
-
-  /* ── Recap ───────────────────────────────────────────────── */
-  function buildRecap() {
-    const data = collectData();
-    const recap = document.getElementById('recap');
-    const rows = [
-      ['Identité', `${data.prenom} ${data.nom}`],
-      ['Email', data.email],
-      ['Téléphone', data.tel],
-      ['Arrondissements', data.arrondissements || 'Non précisé'],
-      ['Horizon', data.timing ? timingLabel(data.timing) : 'Non précisé'],
-      ['Accord bancaire', data.accord_banque ? (data.accord_banque === 'oui' ? 'Oui' : 'Non') : 'Non précisé'],
-      ['Financement', data.financement ? finLabel(data.financement) : 'Non précisé'],
-      data.capacite ? ['Budget emprunt', budgetLabel(data.capacite)] : null,
-    ].filter(Boolean);
-
-    recap.innerHTML = rows.map(([k, v]) => `
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;">
-        <span style="color:var(--cream-dim);white-space:nowrap;">${k}</span>
-        <span style="color:var(--cream);text-align:right;">${v}</span>
-      </div>
-    `).join('<hr style="border:none;border-top:1px solid var(--border);">');
-  }
-
-  function timingLabel(v) {
-    return { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' }[v] || v;
-  }
-  function finLabel(v) {
-    return { comptant: 'Paiement comptant', emprunt: 'Emprunt bancaire' }[v] || v;
-  }
-  function budgetLabel(v) {
-    return {
-      'moins-150k': '< 150 000 €', '150-250k': '150–250 k€', '250-400k': '250–400 k€',
-      '400-600k': '400–600 k€', '600k-1m': '600 k€–1 M€', 'plus-1m': '> 1 000 000 €'
-    }[v] || v;
-  }
-
-  /* ── Collect data ────────────────────────────────────────── */
-  function collectData() {
-    return {
-      prenom: document.getElementById('prenom').value.trim(),
-      nom: document.getElementById('nom').value.trim(),
-      email: document.getElementById('email').value.trim(),
-      tel: document.getElementById('tel').value.trim(),
-      arrondissements: [...selected].sort((a,b)=>a-b).map(i => `${i}e`).join(', ') || null,
-      timing: document.querySelector('input[name="timing"]:checked')?.value || null,
-      accord_banque: document.querySelector('input[name="accord_banque"]:checked')?.value || null,
-      financement: document.querySelector('input[name="financement"]:checked')?.value || null,
-      capacite: document.getElementById('capacite').value || null,
-    };
-  }
-
-  /* ── Submit ──────────────────────────────────────────────── */
-  document.getElementById('lead-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    btn.textContent = 'Envoi en cours…';
-    btn.disabled = true;
-
-    const data = collectData();
-    console.log('Lead data:', data); // Replace with your actual API call
-
-    // Simulated send (replace with fetch to your backend / webhook)
-    await new Promise(r => setTimeout(r, 1000));
-
-    document.getElementById('lead-form').style.display = 'none';
-    document.querySelector('.progress-header').style.display = 'none';
-    document.querySelector('.progress-bar-track').style.display = 'none';
-    document.getElementById('success-name').textContent = data.prenom;
-    document.getElementById('success-screen').classList.add('show');
+/* ── Arrondissements ───────────────────────────────────────── */
+const selected = new Set();
+const grid = document.getElementById('arr-grid');
+for (let i = 1; i <= 20; i++) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'arr-btn';
+  b.dataset.v = i;
+  b.textContent = (i < 10 ? '0' : '') + i + 'e';
+  b.addEventListener('click', () => {
+    selected.has(i) ? (selected.delete(i), b.classList.remove('on'))
+                    : (selected.add(i),    b.classList.add('on'));
   });
+  grid.appendChild(b);
+}
+
+/* ── Budget toggle ─────────────────────────────────────────── */
+function toggleBudget() {
+  const v = document.querySelector('input[name="financement"]:checked')?.value;
+  document.getElementById('budget-row').classList.toggle('open', v === 'emprunt');
+}
+
+/* ── Scroll-triggered separators ──────────────────────────── */
+const seps = document.querySelectorAll('.section-sep');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.3 });
+seps.forEach(s => io.observe(s));
+
+/* ── Validation ────────────────────────────────────────────── */
+function setErr(id, show) {
+  const span = document.getElementById('e-' + id);
+  const input = document.getElementById(id);
+  span?.classList.toggle('on', show);
+  input?.classList.toggle('err', show);
+}
+
+function validate() {
+  const prenom = document.getElementById('prenom').value.trim();
+  const nom    = document.getElementById('nom').value.trim();
+  const email  = document.getElementById('email').value.trim();
+  const tel    = document.getElementById('tel').value.trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  setErr('prenom', !prenom);
+  setErr('nom',    !nom);
+  setErr('email',  !emailOk);
+  setErr('tel',    !tel);
+
+  return prenom && nom && emailOk && tel;
+}
+
+/* ── Submit ────────────────────────────────────────────────── */
+document.getElementById('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!validate()) {
+    document.getElementById('prenom').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours…';
+
+  const data = {
+    prenom:       document.getElementById('prenom').value.trim(),
+    nom:          document.getElementById('nom').value.trim(),
+    email:        document.getElementById('email').value.trim(),
+    tel:          document.getElementById('tel').value.trim(),
+    arrondissements: [...selected].sort((a,b)=>a-b).map(i=>`${i}e`).join(', ') || null,
+    timing:       document.querySelector('input[name="timing"]:checked')?.value || null,
+    accord:       document.querySelector('input[name="accord"]:checked')?.value || null,
+    financement:  document.querySelector('input[name="financement"]:checked')?.value || null,
+    capacite:     document.getElementById('capacite').value || null,
+  };
+
+  console.log('Lead:', data); // → replace with your webhook / API call
+
+  await new Promise(r => setTimeout(r, 900));
+
+  document.getElementById('form').style.display = 'none';
+  document.querySelector('.form-header').style.display = 'none';
+  document.getElementById('s-name').textContent = data.prenom;
+  document.getElementById('success').classList.add('on');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 </script>
 
 </body>
