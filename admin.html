@@ -559,7 +559,7 @@ function renderTable(leads) {
   tbody.innerHTML = leads.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td class="muted">${fmtDate(l.created_at)}</td>
-      <td><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${l.updated_at ? ' <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4caf7d;vertical-align:middle;margin-left:4px" title="Dossier mis à jour"></span>' : ''}</td>
+      <td><strong>${esc(l.prenom)} ${esc(l.nom)}</strong></td>
       <td class="muted">${esc(l.email)}</td>
       <td class="muted">${esc(l.tel)}</td>
       <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
