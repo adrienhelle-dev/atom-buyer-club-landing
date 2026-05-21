@@ -849,7 +849,7 @@
         <option value="19e">19e</option> <option value="20e">20e</option>
       </select>
       <div style="margin-left:auto">
-        <button class="btn-new-project" onclick="setRoute('new-project')">+ Nouveau projet</button>
+        <button class="btn-new-project" onclick="startNewProject()">+ Nouveau projet</button>
       </div>
     </div>
     <div id="projects-container">
@@ -864,10 +864,10 @@
   <div class="view" id="view-new-project">
     <div class="np-header">
       <div>
-        <h2 class="np-title">Nouveau projet</h2>
-        <p class="np-sub">Crée une fiche projet à proposer aux leads matchants</p>
+        <h2 class="np-title" id="np-page-title">Nouveau projet</h2>
+        <p class="np-sub" id="np-page-sub">Crée une fiche projet à proposer aux leads matchants</p>
       </div>
-      <button class="btn-back" onclick="setRoute('projects')">← Retour</button>
+      <button class="btn-back" onclick="startNewProject(); setRoute('projects')">← Retour</button>
     </div>
 
     <div class="np-wrapper">
@@ -1162,9 +1162,10 @@ let token = null;
 let currentPage = 1;
 let totalLeads = 0;
 let searchTimer = null;
-let notesTimer   = null;
-let leadsCache   = [];
-let currentLead  = null;
+let notesTimer        = null;
+let leadsCache        = [];
+let currentLead       = null;
+let editingProjectId  = null;
 
 /* ── Auth ─────────────────────────────────────────────────── */
 function init() {
@@ -1275,7 +1276,7 @@ function renderProjects(projects) {
         <div class="projects-empty-icon">🏠</div>
         <div class="projects-empty-title">Aucun projet pour l'instant</div>
         <div class="projects-empty-sub">Crée ta première fiche pour la proposer aux leads matchants.</div>
-        <button class="btn-new-project" onclick="setRoute('new-project')">+ Créer un projet</button>
+        <button class="btn-new-project" onclick="startNewProject()">+ Créer un projet</button>
       </div>`;
     return;
   }
@@ -1341,12 +1342,24 @@ async function downloadPdf(projectId, btn) {
   }
 }
 
-function openProject(id) {
-  // TODO Tâche 4 : ouvrir la fiche édition / détail
+async function openProject(id) {
+  editingProjectId = id;
+  const res = await fetch(`/api/projects?id=${id}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (res.status === 401) { logout(); return; }
+  if (!res.ok) {
+    editingProjectId = null;
+    alert('Impossible de charger ce projet');
+    return;
+  }
+  const { project } = await res.json();
   setRoute('new-project');
-  // Pour l'instant, le formulaire d'édition n'est pas implémenté
-  // → on l'ajoutera dans la Tâche 4 (vue Nouveau/Éditer projet)
-  setTimeout(() => alert('Édition de projet : à implémenter en Tâche 4.\nProjet ID : ' + id), 100);
+  // populateProjectForm doit s'exécuter APRÈS le reset du router
+  setTimeout(() => populateProjectForm(project), 80);
+}
+
+function startNewProject() {
+  editingProjectId = null;
+  setRoute('new-project');
 }
 
 function fmtEuro(n) {
@@ -1410,9 +1423,70 @@ function resetNewProjectForm() {
   document.getElementById('np-public').checked = false;
   document.querySelectorAll('#np-eq-grid input[type=checkbox]').forEach(cb => { cb.checked = false; cb.parentElement.classList.remove('checked'); });
   notaireTouched = false;
+  // Titre selon le mode (édition vs création)
+  updateNpTitle();
   // Reset section visible
   showNpSection(1);
   recalc();
+}
+
+function updateNpTitle() {
+  const titleEl = document.getElementById('np-page-title');
+  const subEl   = document.getElementById('np-page-sub');
+  if (!titleEl || !subEl) return;
+  if (editingProjectId) {
+    titleEl.textContent = 'Modifier le projet';
+    subEl.textContent   = 'Mets à jour les informations puis enregistre';
+  } else {
+    titleEl.textContent = 'Nouveau projet';
+    subEl.textContent   = 'Crée une fiche projet à proposer aux leads matchants';
+  }
+}
+
+function populateProjectForm(p) {
+  if (!p) return;
+  // Texte / number
+  setVal('np-title',           p.title);
+  setVal('np-address',         p.address);
+  setVal('np-arr',             p.arrondissement);
+  setVal('np-surface',         p.surface_carrez);
+  setVal('np-floor',           p.floor);
+  setVal('np-metro-dist',      p.metro_distance);
+  setVal('np-metro-name',      p.metro_name);
+  setVal('np-dpe-avant',       p.dpe_avant);
+  setVal('np-dpe-apres',       p.dpe_apres);
+  setVal('np-description',     p.description);
+  setVal('np-price-fai',       p.price_fai);
+  setVal('np-fees-atom',       p.fees_atom ?? 8900);
+  setVal('np-fees-notaire',    p.fees_notaire);
+  setVal('np-budget-travaux',  p.budget_travaux ?? 35000);
+  setVal('np-budget-meuble',   p.budget_meuble ?? 3000);
+  setVal('np-loyer',           p.loyer_atom);
+  setVal('np-images',          (p.images || []).join(', '));
+  setVal('np-images-3d',       (p.images_3d || []).join(', '));
+  setVal('np-plan-2d',         p.plan_2d_url);
+  setVal('np-ameublement-desc',p.ameublement_desc);
+  setVal('np-status',          p.status || 'disponible');
+  // Checkboxes
+  document.getElementById('np-elevator').checked = !!p.has_elevator;
+  document.getElementById('np-public').checked   = !!p.public_visible;
+  // Équipements
+  const ameu = p.ameublement || {};
+  document.querySelectorAll('#np-eq-grid input[type=checkbox]').forEach(cb => {
+    cb.checked = !!ameu[cb.dataset.eq];
+    cb.parentElement.classList.toggle('checked', cb.checked);
+  });
+  // Marquer notaire comme "touché" pour ne pas recalculer auto
+  notaireTouched = p.fees_notaire != null;
+  // Titre + calculs
+  updateNpTitle();
+  recalc();
+}
+
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = v == null ? '' : v;
 }
 
 function showNpSection(n) {
@@ -1532,8 +1606,13 @@ async function saveProject(forceStatus) {
   const oldText = btn.textContent;
   btn.textContent = 'Enregistrement…';
 
-  const res = await fetch('/api/projects', {
-    method: 'POST',
+  // PUT si on édite un projet existant, POST sinon
+  const isEdit = !!editingProjectId;
+  const url    = isEdit ? `/api/projects?id=${editingProjectId}` : '/api/projects';
+  const method = isEdit ? 'PUT' : 'POST';
+
+  const res = await fetch(url, {
+    method,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
   });
@@ -1553,6 +1632,7 @@ async function saveProject(forceStatus) {
 
   btn.textContent = '✓ Enregistré';
   setTimeout(() => {
+    editingProjectId = null;
     resetNewProjectForm();
     setRoute('projects');
   }, 700);
