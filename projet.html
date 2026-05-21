@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>Projet — Atom Buyers Club</title>
+  <meta name="description" content="Fiche projet immobilier Atom Buyers Club"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:     #0f0e0c;
+      --bg2:    #161512;
+      --bg3:    #1e1d1a;
+      --cream:  #F5F2ED;
+      --cream-dim: #C7C2BB;
+      --border: #2c2b27;
+      --dim:    #7a7874;
+      --gold:   #B8975A;
+      --green:  #4caf7d;
+      --red:    #d95e5e;
+      --r:      8px;
+      --sans:   'DM Sans', system-ui, sans-serif;
+      --serif:  'Cormorant Garamond', Georgia, serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--cream); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    a { color: var(--gold); text-decoration: none; }
+
+    /* Header */
+    .header {
+      padding: 22px 32px; border-bottom: 1px solid var(--border);
+      background: var(--bg2); display: flex; align-items: center; justify-content: space-between;
+    }
+    .header svg { width: 64px; height: auto; }
+    .header-cta { font-size: 12px; color: var(--dim); letter-spacing: .12em; text-transform: uppercase; }
+
+    /* Loading + error states */
+    .state-screen { min-height: 60vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; padding: 40px; text-align: center; }
+    .state-icon { font-size: 48px; opacity: .5; }
+    .state-title { font-family: var(--serif); font-size: 24px; font-weight: 300; }
+    .state-sub { color: var(--dim); font-size: 14px; }
+
+    /* Main layout */
+    main { max-width: 1100px; margin: 0 auto; padding: 40px 32px; }
+    @media (max-width: 720px) { main { padding: 24px 16px; } }
+
+    /* Hero */
+    .hero { margin-bottom: 36px; }
+    .hero-eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .hero-title { font-family: var(--serif); font-size: 44px; font-weight: 300; line-height: 1.08; margin-bottom: 14px; }
+    @media (max-width: 720px) { .hero-title { font-size: 32px; } }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 14px 20px; font-size: 14px; color: var(--cream-dim); }
+    .hero-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+    .hero-meta-item .label { color: var(--dim); }
+
+    /* Gallery */
+    .gallery {
+      display: grid; gap: 8px; margin-bottom: 40px;
+      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-rows: 240px 240px;
+    }
+    .gallery img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 4px; background: var(--bg2);
+    }
+    .gallery img:first-child { grid-row: span 2; }
+    .gallery-empty {
+      grid-column: 1 / -1; grid-row: 1 / -1;
+      background: linear-gradient(135deg, var(--bg3), var(--bg2));
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-size: 72px; opacity: .3; min-height: 400px;
+    }
+    @media (max-width: 720px) {
+      .gallery { grid-template-columns: 1fr; grid-template-rows: 240px; }
+      .gallery img:first-child { grid-row: span 1; }
+      .gallery img:not(:first-child) { display: none; }
+    }
+
+    /* Content grid */
+    .content-grid { display: grid; grid-template-columns: 1fr 360px; gap: 40px; }
+    @media (max-width: 920px) { .content-grid { grid-template-columns: 1fr; gap: 28px; } }
+
+    .section { margin-bottom: 32px; }
+    .section-title {
+      font-family: var(--serif); font-size: 26px; font-weight: 300;
+      margin-bottom: 14px;
+    }
+    .section p { color: var(--cream-dim); font-size: 15px; line-height: 1.7; margin-bottom: 12px; }
+
+    /* Specs grid */
+    .specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
+    .spec { padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .spec-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
+    .spec-value { font-size: 15px; color: var(--cream); font-weight: 500; }
+
+    /* DPE */
+    .dpe-badges { display: inline-flex; gap: 6px; }
+    .dpe-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; padding: 3px 10px; border-radius: 4px;
+      background: var(--bg3); color: var(--cream);
+    }
+    .dpe-A { background: #00a651; color: white; }
+    .dpe-B { background: #50b848; color: white; }
+    .dpe-C { background: #aed136; color: white; }
+    .dpe-D { background: #fff200; color: #333; }
+    .dpe-E { background: #fdb913; color: white; }
+    .dpe-F { background: #ed8b00; color: white; }
+    .dpe-G { background: #ed1c24; color: white; }
+
+    /* Financial sidebar */
+    .finances {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 28px; position: sticky; top: 24px;
+      align-self: start;
+    }
+    .finances-title { font-family: var(--serif); font-size: 20px; font-weight: 400; margin-bottom: 6px; }
+    .finances-sub { font-size: 12px; color: var(--dim); margin-bottom: 22px; }
+    .fin-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .fin-row:last-of-type { border-bottom: none; }
+    .fin-row.fin-total { border-top: 1px solid var(--gold); border-bottom: none; margin-top: 6px; padding-top: 14px; font-weight: 500; }
+    .fin-key { color: var(--dim); }
+    .fin-val { color: var(--cream); font-weight: 500; }
+    .fin-val-big { color: var(--gold); font-family: var(--serif); font-size: 22px; }
+    .fin-disclaimer { font-size: 11px; color: var(--dim); font-style: italic; margin-top: 16px; line-height: 1.5; }
+
+    /* Interest form */
+    .interest-section {
+      margin-top: 50px; padding: 36px 32px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    }
+    .interest-title { font-family: var(--serif); font-size: 26px; font-weight: 300; margin-bottom: 6px; text-align: center; }
+    .interest-sub { color: var(--dim); font-size: 14px; text-align: center; margin-bottom: 24px; }
+    .interest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 540px; margin: 0 auto; }
+    @media (max-width: 540px) { .interest-grid { grid-template-columns: 1fr; } }
+    .interest-field { display: flex; flex-direction: column; gap: 6px; }
+    .interest-field.span-2 { grid-column: span 2; }
+    @media (max-width: 540px) { .interest-field.span-2 { grid-column: span 1; } }
+    .interest-field label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+    .interest-field input {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 12px 14px; color: var(--cream); font-family: var(--sans); font-size: 15px;
+      outline: none; transition: border-color .15s; width: 100%;
+    }
+    .interest-field input:focus { border-color: var(--gold); }
+    .btn-interest {
+      width: 100%; margin-top: 16px; max-width: 540px; margin-left: auto; margin-right: auto;
+      display: block; padding: 14px; background: var(--gold); border: none;
+      border-radius: var(--r); color: var(--bg); font-family: var(--sans);
+      font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .15s;
+    }
+    .btn-interest:hover { opacity: .87; }
+    .btn-interest:disabled { opacity: .5; cursor: not-allowed; }
+    .interest-status {
+      max-width: 540px; margin: 16px auto 0;
+      text-align: center; font-size: 14px; min-height: 22px;
+    }
+    .interest-success { color: var(--green); }
+    .interest-error   { color: var(--red); }
+
+    /* PDF link */
+    .btn-pdf {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
+      padding: 11px 22px; background: transparent; border: 1px solid var(--gold);
+      border-radius: var(--r); color: var(--gold); font-family: var(--sans);
+      font-size: 13px; font-weight: 500; transition: background .15s;
+    }
+    .btn-pdf:hover { background: rgba(184,151,90,.1); }
+
+    /* Footer */
+    footer {
+      text-align: center; padding: 36px 24px;
+      border-top: 1px solid var(--border); margin-top: 60px;
+      color: var(--dim); font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <a href="https://join.atombuyerclub.fr">
+    <svg viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <path d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144ZM20.4549 19.7444C17.5149 19.7444 16.1349 17.5544 16.1349 14.7344L16.1349 5.43444 14.2449 5.43444 14.2449 5.01444C16.6449 4.77444 18.5049 3.24444 18.9849 0.514443L19.4049 0.514443 19.4049 4.23444 23.8749 4.23444 23.3649 5.43444 19.4049 5.43444 19.4049 14.4044C19.4049 16.4144 20.3049 17.8544 21.8049 17.8544 23.0949 17.8544 23.8449 16.8044 24.0849 15.6944L24.4449 15.7544C24.1749 17.9144 22.6149 19.7444 20.4549 19.7444ZM31.8887 19.7444C27.6287 19.7444 24.2687 16.2644 24.2687 11.7644 24.2687 7.02444 27.7487 3.93444 31.8287 3.93444 35.9687 3.93444 39.3887 7.23445 39.3887 11.8244 39.3887 16.5044 36.0587 19.7444 31.8887 19.7444ZM27.7787 12.4244C28.3187 16.5944 30.3287 19.4744 32.8187 19.1444 35.3387 18.8144 36.4187 15.3344 35.8487 11.1044 35.3087 6.93444 33.2987 4.17444 30.8687 4.53444 28.3487 4.89444 27.2687 8.34445 27.7787 12.4244ZM58.6606 19.4444L58.6606 19.0544C60.1306 19.0544 61.1806 18.4844 60.9106 16.4444L59.9506 9.57444C59.5906 7.05444 58.5406 5.73444 56.8306 5.73444 55.0604 5.73444 54.0704 7.14444 53.8604 8.73444 53.8904 9.03444 53.9204 9.36445 53.9204 9.69445L53.9204 16.4144C53.9204 18.4844 54.8204 19.0544 56.0206 19.0544L56.0206 19.4444 48.7004 19.4444 48.7004 19.0544C49.8704 19.0544 50.7104 18.4844 50.7104 16.4144L50.7104 10.2044C50.7104 7.29445 49.5404 5.70444 47.5604 5.70444 45.9104 5.70444 44.6504 7.08444 44.4704 8.52444L44.4704 16.4144C44.4704 18.4844 45.3104 19.0544 46.4804 19.0544L46.4804 19.4444 39.1304 19.4444 39.1304 19.0544C40.3304 19.0544 41.2304 18.4844 41.2304 16.4144L41.2304 7.50445C41.2304 6.03444 40.6304 5.55444 39.2504 5.52445L39.2504 5.13444C40.8404 5.01444 42.6404 4.68444 44.2004 3.96444L44.4704 4.11444 44.4704 7.32444C45.0704 5.58444 46.7804 3.93444 49.0004 3.93444 51.2204 3.93444 53.0804 5.28444 53.7104 7.77445 54.1904 5.76444 55.8706 3.93444 58.3006 3.93444 60.8806 3.93444 62.6506 5.55444 63.2206 9.48445L64.2406 16.4444C64.5406 18.4844 65.4106 19.0544 66.6406 19.0544L66.6406 19.4444Z" fill="#F5F2ED"/>
+    </svg>
+  </a>
+  <span class="header-cta">Buyers Club</span>
+</header>
+
+<div id="loading" class="state-screen">
+  <div class="state-icon">⌛</div>
+  <div class="state-title">Chargement du projet…</div>
+</div>
+
+<div id="not-found" class="state-screen" style="display:none">
+  <div class="state-icon">🔍</div>
+  <div class="state-title">Projet introuvable</div>
+  <div class="state-sub">Le projet demandé n'existe pas ou n'est plus disponible.</div>
+  <a class="btn-pdf" href="https://join.atombuyerclub.fr">← Retour au site</a>
+</div>
+
+<main id="content" style="display:none">
+  <section class="hero">
+    <div class="hero-eyebrow" id="hero-eyebrow">Projet</div>
+    <h1 class="hero-title" id="hero-title">—</h1>
+    <div class="hero-meta" id="hero-meta"></div>
+  </section>
+
+  <div class="gallery" id="gallery"></div>
+
+  <div class="content-grid">
+    <div>
+      <section class="section" id="section-description" style="display:none">
+        <h2 class="section-title">Le bien</h2>
+        <p id="description-text"></p>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Caractéristiques</h2>
+        <div class="specs" id="specs"></div>
+      </section>
+
+      <section class="section" id="section-ameublement" style="display:none">
+        <h2 class="section-title">Ameublement</h2>
+        <p id="ameublement-text"></p>
+      </section>
+    </div>
+
+    <aside class="finances">
+      <h3 class="finances-title">Éléments financiers</h3>
+      <p class="finances-sub" id="finances-sub">Tous frais inclus</p>
+      <div class="fin-row"><span class="fin-key">Prix FAI</span><span class="fin-val" id="fin-price">—</span></div>
+      <div class="fin-row"><span class="fin-key">Accompagnement</span><span class="fin-val" id="fin-atom">—</span></div>
+      <div class="fin-row"><span class="fin-key">Frais de notaire</span><span class="fin-val" id="fin-notaire">—</span></div>
+      <div class="fin-row"><span class="fin-key">Travaux</span><span class="fin-val" id="fin-travaux">—</span></div>
+      <div class="fin-row"><span class="fin-key">Mobilier</span><span class="fin-val" id="fin-meuble">—</span></div>
+      <div class="fin-row fin-total"><span class="fin-key">Total</span><span class="fin-val fin-val-big" id="fin-total">—</span></div>
+      <div style="margin-top:18px">
+        <div class="fin-row"><span class="fin-key">Loyer Atom</span><span class="fin-val" id="fin-loyer">—</span></div>
+        <div class="fin-row"><span class="fin-key">Mensualité*</span><span class="fin-val" id="fin-mensu">—</span></div>
+        <div class="fin-row"><span class="fin-key">Rendement brut</span><span class="fin-val" id="fin-rendement">—</span></div>
+      </div>
+      <p class="fin-disclaimer">* Hypothèse : 10 % apport, durée 25 ans, taux fixe 3,60 %.</p>
+      <a id="btn-pdf" class="btn-pdf" style="display:none" target="_blank">📄 Voir la fiche complète</a>
+    </aside>
+  </div>
+
+  <!-- Formulaire d'intérêt -->
+  <section class="interest-section">
+    <h2 class="interest-title">Cette opportunité vous intéresse ?</h2>
+    <p class="interest-sub">Laissez-nous vos coordonnées, nous vous recontactons sous 24h.</p>
+    <form id="interest-form">
+      <div class="interest-grid">
+        <div class="interest-field">
+          <label for="i-prenom">Prénom</label>
+          <input type="text" id="i-prenom" required/>
+        </div>
+        <div class="interest-field">
+          <label for="i-nom">Nom</label>
+          <input type="text" id="i-nom" required/>
+        </div>
+        <div class="interest-field span-2">
+          <label for="i-email">Email</label>
+          <input type="email" id="i-email" required/>
+        </div>
+        <div class="interest-field span-2">
+          <label for="i-tel">Téléphone</label>
+          <input type="tel" id="i-tel" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn-interest" id="btn-interest">Je suis intéressé(e)</button>
+      <p class="interest-status" id="interest-status"></p>
+    </form>
+  </section>
+</main>
+
+<footer>
+  Atom Buyers Club · Paris · <a href="https://join.atombuyerclub.fr">join.atombuyerclub.fr</a>
+</footer>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const slug = params.get('slug');
+const id   = params.get('id');
+let project = null;
+
+const DPE_COLORS = { A: 'dpe-A', B: 'dpe-B', C: 'dpe-C', D: 'dpe-D', E: 'dpe-E', F: 'dpe-F', G: 'dpe-G' };
+
+(async function init() {
+  if (!slug && !id) return showNotFound();
+  const q = new URLSearchParams();
+  if (slug) q.set('slug', slug);
+  if (id)   q.set('id', id);
+  const res = await fetch('/api/public-project?' + q);
+  if (!res.ok) return showNotFound();
+  const data = await res.json();
+  project = data.project;
+  if (!project) return showNotFound();
+  render();
+})();
+
+function showNotFound() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('not-found').style.display = 'flex';
+}
+
+function render() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  document.title = project.title + ' — Atom Buyers Club';
+
+  // Hero
+  document.getElementById('hero-eyebrow').textContent = project.arrondissement
+    ? `Paris ${project.arrondissement}` : 'Projet immobilier';
+  document.getElementById('hero-title').textContent = project.title;
+  const meta = [];
+  if (project.surface_carrez) meta.push(`<span class="hero-meta-item"><span class="label">Surface</span> ${project.surface_carrez} m²</span>`);
+  if (project.floor != null)  meta.push(`<span class="hero-meta-item"><span class="label">Étage</span> ${project.floor}${project.has_elevator ? ' · ascenseur' : ''}</span>`);
+  if (project.metro_name)     meta.push(`<span class="hero-meta-item"><span class="label">Métro</span> ${project.metro_name}${project.metro_distance ? ` (${project.metro_distance}m)` : ''}</span>`);
+  document.getElementById('hero-meta').innerHTML = meta.join('');
+
+  // Gallery (priorité : 3D > images état actuel)
+  const images = [...(project.images_3d || []), ...(project.images || [])];
+  const gallery = document.getElementById('gallery');
+  if (images.length === 0) {
+    gallery.innerHTML = '<div class="gallery-empty">🏠</div>';
+  } else {
+    gallery.innerHTML = images.slice(0, 5).map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(project.title)}" loading="lazy"/>`).join('');
+  }
+
+  // Description
+  if (project.description) {
+    document.getElementById('description-text').textContent = project.description;
+    document.getElementById('section-description').style.display = 'block';
+  }
+
+  // Specs
+  const specs = [
+    ['Adresse',         project.address],
+    ['Surface Carrez',  project.surface_carrez ? project.surface_carrez + ' m²' : null],
+    ['Étage',           project.floor != null ? project.floor + ' (' + (project.has_elevator ? 'avec ascenseur' : 'sans ascenseur') + ')' : null],
+    ['Métro',           project.metro_name ? project.metro_name + (project.metro_distance ? ` — ${project.metro_distance} m` : '') : null],
+    ['DPE',             buildDpe()],
+  ].filter(([_, v]) => v);
+  document.getElementById('specs').innerHTML = specs.map(([k, v]) =>
+    `<div class="spec"><div class="spec-label">${k}</div><div class="spec-value">${v}</div></div>`
+  ).join('');
+
+  // Ameublement
+  if (project.ameublement_desc) {
+    document.getElementById('ameublement-text').textContent = project.ameublement_desc;
+    document.getElementById('section-ameublement').style.display = 'block';
+  }
+
+  // Finances
+  setText('fin-price',     fmtEur(project.price_fai));
+  setText('fin-atom',      fmtEur(project.fees_atom));
+  setText('fin-notaire',   fmtEur(project.fees_notaire));
+  setText('fin-travaux',   fmtEur(project.budget_travaux));
+  setText('fin-meuble',    fmtEur(project.budget_meuble));
+  setText('fin-total',     fmtEur(project.total_all_in));
+  setText('fin-loyer',     project.loyer_atom ? fmtEur(project.loyer_atom) + '/mois' : '—');
+  setText('fin-mensu',     project.mensualite ? fmtEur(project.mensualite) + '/mois' : '—');
+  setText('fin-rendement', project.rendement_brut ? project.rendement_brut + ' %' : '—');
+
+  // PDF link
+  if (project.pdf_url) {
+    const btn = document.getElementById('btn-pdf');
+    btn.href = project.pdf_url; btn.style.display = 'inline-flex';
+  }
+}
+
+function buildDpe() {
+  if (!project.dpe_avant && !project.dpe_apres) return null;
+  const parts = [];
+  if (project.dpe_avant) parts.push(`<span class="dpe-badge ${DPE_COLORS[project.dpe_avant] || ''}">Avant : ${project.dpe_avant}</span>`);
+  if (project.dpe_apres) parts.push(`<span class="dpe-badge ${DPE_COLORS[project.dpe_apres] || ''}">Après : ${project.dpe_apres}</span>`);
+  return '<span class="dpe-badges">' + parts.join(' ') + '</span>';
+}
+
+function fmtEur(n) {
+  if (n == null) return '—';
+  return new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR', maximumFractionDigits: 0 }).format(n);
+}
+
+function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Formulaire d'intérêt
+document.getElementById('interest-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-interest');
+  const statusEl = document.getElementById('interest-status');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  statusEl.className = 'interest-status'; statusEl.textContent = '';
+
+  const payload = {
+    prenom: document.getElementById('i-prenom').value.trim(),
+    nom:    document.getElementById('i-nom').value.trim(),
+    email:  document.getElementById('i-email').value.trim(),
+    tel:    document.getElementById('i-tel').value.trim(),
+    referrer: window.location.href,
+    utm_source: 'fiche_projet',
+    utm_content: project?.slug || project?.id || 'unknown',
+  };
+
+  const res = await fetch('/api/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (res.ok) {
+    statusEl.classList.add('interest-success');
+    statusEl.textContent = '✓ Merci ! Nous vous recontactons sous 24h.';
+    document.getElementById('interest-form').reset();
+    btn.textContent = '✓ Envoyé';
+  } else {
+    btn.disabled = false; btn.textContent = 'Je suis intéressé(e)';
+    statusEl.classList.add('interest-error');
+    statusEl.textContent = '✗ Une erreur est survenue, réessayez ou contactez-nous directement.';
+  }
+});
+</script>
+</body>
+</html>
