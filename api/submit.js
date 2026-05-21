@@ -104,7 +104,7 @@ function buildEmail(l, isUpdate) {
         ${row('Téléphone', l.tel)}
         ${row('Arrondissements', l.arrondissements)}
         ${row('Horizon', TIMING[l.timing] || l.timing)}
-        ${row('Accord bancaire', l.accord === 'oui' ? '✓ Oui' : l.accord === 'non' ? 'Non' : null)}
+        ${row('Financement bancaire', l.accord === 'oui' ? '✅ Étude validée' : l.accord === 'courtier' ? '🤝 Courtier souhaité' : l.accord === 'non' ? 'Gère seul' : null)}
         ${row('Financement', FIN[l.financement] || l.financement)}
         ${row('Budget emprunt', BUDGET[l.capacite] || l.capacite)}
         ${row('Source', src)}

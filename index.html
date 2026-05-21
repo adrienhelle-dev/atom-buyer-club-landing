@@ -352,6 +352,13 @@
     }
     #budget-row.open { max-height: 100px; opacity: 1; margin-top: 14px; }
 
+    /* ── Fin panel (conditionnel emprunt) ────────────────────── */
+    .fin-panel {
+      overflow: hidden; max-height: 0; opacity: 0;
+      transition: max-height .4s ease, opacity .3s ease;
+    }
+    .fin-panel.open { max-height: 600px; opacity: 1; margin-top: 14px; }
+
     /* ── Submit button ───────────────────────────────────────── */
     .submit-wrap { margin-top: 44px; }
 
@@ -651,72 +658,96 @@
         </div>
 
         <div class="fields">
-          <div class="field">
-            <label>Étude de financement validée ?</label>
-            <div class="choices" style="margin-top:4px;">
-              <label class="choice">
-                <input type="radio" name="accord" value="oui" />
-                <span class="choice-body">
-                  <span class="choice-ico">🏦</span>
-                  <span class="choice-txt">
-                    <span class="choice-name">Ma Banque — Étude validée</span>
-                    <span class="choice-desc">Mon dossier de financement est accepté</span>
-                  </span>
-                  <span class="choice-tick"></span>
-                </span>
-              </label>
-              <label class="choice">
-                <input type="radio" name="accord" value="non" />
-                <span class="choice-body">
-                  <span class="choice-ico">📋</span>
-                  <span class="choice-txt">
-                    <span class="choice-name">Non — Pas encore</span>
-                    <span class="choice-desc">Je n'ai pas encore démarché ma banque</span>
-                  </span>
-                  <span class="choice-tick"></span>
-                </span>
-              </label>
-            </div>
-          </div>
 
+          <!-- 1. Mode de financement — toujours visible -->
           <div class="field">
             <label>Mode de financement</label>
             <div class="choices" style="margin-top:4px;">
               <label class="choice">
-                <input type="radio" name="financement" value="comptant" onchange="toggleBudget()" />
+                <input type="radio" name="financement" value="comptant" onchange="onFinancementChange()" />
                 <span class="choice-body">
                   <span class="choice-ico">💰</span>
-                  <span class="choice-txt"><span class="choice-name">Paiement comptant</span><span class="choice-desc">Achat sans emprunt</span></span>
+                  <span class="choice-txt">
+                    <span class="choice-name">Paiement comptant</span>
+                    <span class="choice-desc">Achat sans crédit</span>
+                  </span>
                   <span class="choice-tick"></span>
                 </span>
               </label>
               <label class="choice">
-                <input type="radio" name="financement" value="emprunt" onchange="toggleBudget()" />
+                <input type="radio" name="financement" value="emprunt" onchange="onFinancementChange()" />
                 <span class="choice-body">
                   <span class="choice-ico">🏦</span>
-                  <span class="choice-txt"><span class="choice-name">Emprunt bancaire</span><span class="choice-desc">Financement via crédit</span></span>
+                  <span class="choice-txt">
+                    <span class="choice-name">Emprunt bancaire</span>
+                    <span class="choice-desc">Financement via crédit immobilier</span>
+                  </span>
                   <span class="choice-tick"></span>
                 </span>
               </label>
             </div>
           </div>
 
-          <div id="budget-row">
+          <!-- 2. [Si emprunt] Statut du dossier bancaire -->
+          <div class="fin-panel" id="fin-statut-panel">
             <div class="field">
-              <label for="capacite">Capacité d'emprunt estimée</label>
-              <div class="sel-wrap">
-                <select id="capacite" name="capacite">
-                  <option value="" disabled selected>Sélectionnez une tranche</option>
-                  <option value="moins-150k">Moins de 150 000 €</option>
-                  <option value="150-250k">150 000 € — 250 000 €</option>
-                  <option value="250-400k">250 000 € — 400 000 €</option>
-                  <option value="400-600k">400 000 € — 600 000 €</option>
-                  <option value="600k-1m">600 000 € — 1 000 000 €</option>
-                  <option value="plus-1m">Plus de 1 000 000 €</option>
-                </select>
+              <label>Statut de votre financement</label>
+              <div class="choices" style="margin-top:4px;">
+                <label class="choice">
+                  <input type="radio" name="accord" value="oui" onchange="onAccordChange()" />
+                  <span class="choice-body">
+                    <span class="choice-ico">✅</span>
+                    <span class="choice-txt">
+                      <span class="choice-name">Étude validée par ma banque</span>
+                      <span class="choice-desc">J'ai obtenu un accord de principe</span>
+                    </span>
+                    <span class="choice-tick"></span>
+                  </span>
+                </label>
+                <label class="choice">
+                  <input type="radio" name="accord" value="courtier" onchange="onAccordChange()" />
+                  <span class="choice-body">
+                    <span class="choice-ico">🤝</span>
+                    <span class="choice-txt">
+                      <span class="choice-name">Je souhaite un courtier partenaire Atom</span>
+                      <span class="choice-desc">Atom me met en relation avec l'un de ses courtiers</span>
+                    </span>
+                    <span class="choice-tick"></span>
+                  </span>
+                </label>
+                <label class="choice">
+                  <input type="radio" name="accord" value="non" onchange="onAccordChange()" />
+                  <span class="choice-body">
+                    <span class="choice-ico">📋</span>
+                    <span class="choice-txt">
+                      <span class="choice-name">Je gère mon financement seul</span>
+                      <span class="choice-desc">J'ai ma propre démarche bancaire</span>
+                    </span>
+                    <span class="choice-tick"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 3. [Si étude validée] Capacité d'emprunt -->
+            <div id="budget-row">
+              <div class="field">
+                <label for="capacite">Capacité d'emprunt validée</label>
+                <div class="sel-wrap">
+                  <select id="capacite" name="capacite">
+                    <option value="" disabled selected>Sélectionnez une tranche</option>
+                    <option value="moins-150k">Moins de 150 000 €</option>
+                    <option value="150-250k">150 000 € — 250 000 €</option>
+                    <option value="250-400k">250 000 € — 400 000 €</option>
+                    <option value="400-600k">400 000 € — 600 000 €</option>
+                    <option value="600k-1m">600 000 € — 1 000 000 €</option>
+                    <option value="plus-1m">Plus de 1 000 000 €</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
 
         <!-- ── SUBMIT ────────────────────────────────────────── -->
@@ -779,10 +810,20 @@ function buildArrondissements() {
   return parts.join(' · ') || null;
 }
 
-/* ── Budget toggle ─────────────────────────────────────────── */
-function toggleBudget() {
+/* ── Financement conditionnel ──────────────────────────────── */
+function onFinancementChange() {
   const v = document.querySelector('input[name="financement"]:checked')?.value;
-  document.getElementById('budget-row').classList.toggle('open', v === 'emprunt');
+  document.getElementById('fin-statut-panel').classList.toggle('open', v === 'emprunt');
+  if (v !== 'emprunt') {
+    document.querySelectorAll('input[name="accord"]').forEach(r => r.checked = false);
+    document.getElementById('budget-row').classList.remove('open');
+    document.getElementById('capacite').value = '';
+  }
+}
+
+function onAccordChange() {
+  const v = document.querySelector('input[name="accord"]:checked')?.value;
+  document.getElementById('budget-row').classList.toggle('open', v === 'oui');
 }
 
 /* ── Scroll-triggered separators ──────────────────────────── */

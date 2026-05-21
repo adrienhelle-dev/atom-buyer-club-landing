@@ -669,7 +669,7 @@ function openDrawer(lead) {
 
     <div class="drawer-section">
       <p class="drawer-section-label">Financement</p>
-      <div class="drawer-row"><span class="drawer-key">Accord bancaire</span><span class="drawer-val">${lead.accord === 'oui' ? '✓ Oui' : lead.accord === 'non' ? 'Non' : '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Financement bancaire</span><span class="drawer-val">${lead.accord === 'oui' ? '✅ Étude validée' : lead.accord === 'courtier' ? '🤝 Courtier souhaité' : lead.accord === 'non' ? 'Gère seul' : '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Mode</span><span class="drawer-val">${FIN[lead.financement] || lead.financement || '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Budget emprunt</span><span class="drawer-val">${BUDGET[lead.capacite] || lead.capacite || '—'}</span></div>
     </div>
