@@ -291,10 +291,12 @@
     }
     .status-select:focus { border-color: var(--gold); }
 
-    /* Status dot in table */
-    .status-dot {
-      display: inline-block; width: 7px; height: 7px;
-      border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0;
+    /* Status badge in table */
+    .status-badge {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 500; padding: 2px 8px;
+      border-radius: 4px; white-space: nowrap;
+      vertical-align: middle; margin-right: 7px;
     }
 
     /* ── Assigned founder badge ──────────────────────────────── */
@@ -652,7 +654,7 @@ function renderTable(leads) {
   tbody.innerHTML = leads.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td class="muted">${fmtDate(l.created_at)}</td>
-      <td><strong>${statusDot(l.status)}${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</td>
+      <td>${statusBadge(l.status)}<strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</td>
       <td class="muted">${esc(l.email)}</td>
       <td class="muted">${esc(l.tel)}</td>
       <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
@@ -933,9 +935,9 @@ function srcBadge(src) {
   return `<span class="badge ${cls}">${lbl}</span>`;
 }
 
-function statusDot(status) {
+function statusBadge(status) {
   const s = STATUS_OPTS.find(o => o.v === status) || STATUS_OPTS[0];
-  return `<span class="status-dot" style="background:${s.c}"></span>`;
+  return `<span class="status-badge" style="background:${s.c}1a;color:${s.c}">${s.l}</span>`;
 }
 
 function founderColor(email) {
