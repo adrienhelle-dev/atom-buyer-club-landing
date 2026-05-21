@@ -25,7 +25,15 @@ module.exports = async function handler(req, res) {
   }
 
   const { error } = await supabase.from('leads').update(updates).eq('id', id);
-  if (error) { console.error('Patch error:', error); return res.status(500).json({ error: 'db_error' }); }
+  if (error) {
+    console.error('Patch error:', error);
+    // On retourne le détail de l'erreur Supabase pour faciliter le debug
+    return res.status(500).json({
+      error: 'db_error',
+      detail: error.message || error.code || 'unknown',
+      hint: error.hint || null,
+    });
+  }
 
   // Auto-log dans la timeline si le statut a changé
   if ('status' in updates) {
