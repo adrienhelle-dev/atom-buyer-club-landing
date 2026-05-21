@@ -1215,15 +1215,18 @@ async function updateLeadStatus(id, status) {
   });
   if (res.status === 401) { logout(); return; }
 
+  // Lit la réponse en texte d'abord (résilient si non-JSON)
+  const bodyText = await res.text();
   let data = {};
-  try { data = await res.json(); } catch {}
+  try { data = JSON.parse(bodyText); } catch {}
 
-  // Erreur serveur → on alerte l'utilisateur et on ne touche pas le cache
+  // Erreur serveur → on alerte avec le maximum d'infos
   if (!res.ok) {
-    const err = data?.error || 'Erreur serveur';
-    const detail = data?.detail ? ` (${data.detail})` : '';
-    alert(`Impossible d'enregistrer le statut.\n${err}${detail}\n\nVérifie que la colonne assigned_to existe :\nALTER TABLE leads ADD COLUMN IF NOT EXISTS assigned_to text;`);
-    // Réinitialise le select à la valeur précédente
+    const err    = data?.error  || `HTTP ${res.status}`;
+    const detail = data?.detail || bodyText.slice(0, 300) || '(réponse vide)';
+    console.error('PATCH /api/patch error', { status: res.status, body: bodyText });
+    alert(`Impossible d'enregistrer le statut.\n\n${err}\n${detail}`);
+    // Rollback du select
     const select = document.getElementById('status-select');
     const lead = leadsCache.find(l => l.id === id);
     if (select && lead) select.value = lead.status || 'nouveau';
