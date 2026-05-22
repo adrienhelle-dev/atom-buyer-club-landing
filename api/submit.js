@@ -70,27 +70,34 @@ module.exports = async function handler(req, res) {
   }
 
   // ── Email de notification ──────────────────────────────────
-  const notifyEmails = (process.env.NOTIFY_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-  if (!notifyEmails.length)          console.warn('Email: NOTIFY_EMAILS vide ou manquant');
-  if (!process.env.RESEND_API_KEY)   console.warn('Email: RESEND_API_KEY manquant');
-  if (!process.env.RESEND_FROM)      console.warn('Email: RESEND_FROM manquant — fallback onboarding@resend.dev');
+  // Filtre : uniquement les NOUVEAUX leads comptant + achat immédiat (score max)
+  const isHotLead = !isUpdate
+    && leadData.financement === 'comptant'
+    && leadData.timing === 'asap';
 
-  if (notifyEmails.length && process.env.RESEND_API_KEY) {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const fromAddr = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
-    try {
-      const result = await resend.emails.send({
-        from: fromAddr,
-        to: notifyEmails,
-        subject: isUpdate
-          ? `🔄 Dossier mis à jour — ${leadData.prenom} ${leadData.nom}`
-          : `🏠 Nouveau lead — ${leadData.prenom} ${leadData.nom}`,
-        html: buildEmail(leadData, isUpdate),
-      });
-      console.log('Email envoyé:', result?.id || 'ok', '→', fromAddr, '→', notifyEmails.join(', '));
-    } catch (e) {
-      console.error('Email erreur:', e?.message || e);
+  if (isHotLead) {
+    const notifyEmails = (process.env.NOTIFY_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+    if (!notifyEmails.length)          console.warn('Email: NOTIFY_EMAILS vide ou manquant');
+    if (!process.env.RESEND_API_KEY)   console.warn('Email: RESEND_API_KEY manquant');
+    if (!process.env.RESEND_FROM)      console.warn('Email: RESEND_FROM manquant — fallback onboarding@resend.dev');
+
+    if (notifyEmails.length && process.env.RESEND_API_KEY) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const fromAddr = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+      try {
+        const result = await resend.emails.send({
+          from: fromAddr,
+          to: notifyEmails,
+          subject: `🔥 Lead chaud — ${leadData.prenom} ${leadData.nom} · Comptant · Dès que possible`,
+          html: buildEmail(leadData),
+        });
+        console.log('Email envoyé:', result?.id || 'ok', '→', fromAddr, '→', notifyEmails.join(', '));
+      } catch (e) {
+        console.error('Email erreur:', e?.message || e);
+      }
     }
+  } else {
+    console.log(`Email skipped — isUpdate:${isUpdate} financement:${leadData.financement} timing:${leadData.timing}`);
   }
 
   return res.status(200).json({ ok: true, updated: isUpdate });
@@ -100,11 +107,9 @@ function row(label, value) {
   return `<tr><td style="padding:9px 20px 9px 0;color:#888;font-size:13px;white-space:nowrap">${label}</td><td style="padding:9px 0;font-size:14px;color:#111">${value || '—'}</td></tr>`;
 }
 
-function buildEmail(l, isUpdate) {
+function buildEmail(l) {
   const src = l.utm_source ? (SOURCE[l.utm_source.toLowerCase()] || l.utm_source) : '—';
-  const badge = isUpdate
-    ? `<span style="display:inline-block;padding:3px 10px;background:#e8f4e8;color:#2d7a2d;border-radius:20px;font-size:11px;font-weight:500">Mise à jour</span>`
-    : `<span style="display:inline-block;padding:3px 10px;background:#B8975A22;color:#B8975A;border-radius:20px;font-size:11px;font-weight:500">Nouveau lead</span>`;
+  const badge = `<span style="display:inline-block;padding:3px 10px;background:#d95e5e22;color:#d95e5e;border-radius:20px;font-size:11px;font-weight:600">🔥 Comptant · Dès que possible</span>`;
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f4;font-family:system-ui,sans-serif">
   <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e5e5e5">
     <div style="background:#0f0e0c;padding:22px 28px">
