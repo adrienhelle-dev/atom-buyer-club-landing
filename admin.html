@@ -791,7 +791,7 @@
     </select>
     <!-- Vue viewer : sélecteur visible uniquement pour Thierry & Alexandre -->
     <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
-      <option value="hot">🔥 Leads chauds (7+)</option>
+      <option value="hot">🔥 Leads chauds (8+)</option>
       <option value="all">Tous les leads</option>
     </select>
     <div class="toolbar-right">
@@ -1206,8 +1206,8 @@ let notesTimer        = null;
 let leadsCache        = [];
 let currentLead       = null;
 let editingProjectId  = null;
-let isViewerMode      = false;   // true pour Thierry & Alexandre → filtre score ≥ 7 par défaut
-let scoreMinFilter    = 0;       // 0 = pas de filtre, 7 = leads chauds seulement
+let isViewerMode      = false;   // true pour Thierry & Alexandre → filtre score ≥ 8 par défaut
+let scoreMinFilter    = 0;       // 0 = pas de filtre, 8 = leads chauds seulement
 
 /* ── Auth ─────────────────────────────────────────────────── */
 function init() {
@@ -1253,7 +1253,7 @@ function showDashboard(email, isViewer) {
   // Mode viewer (Thierry & Alexandre) : filtre "leads chauds" actif par défaut
   isViewerMode = !!isViewer;
   if (isViewerMode) {
-    scoreMinFilter = 7;
+    scoreMinFilter = 8;
     const sel = document.getElementById('score-view-filter');
     if (sel) { sel.style.display = ''; sel.value = 'hot'; }
   }
@@ -1264,7 +1264,7 @@ function showDashboard(email, isViewer) {
 
 function applyScoreViewFilter() {
   const sel = document.getElementById('score-view-filter');
-  scoreMinFilter = sel?.value === 'hot' ? 7 : 0;
+  scoreMinFilter = sel?.value === 'hot' ? 8 : 0;
   renderTable(leadsCache);
 }
 
