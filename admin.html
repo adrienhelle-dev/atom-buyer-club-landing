@@ -1348,7 +1348,7 @@
   <div class="fiche-modal">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
       <div>
-        <h3 class="fiche-modal-title">Envoyer la fiche projet</h3>
+        <h3 class="fiche-modal-title" id="send-leads-title">Envoyer la fiche projet</h3>
         <p class="fiche-modal-sub" id="send-leads-sub">Sélectionner un lead à contacter</p>
       </div>
       <button style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 0 0 12px" onclick="closeSendLeadsModal()">✕</button>
@@ -1357,13 +1357,13 @@
     <div class="project-list" id="send-leads-list">
       <div class="project-empty">Chargement…</div>
     </div>
-    <div class="fiche-msg-wrap">
+    <div class="fiche-msg-wrap" id="send-leads-msg-wrap">
       <span class="fiche-modal-label">Message personnalisé (optionnel)</span>
       <textarea id="send-leads-message" placeholder="Bonjour, suite à notre échange je vous partage cette sélection…"></textarea>
     </div>
     <div class="fiche-btns">
       <button class="btn-cancel" onclick="closeSendLeadsModal()">Annuler</button>
-      <button class="btn-send-fiche" id="btn-send-leads" onclick="sendFicheToLead()" disabled>📄 Envoyer par email</button>
+      <button class="btn-send-fiche" id="btn-send-leads" disabled>📄 Envoyer par email</button>
     </div>
     <p class="fiche-status" id="send-leads-status"></p>
   </div>
@@ -1661,7 +1661,7 @@ function projectCard(p) {
       <div class="project-card-actions">
         ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐</a>` : ''}
         ${p.status === 'disponible' && matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')">📨 Envoyer (${matchCount})</button>` : ''}
-        ${p.status === 'disponible' ? `<a class="pc-action pc-wa" href="https://wa.me/?text=${encodeURIComponent(waProjectText(p))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Partager sur WhatsApp">💬 WA</a>` : ''}
+        ${p.status === 'disponible' ? `<button class="pc-action pc-wa" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}', 'whatsapp')" title="Envoyer sur WhatsApp">💬 WA</button>` : ''}
         <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 PDF</button>
         <button class="pc-del" onclick="event.stopPropagation(); openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
       </div>
@@ -2826,22 +2826,31 @@ function closeFicheModal() {
 let sendLeadsProjectId    = null;
 let sendLeadsSelectedLead = null;
 let sendLeadsForce        = false; // bypass anti-spam si confirmation
+let sendLeadsMode         = 'email'; // 'email' | 'whatsapp'
 
-function openSendToLeadsModal(projectId) {
+function openSendToLeadsModal(projectId, mode = 'email') {
   sendLeadsProjectId    = projectId;
   sendLeadsSelectedLead = null;
   sendLeadsForce        = false;
+  sendLeadsMode         = mode;
 
   const project = projectsCache.find(p => p.id === projectId);
   const title   = project?.title || 'ce projet';
+  const isWa    = mode === 'whatsapp';
 
-  document.getElementById('send-leads-sub').textContent = `Fiche : "${title}"`;
-  document.getElementById('send-leads-message').value   = '';
+  document.getElementById('send-leads-title').textContent  = isWa ? 'WhatsApp — Leads compatibles' : 'Envoyer la fiche projet';
+  document.getElementById('send-leads-sub').textContent    = `Projet : "${title}"`;
+  document.getElementById('send-leads-message').value      = '';
+  document.getElementById('send-leads-msg-wrap').style.display = isWa ? 'none' : '';
   document.getElementById('send-leads-status').textContent = '';
   document.getElementById('send-leads-status').style.color = 'var(--dim)';
-  document.getElementById('btn-send-leads').disabled    = true;
-  document.getElementById('btn-send-leads').textContent = '📄 Envoyer par email';
-  document.getElementById('btn-send-leads').onclick     = () => sendFicheToLead();
+
+  const btn = document.getElementById('btn-send-leads');
+  btn.disabled  = true;
+  btn.textContent = isWa ? '💬 Ouvrir WhatsApp' : '📄 Envoyer par email';
+  btn.style.background = isWa ? 'rgba(37,211,102,.15)' : '';
+  btn.style.color      = isWa ? '#25d366' : '';
+  btn.onclick = isWa ? () => openWaForSelectedLead() : () => sendFicheToLead();
   document.getElementById('send-leads-overlay').classList.add('on');
 
   const matching = project ? leadsCache.filter(l => leadMatchesProject(l, project)) : [];
@@ -2874,9 +2883,30 @@ function selectLeadForFiche(leadId) {
 
 function closeSendLeadsModal() {
   document.getElementById('send-leads-overlay').classList.remove('on');
+  // Reset bouton email (pour la prochaine ouverture en mode email)
+  const btn = document.getElementById('btn-send-leads');
+  btn.style.background = ''; btn.style.color = '';
+  btn.onclick = () => sendFicheToLead();
   sendLeadsProjectId    = null;
   sendLeadsSelectedLead = null;
   sendLeadsForce        = false;
+  sendLeadsMode         = 'email';
+}
+
+function openWaForSelectedLead() {
+  const lead    = leadsCache.find(l => l.id === sendLeadsSelectedLead);
+  const project = projectsCache.find(p => p.id === sendLeadsProjectId);
+  if (!lead || !project) return;
+  const phone = phoneIntl(lead.tel);
+  if (!phone) {
+    document.getElementById('send-leads-status').textContent = 'Numéro introuvable pour ce lead.';
+    document.getElementById('send-leads-status').style.color = 'var(--red)';
+    return;
+  }
+  const text = waProjectText(project);
+  trackCta(lead.id, 'whatsapp');
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  closeSendLeadsModal();
 }
 
 async function sendFicheToLead(force) {
