@@ -126,14 +126,44 @@
     .fin-val-big { color: var(--gold); font-family: var(--serif); font-size: 22px; }
     .fin-disclaimer { font-size: 11px; color: var(--dim); font-style: italic; margin-top: 16px; line-height: 1.5; }
 
-    /* Interest form */
+    /* Interest section */
     .interest-section {
-      margin-top: 50px; padding: 36px 32px;
+      margin-top: 50px; padding: 40px 32px 36px;
       background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
     }
-    .interest-title { font-family: var(--serif); font-size: 26px; font-weight: 300; margin-bottom: 6px; text-align: center; }
-    .interest-sub { color: var(--dim); font-size: 14px; text-align: center; margin-bottom: 24px; }
-    .interest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 540px; margin: 0 auto; }
+    @media (max-width: 540px) { .interest-section { padding: 32px 20px 28px; } }
+
+    .interest-title {
+      font-family: var(--serif); font-size: 28px; font-weight: 300;
+      margin-bottom: 8px; text-align: center; line-height: 1.2;
+    }
+    @media (max-width: 400px) { .interest-title { font-size: 24px; } }
+
+    .interest-sub { color: var(--dim); font-size: 14px; text-align: center; margin-bottom: 28px; }
+
+    /* Bouton WA primaire */
+    .btn-wa-primary {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; max-width: 480px; margin: 0 auto 28px;
+      padding: 16px 24px; background: #25D366; border: none;
+      border-radius: var(--r); color: #fff; font-family: var(--sans);
+      font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none;
+      transition: opacity .15s; box-shadow: 0 4px 20px rgba(37,211,102,.25);
+    }
+    .btn-wa-primary:hover { opacity: .9; }
+
+    /* Séparateur ou */
+    .interest-divider {
+      display: flex; align-items: center; gap: 14px;
+      max-width: 480px; margin: 0 auto 24px; color: var(--dim); font-size: 12px;
+    }
+    .interest-divider::before, .interest-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* Formulaire */
+    .interest-form-label { font-size: 13px; color: var(--dim); text-align: center; margin-bottom: 16px; }
+    .interest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 480px; margin: 0 auto; }
     @media (max-width: 540px) { .interest-grid { grid-template-columns: 1fr; } }
     .interest-field { display: flex; flex-direction: column; gap: 6px; }
     .interest-field.span-2 { grid-column: span 2; }
@@ -146,7 +176,7 @@
     }
     .interest-field input:focus { border-color: var(--gold); }
     .btn-interest {
-      width: 100%; margin-top: 16px; max-width: 540px; margin-left: auto; margin-right: auto;
+      width: 100%; margin-top: 14px; max-width: 480px; margin-left: auto; margin-right: auto;
       display: block; padding: 14px; background: var(--gold); border: none;
       border-radius: var(--r); color: var(--bg); font-family: var(--sans);
       font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .15s;
@@ -154,36 +184,28 @@
     .btn-interest:hover { opacity: .87; }
     .btn-interest:disabled { opacity: .5; cursor: not-allowed; }
     .interest-status {
-      max-width: 540px; margin: 16px auto 0;
+      max-width: 480px; margin: 14px auto 0;
       text-align: center; font-size: 14px; min-height: 22px;
     }
     .interest-success { color: var(--green); }
     .interest-error   { color: var(--red); }
 
-    /* WA CTA post-submit */
+    /* Post-submit WA CTA */
     .wa-cta-wrap {
-      display: none; max-width: 540px; margin: 24px auto 0;
-      padding: 20px 24px; background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 10px; text-align: center;
+      display: none; max-width: 480px; margin: 24px auto 0; text-align: center;
     }
-    .wa-cta-wrap p { font-size: 14px; color: var(--cream-dim); margin-bottom: 14px; line-height: 1.6; }
+    .wa-cta-wrap p { font-size: 13px; color: var(--dim); margin-bottom: 14px; line-height: 1.6; }
     .btn-wa {
       display: inline-flex; align-items: center; gap: 9px;
-      padding: 13px 24px; background: #25D366; border: none;
+      padding: 13px 28px; background: #25D366; border: none;
       border-radius: var(--r); color: #fff; font-family: var(--sans);
       font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
       transition: opacity .15s;
     }
     .btn-wa:hover { opacity: .88; }
-    .wa-direct-wrap {
-      max-width: 540px; margin: 0 auto 20px; text-align: center;
-    }
-    .wa-direct-link {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; color: var(--dim); text-decoration: none;
-      border-bottom: 1px solid transparent; transition: color .15s, border-color .15s;
-    }
-    .wa-direct-link:hover { color: #25D366; border-color: #25D36640; }
+
+    /* Icône WA inline */
+    .wa-icon { flex-shrink: 0; }
 
     /* PDF link */
     .btn-pdf {
@@ -273,15 +295,17 @@
 
   <!-- Formulaire d'intérêt -->
   <section class="interest-section">
-    <h2 class="interest-title">Cette opportunité vous intéresse ?</h2>
-    <p class="interest-sub">Laissez-nous vos coordonnées, nous vous recontactons sous 24h.</p>
+    <h2 class="interest-title">Ce projet vous intéresse&nbsp;?</h2>
+    <p class="interest-sub">Contactez-nous directement ou laissez vos coordonnées.</p>
 
-    <!-- Lien WA direct (affiché seulement si responsible_admin a un téléphone) -->
-    <div class="wa-direct-wrap" id="wa-direct-wrap" style="display:none">
-      <a id="wa-direct-link" class="wa-direct-link" href="#" target="_blank">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-        Vous préférez nous contacter directement sur WhatsApp ?
+    <!-- CTA WhatsApp primaire (visible si responsible_admin a un téléphone) -->
+    <div id="wa-primary-wrap" style="display:none">
+      <a id="wa-primary-btn" class="btn-wa-primary" href="#" target="_blank">
+        <svg class="wa-icon" width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        Nous contacter sur WhatsApp
       </a>
+      <div class="interest-divider">ou</div>
+      <p class="interest-form-label">Laissez vos coordonnées, nous revenons vers vous sous 24h</p>
     </div>
 
     <form id="interest-form">
@@ -309,9 +333,9 @@
 
     <!-- CTA WhatsApp post-submit -->
     <div class="wa-cta-wrap" id="wa-cta-wrap">
-      <p>Nos équipes vous recontactent sous 24h.<br>Vous pouvez également nous envoyer un message directement.</p>
+      <p>Demande bien enregistrée — nous revenons vers vous sous 24h.<br>Pour aller plus vite, envoyez-nous un message directement.</p>
       <a id="wa-cta-btn" class="btn-wa" href="#" target="_blank">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        <svg class="wa-icon" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
         Envoyer un message WhatsApp
       </a>
     </div>
@@ -370,9 +394,9 @@ function initWaLinks() {
   const msg = `Bonjour, j'ai vu le projet "${title}" sur Atom Buyers Club et je suis intéressé(e). Pouvez-vous me recontacter ?`;
   const url = buildWaUrl(contact.phone, msg);
 
-  // Lien direct avant le formulaire
-  const waDirect = document.getElementById('wa-direct-link');
-  if (waDirect) { waDirect.href = url; document.getElementById('wa-direct-wrap').style.display = 'block'; }
+  // Bouton WA primaire (au-dessus du formulaire)
+  const waPrimary = document.getElementById('wa-primary-btn');
+  if (waPrimary) { waPrimary.href = url; document.getElementById('wa-primary-wrap').style.display = 'block'; }
 
   // Bouton post-submit
   const waBtn = document.getElementById('wa-cta-btn');
