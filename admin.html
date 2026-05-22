@@ -1862,7 +1862,7 @@ async function handleImageFiles(files) {
 }
 
 async function uploadImageFile(file) {
-  const token = localStorage.getItem('abc_token');
+  // token est la variable globale chargée depuis abc_admin_token au boot
   // 1. Obtenir URL signée
   let meta;
   try {
@@ -1897,7 +1897,6 @@ async function removeImage(index) {
   if (!img) return;
   // Supprimer du storage si on a le path
   if (img.path) {
-    const token = localStorage.getItem('abc_token');
     fetch('/api/upload-image', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
