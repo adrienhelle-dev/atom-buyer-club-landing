@@ -74,15 +74,14 @@
     .nav-tabs {
       display: flex; gap: 0;
       background: var(--bg2); border-bottom: 1px solid var(--border);
-      padding: 0 28px; overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      padding: 0 24px; overflow-x: auto; -webkit-overflow-scrolling: touch;
     }
     .nav-tab {
-      padding: 14px 18px; font-size: 13px; font-weight: 500;
+      padding: 13px 20px; font-size: 11px; font-weight: 600;
+      letter-spacing: .09em; text-transform: uppercase;
       color: var(--dim); cursor: pointer; background: none; border: none;
       border-bottom: 2px solid transparent; font-family: var(--sans);
       transition: color .15s, border-color .15s; white-space: nowrap;
-      display: inline-flex; align-items: center; gap: 7px;
     }
     .nav-tab:hover { color: var(--cream); }
     .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
@@ -124,35 +123,53 @@
 
     /* Toolbar */
     .toolbar {
-      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      padding: 16px 28px; border-bottom: 1px solid var(--border);
-      background: var(--bg);
+      display: flex; flex-direction: column; gap: 0;
+      border-bottom: 1px solid var(--border); background: var(--bg);
     }
-    .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+    .toolbar-top {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 28px;
+    }
+    .toolbar-filters {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 28px 14px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .toolbar-filters::-webkit-scrollbar { display: none; }
+
+    .search-wrap { position: relative; flex: 1; min-width: 180px; }
     .search-wrap input {
       width: 100%; background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 9px 14px 9px 36px; color: var(--cream);
-      font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .15s;
+      border-radius: var(--r); padding: 9px 14px 9px 34px; color: var(--cream);
+      font-family: var(--sans); font-size: 13px; outline: none; transition: border-color .15s;
     }
     .search-wrap input:focus { border-color: var(--gold); }
     .search-wrap input::placeholder { color: var(--dim); }
-    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 13px; }
+    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 13px; }
 
     .filter-select {
+      flex: 0 0 auto;
       background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r);
-      padding: 9px 30px 9px 12px; color: var(--cream); font-family: var(--sans);
-      font-size: 13px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+      padding: 8px 28px 8px 11px; color: var(--cream); font-family: var(--sans);
+      font-size: 12px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7874'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 10px center;
+      background-repeat: no-repeat; background-position: right 9px center;
+      white-space: nowrap;
+    }
+    /* Viewer mode select : chip style */
+    .viewer-mode-select {
+      background: rgba(76,175,125,.1) !important; border-color: rgba(76,175,125,.3) !important;
+      color: var(--green) !important;
     }
 
-    .toolbar-right { margin-left: auto; display: flex; gap: 10px; }
+    .toolbar-right { display: flex; gap: 8px; flex-shrink: 0; }
 
     .btn-export {
-      display: flex; align-items: center; gap: 7px;
-      padding: 9px 16px; background: var(--bg2); border: 1px solid var(--border);
+      padding: 9px 14px; background: var(--bg2); border: 1px solid var(--border);
       border-radius: var(--r); color: var(--cream); font-family: var(--sans);
-      font-size: 13px; cursor: pointer; transition: border-color .15s;
+      font-size: 13px; cursor: pointer; transition: border-color .15s, color .15s;
+      white-space: nowrap;
     }
     .btn-export:hover { border-color: var(--gold); color: var(--gold); }
 
@@ -397,10 +414,6 @@
     .tl-add-btn:hover { border-color: var(--gold); color: var(--gold); }
 
     /* ── Vue Projets ─────────────────────────────────────────── */
-    .projects-toolbar {
-      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      padding: 18px 28px; border-bottom: 1px solid var(--border); background: var(--bg);
-    }
     .projects-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 16px; padding: 24px 28px;
@@ -726,28 +739,32 @@
       thead th:nth-child(11),
       td:nth-child(9),
       td:nth-child(11) { display: none; }
-      .toolbar { gap: 8px; }
-      .search-wrap { max-width: 220px; }
     }
 
     /* ── Mobile (≤ 640px) ── */
     @media (max-width: 640px) {
-      .topbar { padding: 12px 16px; }
+      .topbar { padding: 10px 16px; }
       .topbar-email { display: none; }
-      .topbar-left svg { width: 48px; }
+      .topbar-left svg { width: 44px; }
       .topbar-badge { font-size: 9px; padding: 2px 8px; }
       .btn-logout { font-size: 11px; padding: 5px 10px; }
+
       .nav-tabs { padding: 0 12px; }
-      .nav-tab { padding: 12px 14px; font-size: 12px; }
+      .nav-tab { padding: 11px 13px; font-size: 10px; }
 
-      .stats { grid-template-columns: repeat(2, 1fr); }
-      .stat { padding: 14px 16px; }
-      .stat-value { font-size: 26px; }
+      /* Stats — 4 en ligne, très compacts */
+      .stats { grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--border); }
+      .stat { padding: 10px 10px; }
+      .stat-value { font-size: 20px; }
+      .stat-label { font-size: 9px; margin-top: 2px; }
 
-      .toolbar { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-      .search-wrap { max-width: 100%; flex: 1 1 100%; }
-      .filter-select { flex: 1; }
-      .toolbar-right { width: 100%; justify-content: flex-end; }
+      /* Toolbar two-row */
+      .toolbar-top { padding: 10px 14px; gap: 8px; }
+      .toolbar-filters { padding: 0 14px 10px; gap: 6px; }
+      .search-wrap { flex: 1; min-width: 0; }
+      .filter-select { font-size: 11px; padding: 7px 22px 7px 9px; }
+      .btn-export { font-size: 12px; padding: 8px 12px; }
+      .btn-refresh { padding: 8px 10px; }
 
       /* Mobile table: show Date, Score, Nom, Horizon, Source */
       thead th:nth-child(4),
@@ -769,6 +786,11 @@
       .pagination { padding: 12px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
 
       .drawer { max-width: 100%; }
+
+      /* Projects on mobile */
+      .projects-grid { padding: 16px; gap: 12px; }
+      .project-tabs { padding: 12px 14px 0; }
+      .project-tab { padding: 8px 10px; font-size: 11px; }
     }
   </style>
 </head>
@@ -817,8 +839,8 @@
 
   <!-- ── Nav SPA ─────────────────────────────────────────────── -->
   <nav class="nav-tabs">
-    <button class="nav-tab" data-view="leads"    onclick="setRoute('leads')">👥 Leads</button>
-    <button class="nav-tab" data-view="projects" onclick="setRoute('projects')">🏠 Projets</button>
+    <button class="nav-tab" data-view="leads"    onclick="setRoute('leads')">Leads</button>
+    <button class="nav-tab" data-view="projects" onclick="setRoute('projects')">Projets</button>
   </nav>
 
   <!-- ══ VUE LEADS ═════════════════════════════════════════════ -->
@@ -833,37 +855,39 @@
 
   <!-- Toolbar -->
   <div class="toolbar">
-    <div class="search-wrap">
-      <span class="search-icon">⌕</span>
-      <input type="text" id="search-input" placeholder="Rechercher nom, email…" oninput="debounceSearch()" />
+    <div class="toolbar-top">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-input" placeholder="Rechercher nom, email…" oninput="debounceSearch()" />
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-refresh" onclick="loadLeads(currentPage)" title="Actualiser">↻</button>
+        <button class="btn-export" onclick="exportCSV()">↓ CSV</button>
+      </div>
     </div>
-    <select class="filter-select" id="src-filter" onchange="loadLeads(1)">
-      <option value="">Toutes les sources</option>
-      <option value="google">Google Ads</option>
-      <option value="instagram">Instagram</option>
-      <option value="facebook">Facebook</option>
-      <option value="meta">Meta Ads</option>
-      <option value="organic">Organique</option>
-    </select>
-    <select class="filter-select" id="status-filter" onchange="loadLeads(1)">
-      <option value="">Tous les statuts</option>
-      <option value="nouveau">Nouveau</option>
-      <option value="contacte">Contacté</option>
-      <option value="en_cours">En cours</option>
-      <option value="qualifie">Qualifié</option>
-      <option value="signe">Signé</option>
-      <option value="perdu">Non retenu</option>
-    </select>
-    <!-- Vue viewer : sélecteur visible uniquement pour Thierry & Alexandre -->
-    <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
-      <option value="hot">🔥 Leads chauds (8+)</option>
-      <option value="all">Tous les leads</option>
-    </select>
-    <div class="toolbar-right">
-      <button class="btn-refresh" onclick="loadLeads(currentPage)" title="Actualiser">↻</button>
-      <button class="btn-export" onclick="exportCSV()">
-        <span>↓</span> Exporter CSV
-      </button>
+    <div class="toolbar-filters">
+      <select class="filter-select" id="src-filter" onchange="loadLeads(1)">
+        <option value="">Toutes les sources</option>
+        <option value="google">Google Ads</option>
+        <option value="instagram">Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="meta">Meta Ads</option>
+        <option value="organic">Organique</option>
+      </select>
+      <select class="filter-select" id="status-filter" onchange="loadLeads(1)">
+        <option value="">Tous les statuts</option>
+        <option value="nouveau">Nouveau</option>
+        <option value="contacte">Contacté</option>
+        <option value="en_cours">En cours</option>
+        <option value="qualifie">Qualifié</option>
+        <option value="signe">Signé</option>
+        <option value="perdu">Non retenu</option>
+      </select>
+      <!-- Vue viewer : sélecteur visible uniquement pour Thierry & Alexandre -->
+      <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
+        <option value="hot">Leads chauds (8+)</option>
+        <option value="all">Tous les leads</option>
+      </select>
     </div>
   </div>
 
@@ -902,26 +926,30 @@
   <!-- ══ VUE PROJETS ═══════════════════════════════════════════ -->
   <div class="view" id="view-projects">
     <!-- Toolbar -->
-    <div class="projects-toolbar">
-      <div class="search-wrap" style="max-width:280px">
-        <span class="search-icon">⌕</span>
-        <input type="text" id="projects-search" placeholder="Rechercher un projet…" oninput="debounceProjectsSearch()"/>
+    <div class="toolbar">
+      <div class="toolbar-top">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="projects-search" placeholder="Rechercher un projet…" oninput="debounceProjectsSearch()"/>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-new-project" onclick="startNewProject()">+ Nouveau projet</button>
+        </div>
       </div>
-      <select class="filter-select" id="projects-arr-filter" onchange="renderProjectsFiltered()">
-        <option value="">Tous arrondissements</option>
-        <option value="1e">1er</option>  <option value="2e">2e</option>
-        <option value="3e">3e</option>   <option value="4e">4e</option>
-        <option value="5e">5e</option>   <option value="6e">6e</option>
-        <option value="7e">7e</option>   <option value="8e">8e</option>
-        <option value="9e">9e</option>   <option value="10e">10e</option>
-        <option value="11e">11e</option> <option value="12e">12e</option>
-        <option value="13e">13e</option> <option value="14e">14e</option>
-        <option value="15e">15e</option> <option value="16e">16e</option>
-        <option value="17e">17e</option> <option value="18e">18e</option>
-        <option value="19e">19e</option> <option value="20e">20e</option>
-      </select>
-      <div style="margin-left:auto">
-        <button class="btn-new-project" onclick="startNewProject()">+ Nouveau projet</button>
+      <div class="toolbar-filters">
+        <select class="filter-select" id="projects-arr-filter" onchange="renderProjectsFiltered()">
+          <option value="">Tous arrondissements</option>
+          <option value="1e">1er</option>  <option value="2e">2e</option>
+          <option value="3e">3e</option>   <option value="4e">4e</option>
+          <option value="5e">5e</option>   <option value="6e">6e</option>
+          <option value="7e">7e</option>   <option value="8e">8e</option>
+          <option value="9e">9e</option>   <option value="10e">10e</option>
+          <option value="11e">11e</option> <option value="12e">12e</option>
+          <option value="13e">13e</option> <option value="14e">14e</option>
+          <option value="15e">15e</option> <option value="16e">16e</option>
+          <option value="17e">17e</option> <option value="18e">18e</option>
+          <option value="19e">19e</option> <option value="20e">20e</option>
+        </select>
       </div>
     </div>
 
