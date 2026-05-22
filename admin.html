@@ -780,6 +780,9 @@
     .btn-send-fiche:hover { opacity:.85; }
     .btn-send-fiche:disabled { opacity:.4; cursor:not-allowed; }
     .fiche-status { font-size:13px; margin-top:12px; text-align:center; min-height:20px; }
+    .email-compose-modal { max-width:560px; }
+    .email-compose-modal textarea::placeholder { color: var(--dim); opacity: .6; }
+    .email-compose-modal input::placeholder  { color: var(--dim); opacity: .5; }
     .project-empty { text-align:center; padding:24px; color:var(--dim); font-size:13px; }
 
     /* ── iPad (≤ 1024px) ── */
@@ -1371,27 +1374,49 @@
 
 <!-- ══ MODAL COMPOSE EMAIL ════════════════════════════════════ -->
 <div class="fiche-overlay" id="email-compose-overlay" onclick="if(event.target===this)closeEmailComposeModal()">
-  <div class="fiche-modal">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+  <div class="fiche-modal email-compose-modal">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
       <div>
-        <h3 class="fiche-modal-title" id="email-compose-title">Envoyer un email</h3>
-        <p class="fiche-modal-sub" id="email-compose-sub"></p>
+        <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:500;margin:0 0 6px">Nouveau message</p>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px;color:var(--dim)">À :</span>
+          <span id="email-compose-sub" style="font-size:13px;color:var(--cream);font-weight:500"></span>
+        </div>
       </div>
-      <button style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 0 0 12px" onclick="closeEmailComposeModal()">✕</button>
+      <button style="background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px;line-height:1;margin-top:-2px;transition:color .15s" onmouseenter="this.style.color='var(--cream)'" onmouseleave="this.style.color='var(--dim)'" onclick="closeEmailComposeModal()">✕</button>
     </div>
-    <div class="np-field" style="margin-bottom:12px">
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);display:block;margin-bottom:4px">Objet</label>
-      <input type="text" id="email-compose-subject" style="width:100%;box-sizing:border-box" placeholder="Objet de l'email"/>
+
+    <!-- Séparateur -->
+    <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+
+    <!-- Objet -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--dim);white-space:nowrap;width:46px;flex-shrink:0">Objet</span>
+      <input type="text" id="email-compose-subject"
+        style="flex:1;background:none;border:none;outline:none;font-family:var(--sans);font-size:14px;color:var(--cream);padding:0"
+        placeholder="Objet du message"/>
     </div>
-    <div class="fiche-msg-wrap">
-      <span class="fiche-modal-label">Message</span>
-      <textarea id="email-compose-body" style="min-height:140px" placeholder="Votre message…"></textarea>
+
+    <!-- Corps -->
+    <div style="position:relative;margin:4px 0 20px">
+      <textarea id="email-compose-body"
+        style="width:100%;box-sizing:border-box;background:none;border:none;outline:none;resize:none;font-family:var(--sans);font-size:14px;color:var(--cream);line-height:1.75;min-height:190px;padding:12px 0 0;placeholder-color:var(--dim)"
+        placeholder="Écrivez votre message…"></textarea>
     </div>
-    <div class="fiche-btns">
-      <button class="btn-cancel" onclick="closeEmailComposeModal()">Annuler</button>
-      <button class="btn-send-fiche" id="btn-email-compose" onclick="sendEmailFromDrawer()">✉ Envoyer</button>
+
+    <!-- Footer actions -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--dim);opacity:.6">⌘ Entrée pour envoyer</span>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button onclick="closeEmailComposeModal()" style="background:none;border:none;font-family:var(--sans);font-size:13px;color:var(--dim);cursor:pointer;padding:6px 10px;transition:color .15s" onmouseenter="this.style.color='var(--cream)'" onmouseleave="this.style.color='var(--dim)'">Annuler</button>
+        <button id="btn-email-compose" onclick="sendEmailFromDrawer()"
+          style="background:var(--gold);border:none;border-radius:6px;font-family:var(--sans);font-size:13px;font-weight:500;color:var(--bg);padding:8px 20px;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;gap:6px">
+          <span>Envoyer</span>
+        </button>
+      </div>
     </div>
-    <p class="fiche-status" id="email-compose-status"></p>
+    <p class="fiche-status" id="email-compose-status" style="margin-top:10px"></p>
   </div>
 </div>
 
@@ -2950,17 +2975,31 @@ let emailComposeLeadId = null;
 
 function openEmailComposeModal(leadId, prenom, email) {
   emailComposeLeadId = leadId;
-  document.getElementById('email-compose-sub').textContent    = `${prenom} — ${email}`;
-  document.getElementById('email-compose-subject').value      = 'Atom Buyers Club — À votre attention';
-  document.getElementById('email-compose-body').value         = `Bonjour ${prenom},\n\nSuite à votre inscription sur Atom Buyers Club, nous souhaitons échanger avec vous sur votre projet.\n\nPouvez-vous nous indiquer vos disponibilités pour un appel ?\n\nBonne journée`;
+  document.getElementById('email-compose-sub').textContent    = `${prenom} · ${email}`;
+  document.getElementById('email-compose-subject').value      = 'Atom Buyers Club';
+  document.getElementById('email-compose-body').value         = `Bonjour ${prenom},\n\nOn a regardé votre dossier et j'aimerais qu'on en parle rapidement — vous avez 15 min cette semaine pour un appel ?\n\nBonne journée`;
   document.getElementById('email-compose-status').textContent = '';
+  document.getElementById('email-compose-status').style.color = '';
   const btn = document.getElementById('btn-email-compose');
-  btn.disabled = false; btn.textContent = '✉ Envoyer';
+  btn.disabled = false;
+  btn.querySelector('span').textContent = 'Envoyer';
   document.getElementById('email-compose-overlay').classList.add('on');
-  setTimeout(() => document.getElementById('email-compose-body').focus(), 80);
+  // Focus sur le corps, curseur à la fin
+  setTimeout(() => {
+    const ta = document.getElementById('email-compose-body');
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  }, 80);
+  // Raccourci Cmd/Ctrl+Entrée
+  document.getElementById('email-compose-body')._keyHandler = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); sendEmailFromDrawer(); }
+  };
+  document.getElementById('email-compose-body').addEventListener('keydown', document.getElementById('email-compose-body')._keyHandler);
 }
 
 function closeEmailComposeModal() {
+  const ta = document.getElementById('email-compose-body');
+  if (ta._keyHandler) { ta.removeEventListener('keydown', ta._keyHandler); delete ta._keyHandler; }
   document.getElementById('email-compose-overlay').classList.remove('on');
   emailComposeLeadId = null;
 }
@@ -2973,7 +3012,7 @@ async function sendEmailFromDrawer() {
   const statusEl = document.getElementById('email-compose-status');
   if (!subject || !body) { statusEl.textContent = 'Objet et message requis.'; return; }
 
-  btn.disabled = true; btn.textContent = 'Envoi…';
+  btn.disabled = true; btn.querySelector('span').textContent = 'Envoi…';
   statusEl.textContent = '';
 
   let res, data = {};
@@ -2986,7 +3025,7 @@ async function sendEmailFromDrawer() {
     data = await res.json().catch(() => ({}));
   } catch (e) {
     statusEl.textContent = 'Erreur réseau — réessaie.';
-    btn.disabled = false; btn.textContent = '✉ Envoyer';
+    btn.disabled = false; btn.querySelector('span').textContent = 'Envoyer';
     return;
   }
 
@@ -2998,7 +3037,7 @@ async function sendEmailFromDrawer() {
   } else {
     statusEl.textContent = '❌ ' + (data.error || data.detail || `Erreur ${res.status}`);
     statusEl.style.color = 'var(--red)';
-    btn.disabled = false; btn.textContent = '✉ Envoyer';
+    btn.disabled = false; btn.querySelector('span').textContent = 'Envoyer';
   }
 }
 
