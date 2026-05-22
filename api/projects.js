@@ -65,11 +65,79 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ projects });
     }
 
-    // ─── POST (création) ────────────────────────────────────────
+    // ─── POST (création ou parse-pdf) ──────────────────────────
     if (req.method === 'POST') {
       let b = {};
       try { b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); }
       catch (e) { return res.status(400).json({ error: 'invalid_json', detail: e.message }); }
+
+      // ── Action parse-pdf : extrait les champs depuis le texte brut d'un PDF ──
+      if (b.action === 'parse-pdf') {
+        const text = String(b.text || '').slice(0, 20000);
+        if (!text.trim()) return res.status(400).json({ error: 'text_required' });
+
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) return res.status(500).json({ error: 'anthropic_key_missing' });
+
+        const prompt = `Tu es un assistant spécialisé en immobilier parisien. Extrais les données depuis le texte d'une fiche bien et retourne UNIQUEMENT un objet JSON valide, sans commentaire ni explication. Si un champ est absent, utilise null.
+
+Champs attendus :
+- title: string (nom court du bien, ex: "Studio 11e – Charonne")
+- address: string (adresse complète)
+- arrondissement: string (format "Xe", ex: "11e", "16e")
+- price_fai: number (prix FAI en euros, ex: 380000)
+- surface_carrez: number (surface Carrez en m², ex: 28.5)
+- description: string (description courte, max 400 caractères)
+- loyer_atom: number (loyer mensuel proposé en euros)
+- rendement_brut: number (rendement brut en %, ex: 6.2)
+- fees_atom: number (honoraires Atom en euros)
+- fees_notaire: number (frais de notaire en euros)
+- budget_travaux: number (budget travaux en euros)
+- budget_meuble: number (budget ameublement en euros)
+- dpe_avant: string (lettre DPE avant travaux, ex: "E")
+- dpe_apres: string (lettre DPE après travaux, ex: "C")
+- metro_name: string (station de métro la plus proche)
+- metro_distance: number (distance à pied en minutes)
+
+Texte du PDF :
+${text}`;
+
+        let apiRes;
+        try {
+          apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify({
+              model: 'claude-3-5-haiku-20241022',
+              max_tokens: 1024,
+              messages: [{ role: 'user', content: prompt }],
+            }),
+          });
+        } catch (e) {
+          return res.status(500).json({ error: 'anthropic_fetch_error', detail: e.message });
+        }
+
+        if (!apiRes.ok) {
+          const errBody = await apiRes.json().catch(() => ({}));
+          return res.status(500).json({ error: 'anthropic_api_error', status: apiRes.status, detail: errBody.error?.message });
+        }
+
+        const apiData = await apiRes.json();
+        const raw     = apiData.content?.[0]?.text || '{}';
+
+        // Gère le cas où Claude entoure le JSON de ```json ... ```
+        const m = raw.match(/```(?:json)?\s*([\s\S]+?)\s*```/) || [null, raw];
+        let parsed;
+        try { parsed = JSON.parse(m[1]); }
+        catch { return res.status(500).json({ error: 'json_parse_error', raw: raw.slice(0, 500) }); }
+
+        return res.status(200).json({ ok: true, project: parsed });
+      }
+      // ── Fin parse-pdf ─────────────────────────────────────────
 
       if (!b.title || !b.title.trim()) return res.status(400).json({ error: 'title_required' });
 

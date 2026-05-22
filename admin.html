@@ -756,6 +756,30 @@
     /* ── Send fiche modal ───────────────────────────────────── */
     .fiche-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
     .fiche-overlay.on { display:flex; }
+
+    /* ── Import PDF overlay ─────────────────────────────────── */
+    .import-modal { width:100%; max-width:640px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:24px; animation:fadeUp .2s ease; max-height:90vh; overflow-y:auto; }
+    .import-item { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:10px; }
+    .import-item-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .import-item-name { font-size:13px; color:var(--cream); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:320px; }
+    .import-status-chip { font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+    .chip-waiting  { background:rgba(122,120,116,.15); color:var(--dim); }
+    .chip-extract  { background:rgba(184,151,90,.15); color:var(--gold); }
+    .chip-parsing  { background:rgba(66,133,244,.15); color:#4285f4; }
+    .chip-ready    { background:rgba(76,175,125,.15); color:var(--green); }
+    .chip-error    { background:rgba(217,94,94,.15); color:var(--red); }
+    .import-preview { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+    .import-preview-title { font-family:var(--serif); font-size:16px; font-weight:300; color:var(--cream); margin-bottom:6px; }
+    .import-preview-meta { font-size:12px; color:var(--dim); line-height:1.8; }
+    .import-preview-meta strong { color:var(--cream); }
+    .import-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+    .btn-import-review { padding:8px 14px; background:var(--gold); border:none; border-radius:6px; color:var(--bg); font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; transition:opacity .15s; }
+    .btn-import-review:hover { opacity:.85; }
+    .btn-import-draft { padding:8px 14px; background:rgba(76,175,125,.15); border:1px solid rgba(76,175,125,.3); border-radius:6px; color:var(--green); font-family:var(--sans); font-size:12px; cursor:pointer; transition:background .15s; }
+    .btn-import-draft:hover { background:rgba(76,175,125,.25); }
+    .btn-import-draft:disabled { opacity:.4; cursor:not-allowed; }
+    .import-spinner { display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,.15); border-top-color:currentColor; border-radius:50%; animation:spin .7s linear infinite; margin-right:5px; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
     .fiche-modal { width:100%; max-width:500px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:24px; animation:fadeUp .2s ease; max-height:85vh; overflow-y:auto; }
     @keyframes fadeUp { from { transform: translateY(16px); opacity:0; } to { transform: translateY(0); opacity:1; } }
     .fiche-modal-title { font-family:var(--serif); font-size:20px; font-weight:300; margin-bottom:4px; }
@@ -1002,7 +1026,9 @@
           <span class="search-icon">⌕</span>
           <input type="text" id="projects-search" placeholder="Rechercher un projet…" oninput="debounceProjectsSearch()"/>
         </div>
-        <div class="toolbar-right">
+        <div class="toolbar-right" style="display:flex;gap:8px;align-items:center">
+          <input type="file" id="pdf-import-input" accept=".pdf" multiple style="display:none" onchange="startPdfImport(this.files)"/>
+          <button class="btn-new-project" style="background:var(--bg3);color:var(--cream);border:1px solid var(--border)" onclick="document.getElementById('pdf-import-input').click()">📄 Importer PDF</button>
           <button class="btn-new-project" onclick="startNewProject()">+ Nouveau projet</button>
         </div>
       </div>
@@ -1446,6 +1472,24 @@
       </div>
     </div>
     <p class="fiche-status" id="email-compose-status" style="margin-top:10px"></p>
+  </div>
+</div>
+
+<!-- ══ IMPORT PDF OVERLAY ════════════════════════════════════ -->
+<div class="fiche-overlay" id="import-overlay" onclick="if(event.target===this)closeImportOverlay()">
+  <div class="import-modal">
+    <div class="send-modal-header">
+      <div>
+        <p class="send-modal-tag">Importer fiches PDF</p>
+        <p class="send-modal-sub" id="import-sub">Extraction en cours…</p>
+      </div>
+      <button class="send-modal-close" onclick="closeImportOverlay()">✕</button>
+    </div>
+    <div class="send-modal-divider"></div>
+    <div id="import-queue-list"></div>
+    <div style="margin-top:8px;display:flex;justify-content:flex-end">
+      <button class="send-modal-cancel" onclick="closeImportOverlay()">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -2913,6 +2957,224 @@ async function addTimelineEvent(leadId) {
     body: JSON.stringify({ lead_id: leadId, type, content }),
   });
   if (res.ok) loadTimeline(leadId);
+}
+
+/* ── Import PDF ─────────────────────────────────────────────── */
+let importQueue = [];
+
+function closeImportOverlay() {
+  document.getElementById('import-overlay').classList.remove('on');
+  // Reset file input pour permettre re-sélection du même fichier
+  const inp = document.getElementById('pdf-import-input');
+  if (inp) inp.value = '';
+  importQueue = [];
+}
+
+async function loadPdfJs() {
+  if (window.pdfjsLib) return;
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve();
+    };
+    s.onerror = () => reject(new Error('Impossible de charger PDF.js'));
+    document.head.appendChild(s);
+  });
+}
+
+async function extractPdfText(file) {
+  const ab  = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page    = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(s => s.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
+async function startPdfImport(files) {
+  if (!files || !files.length) return;
+  importQueue = Array.from(files).map(f => ({
+    file: f,
+    name: f.name.replace(/\.pdf$/i, ''),
+    status: 'waiting',
+    data: null,
+    error: null,
+  }));
+  document.getElementById('import-overlay').classList.add('on');
+  renderImportQueue();
+
+  // Chargement PDF.js si nécessaire
+  try {
+    await loadPdfJs();
+  } catch (e) {
+    importQueue.forEach(it => { it.status = 'error'; it.error = 'PDF.js unavailable'; });
+    renderImportQueue();
+    return;
+  }
+
+  // Traitement séquentiel pour ne pas saturer le navigateur
+  for (let i = 0; i < importQueue.length; i++) {
+    const item = importQueue[i];
+
+    // 1. Extraction texte
+    item.status = 'extracting';
+    renderImportQueue();
+    let text;
+    try {
+      text = await extractPdfText(item.file);
+    } catch (e) {
+      item.status = 'error';
+      item.error = 'Lecture PDF impossible';
+      renderImportQueue();
+      continue;
+    }
+
+    // 2. Parsing via Claude API
+    item.status = 'parsing';
+    renderImportQueue();
+    try {
+      const res  = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'parse-pdf', text }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.project) {
+        item.status = 'ready';
+        item.data   = data.project;
+        // Titre de fallback = nom du fichier
+        if (!item.data.title) item.data.title = item.name;
+      } else {
+        item.status = 'error';
+        item.error  = data.error === 'anthropic_key_missing'
+          ? 'Clé ANTHROPIC_API_KEY manquante dans Vercel'
+          : (data.detail || data.error || `Erreur ${res.status}`);
+      }
+    } catch (e) {
+      item.status = 'error';
+      item.error  = 'Erreur réseau';
+    }
+    renderImportQueue();
+  }
+
+  const ready = importQueue.filter(it => it.status === 'ready').length;
+  document.getElementById('import-sub').textContent =
+    `${ready} fiche${ready > 1 ? 's' : ''} prête${ready > 1 ? 's' : ''} sur ${importQueue.length}`;
+}
+
+function renderImportQueue() {
+  const el = document.getElementById('import-queue-list');
+  if (!el) return;
+
+  const pending = importQueue.filter(it => it.status === 'waiting' || it.status === 'extracting' || it.status === 'parsing').length;
+  if (pending > 0) {
+    document.getElementById('import-sub').textContent = `Analyse en cours… (${importQueue.length - pending}/${importQueue.length})`;
+  }
+
+  el.innerHTML = importQueue.map((item, idx) => {
+    const chipClass = {
+      waiting:    'chip-waiting',
+      extracting: 'chip-extract',
+      parsing:    'chip-parsing',
+      ready:      'chip-ready',
+      error:      'chip-error',
+    }[item.status] || 'chip-waiting';
+
+    const chipLabel = {
+      waiting:    'En attente',
+      extracting: '<span class="import-spinner"></span>Extraction…',
+      parsing:    '<span class="import-spinner"></span>Analyse IA…',
+      ready:      '✓ Prêt',
+      error:      '✕ Erreur',
+    }[item.status] || item.status;
+
+    let preview = '';
+    if (item.status === 'ready' && item.data) {
+      const d = item.data;
+      const price = d.price_fai ? fmtEuro(d.price_fai) + ' FAI' : null;
+      const surf  = d.surface_carrez ? `${d.surface_carrez} m²` : null;
+      const loyer = d.loyer_atom ? `Loyer ${fmtEuro(d.loyer_atom)}/mois` : null;
+      const rdt   = d.rendement_brut ? `Rdt ${d.rendement_brut}%` : null;
+      const meta  = [d.arrondissement, surf, price, loyer, rdt].filter(Boolean).join(' · ');
+      preview = `
+        <div class="import-preview">
+          <div class="import-preview-title">${esc(d.title || item.name)}</div>
+          ${d.address ? `<div class="import-preview-meta">📍 ${esc(d.address)}</div>` : ''}
+          ${meta ? `<div class="import-preview-meta" style="margin-top:3px">${esc(meta)}</div>` : ''}
+          ${d.description ? `<div class="import-preview-meta" style="margin-top:6px;opacity:.7;font-style:italic">${esc(d.description.slice(0, 120))}${d.description.length > 120 ? '…' : ''}</div>` : ''}
+          <div class="import-actions">
+            <button class="btn-import-review" onclick="reviewImportedProject(${idx})">✏️ Réviser dans le formulaire</button>
+            <button class="btn-import-draft" id="btn-draft-${idx}" onclick="createImportDraft(${idx})">Créer en brouillon</button>
+          </div>
+        </div>`;
+    }
+    if (item.status === 'error') {
+      preview = `<div style="margin-top:8px;font-size:12px;color:var(--red)">${esc(item.error || 'Erreur inconnue')}</div>`;
+    }
+
+    return `
+      <div class="import-item">
+        <div class="import-item-head">
+          <span class="import-item-name">📄 ${esc(item.name)}.pdf</span>
+          <span class="import-status-chip ${chipClass}">${chipLabel}</span>
+        </div>
+        ${preview}
+      </div>`;
+  }).join('');
+}
+
+function reviewImportedProject(idx) {
+  const item = importQueue[idx];
+  if (!item?.data) return;
+  closeImportOverlay();
+  resetNewProjectForm();
+  populateProjectForm(item.data);
+  // Forcer le statut "brouillon" + titre si absent
+  const st = document.getElementById('np-status'); if (st) st.value = 'brouillon';
+  if (!item.data.title) setVal('np-title', item.name);
+  // Mettre à jour le titre du formulaire
+  const titleEl = document.getElementById('np-page-title');
+  if (titleEl) titleEl.textContent = 'Nouveau projet';
+  const subEl = document.getElementById('np-page-sub');
+  if (subEl) subEl.textContent = 'Importé depuis PDF — vérifiez les champs avant de sauvegarder';
+  setRoute('new-project');
+}
+
+async function createImportDraft(idx) {
+  const item = importQueue[idx];
+  if (!item?.data) return;
+  const btn = document.getElementById(`btn-draft-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Création…'; }
+
+  const payload = {
+    ...item.data,
+    title:  item.data.title || item.name,
+    status: 'brouillon',
+  };
+
+  try {
+    const res  = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      item.status = 'created';
+      if (btn) { btn.textContent = '✓ Créé'; btn.style.background = 'rgba(76,175,125,.25)'; btn.style.borderColor = 'rgba(76,175,125,.5)'; }
+      projectsCache = []; // force refresh
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = '❌ ' + (data.error || 'Erreur'); }
+    }
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = '❌ Erreur réseau'; }
+  }
 }
 
 /* ── Projets compatibles dans drawer lead ─────────────────── */
