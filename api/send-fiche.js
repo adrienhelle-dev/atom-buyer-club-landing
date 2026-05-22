@@ -165,7 +165,6 @@ function buildSimpleEmail(lead, subject, body, founder = {}, senderEmail = '') {
       <p style="margin:0;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#B8975A;font-weight:500">Atom Buyers Club</p>
     </div>
     <div style="padding:28px">
-      <p style="margin:0 0 20px;font-size:16px;color:#111">Bonjour ${esc(lead.prenom)},</p>
       <p style="margin:0 0 24px;font-size:14px;color:#444;line-height:1.8">${bodyHtml}</p>
     </div>
     <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0;font-size:12px;color:#888;line-height:1.7">
