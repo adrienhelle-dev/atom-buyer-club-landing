@@ -2872,38 +2872,27 @@ function srcBadge(src) {
 
 /* ── Score ──────────────────────────────────────────────────── */
 // Grille (max 10) :
-//   Horizon            : asap=4  3mois=3  6mois=2  reflexion=1
-//   Financement comptant: +6  (plafond infini + certitude maximale)
-//   Financement emprunt :
-//     accord=oui       : +4  (étude bancaire validée)
-//     accord=oui       : +4  (étude bancaire validée)
-//     accord=courtier  : +2  (courtier souhaité)
-//     accord=non       : +2  (pas encore fait de demande)
-//     Budget emprunt   : >1M/600k-1M/400-600k=+2  150-400k=+1  <150k=+0
-//   → max emprunt = asap(4) + oui(4) + budget(2) = 10
+//   Horizon  : asap=4  3mois=3  6mois=2  reflexion=1
+//   Comptant : +6
+//   Emprunt  : accord=oui→+4  courtier→+2  non→+2  (budget +2/+1/0)
 //
-//   RÈGLE VERROU : score ≥ 8 UNIQUEMENT si timing=asap
-//   ET financement renseigné (comptant | oui | courtier | non)
-//   Sinon plafonné à 7 quelle que soit la somme brute.
+//   RÈGLE FINALE :
+//     asap     → plancher 8  (tout lead asap est chaud, peu importe le financement)
+//     non-asap → plafond  7  (jamais dans les leads chauds)
 function computeScore(lead) {
   let s = 0;
-  // Horizon (max 4)
   s += ({ asap: 4, '3mois': 3, '6mois': 2, reflexion: 1 }[lead.timing] || 0);
-  // Financement + Budget (max 6)
   if (lead.financement === 'comptant') {
-    s += 6; // cash = financement parfait + pas de plafond d'emprunt → max des 2 composantes
+    s += 6;
   } else {
-    if      (lead.accord === 'oui')      s += 4; // étude bancaire validée
-    else if (lead.accord === 'courtier') s += 2; // courtier souhaité
-    else if (lead.accord === 'non')      s += 2; // pas encore fait de demande (+bonus asap)
+    if      (lead.accord === 'oui')      s += 4;
+    else if (lead.accord === 'courtier') s += 2;
+    else if (lead.accord === 'non')      s += 2;
     s += ({ 'plus-1m': 2, '600k-1m': 2, '400-600k': 2, '250-400k': 1, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
   }
   const raw = Math.min(10, s);
-  // Verrou : 8+ réservé aux leads asap + financement fort (comptant | validé | autonome)
-  const isHotEligible = lead.timing === 'asap'
-    && (lead.financement === 'comptant' || lead.accord === 'oui'
-        || lead.accord === 'courtier' || lead.accord === 'non');
-  return (raw >= 8 && !isHotEligible) ? 7 : raw;
+  if (lead.timing === 'asap') return Math.max(8, raw);  // plancher 8
+  return Math.min(7, raw);                               // plafond 7
 }
 function scoreBadge(lead) {
   const s = computeScore(lead);
