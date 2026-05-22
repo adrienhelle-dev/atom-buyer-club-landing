@@ -1461,8 +1461,33 @@
 const TIMING = { asap:'Dès que possible', '3mois':'Dans 3 mois', '6mois':'Dans 6 mois', reflexion:'En réflexion' };
 const FIN    = { comptant:'Comptant', emprunt:'Emprunt bancaire' };
 const BUDGET = { 'moins-150k':'< 150 k€','150-250k':'150–250 k€','250-400k':'250–400 k€','400-600k':'400–600 k€','600k-1m':'600 k€–1 M€','plus-1m':'> 1 M€' };
-const SRC_LABELS = { google:'Google Ads', instagram:'Instagram Ads', facebook:'Facebook Ads', meta:'Meta Ads', organic:'Organique', email:'Email' };
-const SRC_CLASS  = { google:'badge-google', instagram:'badge-instagram', facebook:'badge-facebook', meta:'badge-meta', organic:'badge-organic' };
+// Sources d'acquisition canoniques
+// fiche_projet = lead venu d'une page projet sans UTM payant → assimilé Organique
+const SRC_LABELS = {
+  google:       'Google Ads',
+  instagram:    'Instagram Ads',
+  facebook:     'Facebook Ads',
+  meta:         'Meta Ads',
+  email:        'Email',
+  organic:      'Organique',
+  fiche_projet: 'Organique',   // page projet sans canal payant = organique
+};
+const SRC_CLASS  = {
+  google:       'badge-google',
+  instagram:    'badge-instagram',
+  facebook:     'badge-facebook',
+  meta:         'badge-meta',
+  email:        'badge-default',
+  organic:      'badge-organic',
+  fiche_projet: 'badge-organic',
+};
+// Ensemble des sources qui se regroupent sous "Organique" (pour les stats)
+const ORGANIC_SRC_KEYS = new Set(['organic', 'fiche_projet']);
+function normalizeSrc(src) {
+  if (!src) return null;
+  const s = src.toLowerCase();
+  return ORGANIC_SRC_KEYS.has(s) ? 'organic' : s;
+}
 const STATUS_OPTS = [
   { v: 'nouveau',  l: 'Nouveau',      c: '#7a7874' },
   { v: 'contacte', l: 'Contacté',     c: '#4285f4' },
@@ -2346,8 +2371,12 @@ function renderStats(leads, total) {
   const weekCount = leads.filter(l => new Date(l.created_at) >= weekAgo).length;
   document.getElementById('s-week').textContent = weekCount;
 
+  // Compte les sources en normalisant (fiche_projet → organic, etc.)
   const srcCounts = {};
-  leads.forEach(l => { if (l.utm_source) srcCounts[l.utm_source] = (srcCounts[l.utm_source] || 0) + 1; });
+  leads.forEach(l => {
+    const norm = normalizeSrc(l.utm_source);
+    if (norm) srcCounts[norm] = (srcCounts[norm] || 0) + 1;
+  });
   const topSrc = Object.entries(srcCounts).sort((a,b) => b[1]-a[1])[0];
   document.getElementById('s-top-src').textContent = topSrc ? (SRC_LABELS[topSrc[0]] || topSrc[0]) : '—';
 }

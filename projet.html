@@ -499,15 +499,25 @@ document.getElementById('interest-form').addEventListener('submit', async (e) =>
   btn.disabled = true; btn.textContent = 'Envoi…';
   statusEl.className = 'interest-status'; statusEl.textContent = '';
 
+  // Lit les UTMs depuis l'URL ou la sessionStorage (pour attribution pub correcte
+  // si un lead arrive via Google/Meta Ads sur une page projet).
+  // Fallback : 'fiche_projet' = arrivée organique directement sur la fiche.
+  const _usp = new URLSearchParams(window.location.search);
+  const getU = k => _usp.get(k) || sessionStorage.getItem('utm_' + k) || null;
   const payload = {
-    prenom:      document.getElementById('i-prenom').value.trim(),
-    nom:         document.getElementById('i-nom').value.trim(),
-    email:       document.getElementById('i-email').value.trim(),
-    tel:         document.getElementById('i-tel').value.trim(),
-    referrer:    window.location.href,
-    utm_source:  'fiche_projet',
-    utm_content: project?.slug || project?.id || 'unknown',
-    project_id:  project?.id || null,
+    prenom:       document.getElementById('i-prenom').value.trim(),
+    nom:          document.getElementById('i-nom').value.trim(),
+    email:        document.getElementById('i-email').value.trim(),
+    tel:          document.getElementById('i-tel').value.trim(),
+    referrer:     window.location.href,
+    utm_source:   getU('utm_source')   || 'fiche_projet',
+    utm_medium:   getU('utm_medium'),
+    utm_campaign: getU('utm_campaign'),
+    utm_content:  getU('utm_content')  || project?.slug || null,
+    utm_term:     getU('utm_term'),
+    gclid:        getU('gclid'),
+    fbclid:       getU('fbclid'),
+    project_id:   project?.id || null,
   };
 
   const res = await fetch('/api/submit', {
