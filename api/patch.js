@@ -24,12 +24,12 @@ module.exports = async function handler(req, res) {
     const updates = {};
     ALLOWED.forEach(k => { if (k in b) updates[k] = b[k]; });
 
-    if (!Object.keys(updates).length) return res.status(400).json({ error: 'Aucun champ valide' });
-
-    // Si le statut change, on assigne automatiquement le lead au founder connecté
-    if ('status' in updates) {
+    // Auto-assign : quand le statut change OU quand force_assign=true (ex: clic CTA)
+    if ('status' in updates || b.force_assign) {
       updates.assigned_to = payload.email;
     }
+
+    if (!Object.keys(updates).length) return res.status(400).json({ error: 'Aucun champ valide' });
 
     const { error } = await supabase.from('leads').update(updates).eq('id', id);
     if (error) {

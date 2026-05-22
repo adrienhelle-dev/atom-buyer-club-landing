@@ -2175,13 +2175,13 @@ function openDrawer(lead) {
     <div class="drawer-section">
       <p class="drawer-section-label">Actions</p>
       <div class="cta-grid" style="grid-template-columns:repeat(2,1fr)">
-        <a class="cta-btn cta-call" href="tel:${esc(lead.tel)}">
+        <a class="cta-btn cta-call" href="tel:${esc(lead.tel)}" onclick="trackCta('${esc(lead.id)}','appel')">
           <span class="cta-icon">📞</span><span>Appeler</span>
         </a>
-        <a class="cta-btn cta-whatsapp" href="https://wa.me/${phone}?text=${waText}" target="_blank" rel="noopener noreferrer">
+        <a class="cta-btn cta-whatsapp" href="https://wa.me/${phone}?text=${waText}" target="_blank" rel="noopener noreferrer" onclick="trackCta('${esc(lead.id)}','whatsapp')">
           <span class="cta-icon">💬</span><span>WhatsApp</span>
         </a>
-        <a class="cta-btn cta-email" href="mailto:${esc(lead.email)}?subject=${mailSubject}&body=${mailBody}">
+        <a class="cta-btn cta-email" href="mailto:${esc(lead.email)}?subject=${mailSubject}&body=${mailBody}" onclick="trackCta('${esc(lead.id)}','email_manuel')">
           <span class="cta-icon">✉</span><span>Email</span>
         </a>
         <button class="cta-btn" style="background:rgba(184,151,90,.1);color:var(--gold);border-color:rgba(184,151,90,.2)" onclick="openFicheModal()">
@@ -2288,6 +2288,83 @@ async function updateLeadStatus(id, status) {
     lead.status = status;
     if (assignedEmail) lead.assigned_to = assignedEmail;
     renderTable(leadsCache);
+  }
+}
+
+// ─── CTA tracking : timeline + responsable + statut min "contacté" ────────────
+async function trackCta(leadId, ctaType) {
+  if (!leadId || !token) return;
+
+  // Détermine si on doit passer le statut à "contacté"
+  const body = { force_assign: true };
+  const lead = leadsCache.find(l => l.id === leadId);
+  if (!lead?.status || lead.status === 'nouveau') body.status = 'contacte';
+
+  // Appels parallèles : log timeline + patch lead
+  const [, patchRes] = await Promise.all([
+    fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead_id: leadId, type: ctaType }),
+    }).catch(() => null),
+    fetch(`/api/patch?id=${leadId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    }).catch(() => null),
+  ]);
+
+  if (patchRes?.ok) {
+    const d = await patchRes.json().catch(() => ({}));
+    // Mise à jour du cache lead
+    if (lead) {
+      if (body.status) lead.status = body.status;
+      if (d.assigned_to) lead.assigned_to = d.assigned_to;
+      renderTable(leadsCache);
+    }
+    // Mise à jour du drawer si c'est le lead courant
+    if (currentLead?.id === leadId) {
+      if (body.status) {
+        const sel = document.getElementById('status-select');
+        if (sel) sel.value = body.status;
+        const dot = document.getElementById('status-dot');
+        const s = STATUS_OPTS.find(o => o.v === body.status);
+        if (dot && s) dot.style.background = s.c;
+        if (currentLead) currentLead.status = body.status;
+      }
+      if (d.assigned_to) {
+        const el = document.getElementById('drawer-assigned');
+        if (el) el.innerHTML = founderBlock(d.assigned_to);
+        if (currentLead) currentLead.assigned_to = d.assigned_to;
+      }
+      loadTimeline(leadId);
+    }
+  }
+}
+
+// Helper pour rafraîchir le drawer après envoi de fiche
+function refreshDrawerAfterSend(leadId, apiResponse) {
+  const lead = leadsCache.find(l => l.id === leadId);
+  if (lead) {
+    if (apiResponse.status) lead.status = apiResponse.status;
+    if (apiResponse.assigned_to) lead.assigned_to = apiResponse.assigned_to;
+    renderTable(leadsCache);
+  }
+  if (currentLead?.id === leadId) {
+    if (apiResponse.status) {
+      const sel = document.getElementById('status-select');
+      if (sel) sel.value = apiResponse.status;
+      const dot = document.getElementById('status-dot');
+      const s = STATUS_OPTS.find(o => o.v === apiResponse.status);
+      if (dot && s) dot.style.background = s.c;
+      if (currentLead) currentLead.status = apiResponse.status;
+    }
+    if (apiResponse.assigned_to) {
+      const el = document.getElementById('drawer-assigned');
+      if (el) el.innerHTML = founderBlock(apiResponse.assigned_to);
+      if (currentLead) currentLead.assigned_to = apiResponse.assigned_to;
+    }
+    loadTimeline(leadId);
   }
 }
 
@@ -2402,7 +2479,10 @@ const TL_INFO = {
   inscription:   { icon: '📝', label: ()  => 'Formulaire soumis' },
   resoumission:  { icon: '🔄', label: ()  => 'Dossier mis à jour' },
   status_change: { icon: '🏷', label: (c) => { try { const d=JSON.parse(c); return 'Statut → '+(STATUS_OPTS.find(o=>o.v===d.status)?.l||d.status); } catch { return 'Changement de statut'; } } },
-  fiche_envoyee: { icon: '📄', label: (c) => { try { return 'Fiche envoyée — '+JSON.parse(c).titre; } catch { return 'Fiche envoyée'; } } },
+  fiche_envoyee: { icon: '📄', label: (c) => { try { const d=JSON.parse(c); return 'Fiche envoyée — '+(d.title||d.titre||'projet'); } catch { return 'Fiche envoyée'; } } },
+  appel:         { icon: '📞', label: ()  => 'Appel téléphonique' },
+  whatsapp:      { icon: '💬', label: ()  => 'Message WhatsApp' },
+  email_manuel:  { icon: '✉',  label: ()  => 'Email envoyé' },
   rdv:           { icon: '📅', label: (c) => c || 'RDV pris' },
   note:          { icon: '💬', label: (c) => c || 'Note' },
 };
@@ -2486,17 +2566,20 @@ function compatItem(p) {
 async function sendFicheDirect(projectId) {
   if (!currentLead) return;
   if (!confirm('Envoyer cette fiche par email à ' + currentLead.prenom + ' ' + currentLead.nom + ' ?')) return;
-  const res = await fetch('/api/send-fiche', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ lead_id: currentLead.id, project_id: projectId, message: '' }),
-  });
-  if (res.ok) {
-    alert('✅ Fiche envoyée !');
-    loadTimeline(currentLead.id);
+  let resData = {}, ok = false;
+  try {
+    const res = await fetch('/api/send-fiche', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead_id: currentLead.id, project_id: projectId, message: '' }),
+    });
+    resData = await res.json().catch(() => ({}));
+    ok = res.ok;
+  } catch (e) { console.error('sendFicheDirect:', e); }
+  if (ok) {
+    refreshDrawerAfterSend(currentLead.id, resData);
   } else {
-    const d = await res.json().catch(() => ({}));
-    alert('❌ ' + (d.error || 'Erreur d\'envoi'));
+    alert('❌ ' + (resData.error || resData.detail || 'Erreur d\'envoi'));
   }
 }
 
@@ -2601,24 +2684,32 @@ async function sendFicheToLead() {
   btn.disabled = true; btn.textContent = 'Envoi…';
   statusEl.textContent = '';
 
-  const res = await fetch('/api/send-fiche', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      lead_id:    sendLeadsSelectedLead,
-      project_id: sendLeadsProjectId,
-      message:    document.getElementById('send-leads-message').value.trim(),
-    }),
-  });
+  let resData = {};
+  let ok = false;
+  try {
+    const res = await fetch('/api/send-fiche', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        lead_id:    sendLeadsSelectedLead,
+        project_id: sendLeadsProjectId,
+        message:    document.getElementById('send-leads-message').value.trim(),
+      }),
+    });
+    resData = await res.json().catch(() => ({}));
+    ok = res.ok;
+  } catch (e) {
+    console.error('sendFicheToLead fetch error:', e);
+  }
 
   btn.textContent = '📄 Envoyer par email';
-  if (res.ok) {
-    statusEl.textContent = '✅ Fiche envoyée avec succès !';
+  if (ok) {
+    statusEl.textContent = '✅ Fiche envoyée !';
     statusEl.style.color = 'var(--green)';
-    setTimeout(closeSendLeadsModal, 1800);
+    refreshDrawerAfterSend(sendLeadsSelectedLead, resData);
+    setTimeout(closeSendLeadsModal, 1600);
   } else {
-    const d = await res.json().catch(() => ({}));
-    statusEl.textContent = '❌ ' + (d.error || 'Erreur inconnue');
+    statusEl.textContent = '❌ ' + (resData.error || resData.detail || 'Erreur inconnue');
     statusEl.style.color = 'var(--red)';
     btn.disabled = false;
   }
@@ -2630,20 +2721,29 @@ async function sendFiche() {
   const statusEl = document.getElementById('fiche-status');
   btn.disabled = true; btn.textContent = 'Envoi…';
   statusEl.textContent = ''; statusEl.style.color = 'var(--dim)';
-  const res = await fetch('/api/send-fiche', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ lead_id: currentLead.id, project_id: selectedProjectId, message: document.getElementById('fiche-message').value.trim() }),
-  });
+
+  let resData = {};
+  let ok = false;
+  try {
+    const res = await fetch('/api/send-fiche', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead_id: currentLead.id, project_id: selectedProjectId, message: document.getElementById('fiche-message').value.trim() }),
+    });
+    resData = await res.json().catch(() => ({}));
+    ok = res.ok;
+  } catch (e) {
+    console.error('sendFiche fetch error:', e);
+  }
+
   btn.textContent = '📄 Envoyer par email';
-  if (res.ok) {
-    statusEl.textContent = '✅ Fiche envoyée avec succès !';
+  if (ok) {
+    statusEl.textContent = '✅ Fiche envoyée !';
     statusEl.style.color = 'var(--green)';
-    setTimeout(closeFicheModal, 1800);
-    loadTimeline(currentLead.id);
+    refreshDrawerAfterSend(currentLead.id, resData);
+    setTimeout(closeFicheModal, 1600);
   } else {
-    const d = await res.json().catch(() => ({}));
-    statusEl.textContent = '❌ ' + (d.error || 'Erreur inconnue');
+    statusEl.textContent = '❌ ' + (resData.error || resData.detail || 'Erreur inconnue');
     statusEl.style.color = 'var(--red)';
     btn.disabled = false;
   }
