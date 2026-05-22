@@ -1,6 +1,8 @@
 const { supabase } = require('../lib/supabase');
+const { getFounder } = require('../lib/founders');
 
 // Champs exposés publiquement (jamais d'infos internes)
+// responsible_admin est chargé côté serveur uniquement pour dériver wa_contact
 const PUBLIC_FIELDS = [
   'id', 'title', 'address', 'arrondissement', 'surface_carrez', 'floor',
   'has_elevator', 'price_fai', 'fees_atom', 'fees_notaire',
@@ -9,6 +11,7 @@ const PUBLIC_FIELDS = [
   'description', 'images', 'images_3d', 'plan_2d_url',
   'metro_distance', 'metro_name', 'pdf_url', 'slug',
   'ameublement_desc', 'ameublement', 'published_at',
+  'responsible_admin',
 ].join(',');
 
 module.exports = async function handler(req, res) {
@@ -27,7 +30,16 @@ module.exports = async function handler(req, res) {
     if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
     if (!data) return res.status(404).json({ error: 'not_found' });
 
-    return res.status(200).json({ project: data });
+    // Dérive wa_contact depuis responsible_admin sans exposer l'email brut
+    const { responsible_admin, ...projectPublic } = data;
+    let wa_contact = null;
+    if (responsible_admin) {
+      const founder = getFounder(responsible_admin);
+      const phone   = founder.phone ? founder.phone.replace(/[\s\-]/g, '') : null;
+      if (phone) wa_contact = { name: founder.name, phone };
+    }
+
+    return res.status(200).json({ project: { ...projectPublic, wa_contact } });
 
   } catch (e) {
     console.error('Public-project crash:', e);

@@ -1152,6 +1152,15 @@
               <label for="np-description">Description</label>
               <textarea id="np-description" maxlength="500" placeholder="Description courte du bien (max 500 caractères)"></textarea>
             </div>
+            <div class="np-field span-2">
+              <label for="np-responsible">Admin responsable du projet</label>
+              <select id="np-responsible">
+                <option value="">— Non assigné —</option>
+                <option value="adrien.helle@atom-capital.fr">Adrien Hellé</option>
+                <option value="alexandre.kiman@atom-capital.fr">Alexandre Kiman</option>
+                <option value="thierry.vignal@atom-capital.fr">Thierry Vignal</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1265,6 +1274,12 @@
             <label class="np-eq-item"><input type="checkbox" data-eq="rangements"><span>🗄 Rangements intégrés</span></label>
             <label class="np-eq-item"><input type="checkbox" data-eq="internet"><span>📶 Internet inclus</span></label>
           </div>
+        </div>
+
+        <!-- Leads intéressés (affiché uniquement en mode édition) -->
+        <div id="np-interested-section" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:20px">
+          <p style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:12px">Leads ayant déclaré un intérêt</p>
+          <div id="np-interested-list"></div>
         </div>
 
         <!-- Footer -->
@@ -1672,6 +1687,17 @@ function renderProjectsSections(all) {
   container.innerHTML = html;
 }
 
+// Dérive un prénom + nom lisible depuis un email de founder
+function founderNameFromEmail(email) {
+  if (!email) return '';
+  const FOUNDER_NAMES = {
+    'adrien.helle@atom-capital.fr':    'Adrien Hellé',
+    'alexandre.kiman@atom-capital.fr': 'Alexandre Kiman',
+    'thierry.vignal@atom-capital.fr':  'Thierry Vignal',
+  };
+  return FOUNDER_NAMES[email.toLowerCase()] || email.split('@')[0].split(/[.\-_]/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+
 function waProjectText(p) {
   const adminRaw    = (localStorage.getItem('abc_admin_email') || '').split('@')[0].split(/[.\-_]/)[0];
   const adminPrenom = adminRaw.charAt(0).toUpperCase() + adminRaw.slice(1);
@@ -1708,6 +1734,16 @@ function projectCard(p) {
     ? `<span class="match-badge">👥 ${matchCount} lead${matchCount > 1 ? 's' : ''} compatible${matchCount > 1 ? 's' : ''}</span>`
     : `<span class="match-badge zero">Aucun lead compatible</span>`;
 
+  // Compteur d'intérêts déclarés
+  const intCount = p.interest_count || 0;
+  const intBadge = intCount > 0
+    ? `<span class="match-badge" style="background:rgba(76,175,125,.12);color:#4caf7d;margin-top:4px">⭐ ${intCount} intérêt${intCount > 1 ? 's' : ''} déclaré${intCount > 1 ? 's' : ''}</span>`
+    : '';
+
+  // Admin responsable
+  const respName = p.responsible_admin ? founderNameFromEmail(p.responsible_admin) : '';
+  const respBadge = respName ? `<span style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:4px;margin-top:2px">👤 ${esc(respName)}</span>` : '';
+
   return `
     <div class="project-card">
       <div class="project-card-img ${img ? '' : 'empty'}" style="${img ? `background-image:url('${esc(img)}')` : ''}" onclick="openProject('${esc(p.id)}')">
@@ -1717,7 +1753,9 @@ function projectCard(p) {
       <div class="project-card-body" onclick="openProject('${esc(p.id)}')">
         <div class="project-card-title">${esc(p.title || 'Sans titre')}</div>
         <div class="project-card-meta">${meta.map(m => `<span>${esc(m)}</span>`).join('')}</div>
+        ${respBadge}
         ${matchBadge}
+        ${intBadge}
         <div class="project-card-prices">
           <div class="project-card-price-main">${total}</div>
           <div class="project-card-price-sub"><strong>${loyer}</strong><br>Loyer Atom</div>
@@ -1828,17 +1866,46 @@ async function confirmDeleteProject() {
 
 async function openProject(id) {
   editingProjectId = id;
-  const res = await fetch(`/api/projects?id=${id}`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(`/api/projects?id=${id}&interests=1`, { headers: { Authorization: `Bearer ${token}` } });
   if (res.status === 401) { logout(); return; }
   if (!res.ok) {
     editingProjectId = null;
     alert('Impossible de charger ce projet');
     return;
   }
-  const { project } = await res.json();
+  const { project, interested_leads } = await res.json();
   setRoute('new-project');
   // populateProjectForm doit s'exécuter APRÈS le reset du router
-  setTimeout(() => populateProjectForm(project), 80);
+  setTimeout(() => {
+    populateProjectForm(project);
+    renderInterestedLeads(interested_leads || []);
+  }, 80);
+}
+
+function renderInterestedLeads(leads) {
+  const section = document.getElementById('np-interested-section');
+  const list    = document.getElementById('np-interested-list');
+  if (!section || !list) return;
+
+  if (!leads.length) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  list.innerHTML = leads.map(r => {
+    const l = r.leads || {};
+    const date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' }) : '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <span style="font-size:13px;color:var(--cream);font-weight:500">${esc(l.prenom||'')} ${esc(l.nom||'')}</span>
+        <span style="font-size:12px;color:var(--dim);margin-left:10px">${esc(l.email||'')}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${date ? `<span style="font-size:11px;color:var(--dim)">${date}</span>` : ''}
+        <a href="tel:${esc(l.tel||'')}" style="font-size:12px;color:var(--gold);text-decoration:none">${esc(l.tel||'')}</a>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function startNewProject() {
@@ -1991,7 +2058,7 @@ function resetNewProjectForm() {
   ['np-title','np-address','np-arr','np-surface','np-floor','np-metro-dist','np-metro-name',
    'np-dpe-avant','np-dpe-apres','np-description',
    'np-price-fai','np-fees-notaire','np-loyer',
-   'np-images','np-images-3d','np-plan-2d','np-ameublement-desc'
+   'np-images','np-images-3d','np-plan-2d','np-ameublement-desc','np-responsible'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   // Valeurs par défaut
   const fa = document.getElementById('np-fees-atom');     if (fa) fa.value = 8900;
@@ -2006,6 +2073,9 @@ function resetNewProjectForm() {
   // Reset photos
   npImages = [];
   renderImagePreviews();
+  // Cache la section intérêts (mode création)
+  const intSec = document.getElementById('np-interested-section');
+  if (intSec) intSec.style.display = 'none';
   // Titre selon le mode (édition vs création)
   updateNpTitle();
   // Reset section visible
@@ -2050,8 +2120,9 @@ function populateProjectForm(p) {
   renderImagePreviews();
   setVal('np-images-3d',       (p.images_3d || []).join(', '));
   setVal('np-plan-2d',         p.plan_2d_url);
-  setVal('np-ameublement-desc',p.ameublement_desc);
-  setVal('np-status',          p.status || 'disponible');
+  setVal('np-ameublement-desc', p.ameublement_desc);
+  setVal('np-responsible',      p.responsible_admin || '');
+  setVal('np-status',           p.status || 'disponible');
   // Checkboxes
   document.getElementById('np-elevator').checked = !!p.has_elevator;
   document.getElementById('np-public').checked   = !!p.public_visible;
@@ -2178,9 +2249,10 @@ async function saveProject(forceStatus) {
     images_3d:        parseImagesList(document.getElementById('np-images-3d').value),
     plan_2d_url:      document.getElementById('np-plan-2d').value.trim() || null,
     ameublement_desc: document.getElementById('np-ameublement-desc').value.trim() || null,
-    ameublement:      collectEquipement(),
-    status:           forceStatus || document.getElementById('np-status').value,
-    public_visible:   document.getElementById('np-public').checked,
+    ameublement:       collectEquipement(),
+    status:            forceStatus || document.getElementById('np-status').value,
+    public_visible:    document.getElementById('np-public').checked,
+    responsible_admin: document.getElementById('np-responsible').value || null,
   };
 
   if (payload.status === 'disponible' || payload.public_visible) {
@@ -2751,6 +2823,16 @@ const TL_INFO = {
   email_manuel:  { icon: '✉',  label: (c) => {
     try { const d = JSON.parse(c); if (d.subject) return `Email — ${d.subject}`; } catch {}
     return 'Email envoyé';
+  }},
+  interet_projet: { icon: '⭐', label: (c) => {
+    try {
+      const d = JSON.parse(c);
+      if (d.project_id) {
+        const proj = projectsCache.find(p => p.id === d.project_id);
+        return proj ? `Intérêt déclaré — ${proj.title}` : 'Intérêt déclaré — projet';
+      }
+    } catch {}
+    return 'Intérêt déclaré sur un projet';
   }},
   rdv:           { icon: '📅', label: (c) => c || 'RDV pris' },
   note:          { icon: '💬', label: (c) => c || 'Note' },

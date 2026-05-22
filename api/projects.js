@@ -8,6 +8,7 @@ const WRITE_FIELDS = [
   'loyer_atom', 'status', 'dpe_avant', 'dpe_apres', 'description',
   'images', 'images_3d', 'plan_2d_url', 'metro_distance', 'metro_name',
   'slug', 'public_visible', 'ameublement_desc', 'ameublement', 'published_at',
+  'responsible_admin',
 ];
 
 module.exports = async function handler(req, res) {
@@ -19,19 +20,49 @@ module.exports = async function handler(req, res) {
 
     // ─── GET ────────────────────────────────────────────────────
     if (req.method === 'GET') {
-      const { id, status, arrondissement, search } = req.query;
+      const { id, status, arrondissement, search, interests } = req.query;
+
       if (id) {
         const { data, error } = await supabase.from('projects').select('*').eq('id', id).single();
         if (error) return res.status(404).json({ error: 'not_found', detail: error.message });
+
+        // ?interests=1 → renvoie aussi la liste des leads intéressés
+        if (interests === '1') {
+          const { data: intRows } = await supabase
+            .from('project_interests')
+            .select('lead_id, source, created_at, leads(id, prenom, nom, email, tel, status)')
+            .eq('project_id', id)
+            .order('created_at', { ascending: false });
+          return res.status(200).json({ project: data, interested_leads: intRows || [] });
+        }
+
         return res.status(200).json({ project: data });
       }
+
       let q = supabase.from('projects').select('*').order('created_at', { ascending: false });
       if (status)         q = q.eq('status', status);
       if (arrondissement) q = q.eq('arrondissement', arrondissement);
       if (search)         q = q.ilike('title', `%${search}%`);
-      const { data, error } = await q;
+
+      const [{ data, error }, { data: intData }] = await Promise.all([
+        q,
+        supabase.from('project_interests').select('project_id'),
+      ]);
+
       if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
-      return res.status(200).json({ projects: data || [] });
+
+      // Calcule le nombre d'intéressés par projet
+      const interestCounts = {};
+      (intData || []).forEach(r => {
+        interestCounts[r.project_id] = (interestCounts[r.project_id] || 0) + 1;
+      });
+
+      const projects = (data || []).map(p => ({
+        ...p,
+        interest_count: interestCounts[p.id] || 0,
+      }));
+
+      return res.status(200).json({ projects });
     }
 
     // ─── POST (création) ────────────────────────────────────────
