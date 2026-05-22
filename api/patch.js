@@ -49,7 +49,7 @@ module.exports = async function handler(req, res) {
         type: 'status_change',
         content: JSON.stringify({ status: updates.status }),
         author: payload.email,
-      }]).then(() => {}).catch(e => console.error('Event log status:', e));
+      }]);
     }
 
     return res.status(200).json({ ok: true, assigned_to: updates.assigned_to || null });

@@ -42,9 +42,9 @@ module.exports = async function handler(req, res) {
     if (!lead.status || lead.status === 'nouveau') leadUpdates.status = 'contacte';
     const events = [{ lead_id, type: 'email_manuel', content: JSON.stringify({ subject }), author: payload.email }];
     if (leadUpdates.status) events.push({ lead_id, type: 'status_change', content: JSON.stringify({ status: leadUpdates.status }), author: payload.email });
-    await Promise.all([
-      supabase.from('leads').update(leadUpdates).eq('id', lead_id).catch(() => {}),
-      supabase.from('lead_events').insert(events).catch(() => {}),
+    await Promise.allSettled([
+      supabase.from('leads').update(leadUpdates).eq('id', lead_id),
+      supabase.from('lead_events').insert(events),
     ]);
     return res.status(200).json({ ok: true, assigned_to: payload.email, status: leadUpdates.status || lead.status });
   }
@@ -132,11 +132,9 @@ module.exports = async function handler(req, res) {
     events.push({ lead_id, type: 'status_change', content: JSON.stringify({ status: leadUpdates.status }), author: payload.email });
   }
 
-  await Promise.all([
-    supabase.from('leads').update(leadUpdates).eq('id', lead_id)
-      .catch(e => console.error('Lead update after fiche:', e)),
-    supabase.from('lead_events').insert(events)
-      .catch(e => console.error('Event log fiche:', e)),
+  await Promise.allSettled([
+    supabase.from('leads').update(leadUpdates).eq('id', lead_id),
+    supabase.from('lead_events').insert(events),
   ]);
 
   return res.status(200).json({
