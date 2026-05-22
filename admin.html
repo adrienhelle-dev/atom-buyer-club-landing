@@ -2880,6 +2880,10 @@ function srcBadge(src) {
 //     accord=courtier  : +2  (souhaite être accompagné)
 //     Budget emprunt   : >1M/600k-1M/400-600k=+2  150-250k=+1  <150k=+0
 //   → max emprunt = asap(4) + oui(4) + budget(2) = 10
+//
+//   RÈGLE VERROU : score ≥ 8 UNIQUEMENT si timing=asap
+//   ET financement fort (comptant | accord=oui | accord=non)
+//   Sinon plafonné à 7 quelle que soit la somme brute.
 function computeScore(lead) {
   let s = 0;
   // Horizon (max 4)
@@ -2893,7 +2897,11 @@ function computeScore(lead) {
     else if (lead.accord === 'courtier') s += 2; // souhaite être accompagné
     s += ({ 'plus-1m': 2, '600k-1m': 2, '400-600k': 2, '250-400k': 1, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
   }
-  return Math.min(10, s);
+  const raw = Math.min(10, s);
+  // Verrou : 8+ réservé aux leads asap + financement fort (comptant | validé | autonome)
+  const isHotEligible = lead.timing === 'asap'
+    && (lead.financement === 'comptant' || lead.accord === 'oui' || lead.accord === 'non');
+  return (raw >= 8 && !isHotEligible) ? 7 : raw;
 }
 function scoreBadge(lead) {
   const s = computeScore(lead);
