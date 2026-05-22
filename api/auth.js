@@ -1,4 +1,4 @@
-const { ADMIN_EMAILS, ADMIN_PASSWORD, signToken } = require('../lib/auth');
+const { ADMIN_EMAILS, VIEWER_EMAILS, ADMIN_PASSWORD, signToken } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -12,5 +12,6 @@ module.exports = async function handler(req, res) {
   if (!ADMIN_EMAILS.includes(email)) return res.status(401).json({ error: 'Accès non autorisé' });
   if (password !== ADMIN_PASSWORD)   return res.status(401).json({ error: 'Mot de passe incorrect' });
 
-  return res.status(200).json({ token: signToken(email), email });
+  const isViewer = VIEWER_EMAILS.includes(email);
+  return res.status(200).json({ token: signToken(email), email, isViewer });
 };

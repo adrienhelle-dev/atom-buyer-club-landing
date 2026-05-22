@@ -789,6 +789,11 @@
       <option value="signe">Signé</option>
       <option value="perdu">Non retenu</option>
     </select>
+    <!-- Vue viewer : sélecteur visible uniquement pour Thierry & Alexandre -->
+    <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
+      <option value="hot">🔥 Leads chauds (7+)</option>
+      <option value="all">Tous les leads</option>
+    </select>
     <div class="toolbar-right">
       <button class="btn-refresh" onclick="loadLeads(currentPage)" title="Actualiser">↻</button>
       <button class="btn-export" onclick="exportCSV()">
@@ -1201,11 +1206,16 @@ let notesTimer        = null;
 let leadsCache        = [];
 let currentLead       = null;
 let editingProjectId  = null;
+let isViewerMode      = false;   // true pour Thierry & Alexandre → filtre score ≥ 7 par défaut
+let scoreMinFilter    = 0;       // 0 = pas de filtre, 7 = leads chauds seulement
 
 /* ── Auth ─────────────────────────────────────────────────── */
 function init() {
   token = localStorage.getItem('abc_admin_token');
-  if (token) showDashboard(localStorage.getItem('abc_admin_email') || '');
+  if (token) showDashboard(
+    localStorage.getItem('abc_admin_email') || '',
+    localStorage.getItem('abc_admin_viewer') === '1'
+  );
 }
 
 document.getElementById('login-form').addEventListener('submit', async e => {
@@ -1231,15 +1241,31 @@ document.getElementById('login-form').addEventListener('submit', async e => {
   token = data.token;
   localStorage.setItem('abc_admin_token', token);
   localStorage.setItem('abc_admin_email', data.email);
-  showDashboard(data.email);
+  localStorage.setItem('abc_admin_viewer', data.isViewer ? '1' : '0');
+  showDashboard(data.email, data.isViewer);
 });
 
-function showDashboard(email) {
+function showDashboard(email, isViewer) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('admin-email').textContent = email;
+
+  // Mode viewer (Thierry & Alexandre) : filtre "leads chauds" actif par défaut
+  isViewerMode = !!isViewer;
+  if (isViewerMode) {
+    scoreMinFilter = 7;
+    const sel = document.getElementById('score-view-filter');
+    if (sel) { sel.style.display = ''; sel.value = 'hot'; }
+  }
+
   loadLeads(1);
   handleRoute(); // applique la vue selon le hash actuel (ou #leads par défaut)
+}
+
+function applyScoreViewFilter() {
+  const sel = document.getElementById('score-view-filter');
+  scoreMinFilter = sel?.value === 'hot' ? 7 : 0;
+  renderTable(leadsCache);
 }
 
 /* ── Routeur SPA par hash ───────────────────────────────────── */
@@ -1734,13 +1760,20 @@ function renderStats(leads, total) {
 
 function renderTable(leads) {
   leadsCache = leads;
+  // Filtre score (mode viewer ou filtre manuel)
+  let filtered = scoreMinFilter > 0
+    ? leads.filter(l => computeScore(l) >= scoreMinFilter)
+    : leads;
   // Tri par score si activé
   const sorted = sortByScore
-    ? [...leads].sort((a, b) => sortScoreDir === 'desc' ? computeScore(b) - computeScore(a) : computeScore(a) - computeScore(b))
-    : leads;
+    ? [...filtered].sort((a, b) => sortScoreDir === 'desc' ? computeScore(b) - computeScore(a) : computeScore(a) - computeScore(b))
+    : filtered;
   const tbody = document.getElementById('leads-body');
   if (!sorted.length) {
-    tbody.innerHTML = '<tr><td colspan="12" class="table-msg">Aucun lead trouvé</td></tr>';
+    const msg = scoreMinFilter > 0
+      ? `Aucun lead avec un score ≥ ${scoreMinFilter} pour l'instant.`
+      : 'Aucun lead trouvé';
+    tbody.innerHTML = `<tr><td colspan="12" class="table-msg">${msg}</td></tr>`;
     return;
   }
   tbody.innerHTML = sorted.map((l, i) => `
@@ -2067,6 +2100,15 @@ function srcBadge(src) {
 }
 
 /* ── Score ──────────────────────────────────────────────────── */
+// Grille (max 10) :
+//   Horizon            : asap=4  3mois=3  6mois=2  reflexion=1
+//   Financement comptant: +6  (plafond infini + certitude maximale)
+//   Financement emprunt :
+//     accord=oui       : +4  (étude bancaire validée)
+//     accord=non       : +3  (gère avec sa banque — autonome et motivé)
+//     accord=courtier  : +2  (souhaite être accompagné)
+//     Budget emprunt   : >1M/600k-1M/400-600k=+2  150-250k=+1  <150k=+0
+//   → max emprunt = asap(4) + oui(4) + budget(2) = 10
 function computeScore(lead) {
   let s = 0;
   // Horizon (max 4)
@@ -2075,12 +2117,12 @@ function computeScore(lead) {
   if (lead.financement === 'comptant') {
     s += 6; // cash = financement parfait + pas de plafond d'emprunt → max des 2 composantes
   } else {
-    if      (lead.accord === 'oui')     s += 3;
-    else if (lead.accord === 'courtier') s += 2;
-    else if (lead.accord === 'non')      s += 1;
-    s += ({ 'plus-1m': 3, '600k-1m': 3, '400-600k': 2, '250-400k': 2, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
+    if      (lead.accord === 'oui')      s += 4; // étude bancaire validée
+    else if (lead.accord === 'non')      s += 3; // gère avec sa banque, autonome
+    else if (lead.accord === 'courtier') s += 2; // souhaite être accompagné
+    s += ({ 'plus-1m': 2, '600k-1m': 2, '400-600k': 2, '250-400k': 1, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
   }
-  return s; // 0–10
+  return Math.min(10, s);
 }
 function scoreBadge(lead) {
   const s = computeScore(lead);
