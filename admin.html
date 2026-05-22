@@ -453,6 +453,15 @@
     }
     .pc-action:hover { border-color: var(--gold); color: var(--gold); }
     .pc-action.pc-pdf { background: rgba(184,151,90,.08); color: var(--gold); border-color: rgba(184,151,90,.25); }
+    .pc-action.pc-send { background: rgba(76,175,125,.08); color: var(--green); border-color: rgba(76,175,125,.25); }
+
+    .match-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 500; padding: 3px 8px;
+      background: rgba(76,175,125,.12); color: var(--green);
+      border-radius: 20px; width: fit-content; margin-top: 4px;
+    }
+    .match-badge.zero { background: rgba(122,120,116,.1); color: var(--dim); }
 
     .projects-empty {
       text-align: center; padding: 80px 24px; color: var(--dim);
@@ -1135,6 +1144,32 @@
   </div>
 </div>
 
+<!-- ══ SEND TO LEADS MODAL (depuis vue Projets) ═══════════════ -->
+<div class="fiche-overlay" id="send-leads-overlay" onclick="if(event.target===this)closeSendLeadsModal()">
+  <div class="fiche-modal">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <h3 class="fiche-modal-title">Envoyer la fiche projet</h3>
+        <p class="fiche-modal-sub" id="send-leads-sub">Sélectionner un lead à contacter</p>
+      </div>
+      <button style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 0 0 12px" onclick="closeSendLeadsModal()">✕</button>
+    </div>
+    <span class="fiche-modal-label">Leads compatibles</span>
+    <div class="project-list" id="send-leads-list">
+      <div class="project-empty">Chargement…</div>
+    </div>
+    <div class="fiche-msg-wrap">
+      <span class="fiche-modal-label">Message personnalisé (optionnel)</span>
+      <textarea id="send-leads-message" placeholder="Bonjour, suite à notre échange je vous partage cette sélection…"></textarea>
+    </div>
+    <div class="fiche-btns">
+      <button class="btn-cancel" onclick="closeSendLeadsModal()">Annuler</button>
+      <button class="btn-send-fiche" id="btn-send-leads" onclick="sendFicheToLead()" disabled>📄 Envoyer par email</button>
+    </div>
+    <p class="fiche-status" id="send-leads-status"></p>
+  </div>
+</div>
+
 <!-- ══ DETAIL DRAWER ══════════════════════════════════════════ -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer(event)">
   <div class="drawer" id="drawer">
@@ -1293,6 +1328,13 @@ function projectCard(p) {
   const arr    = p.arrondissement || '';
   const meta   = [arr, surf, floor].filter(Boolean).join('|||').split('|||');
   const slug   = p.slug || p.id;
+
+  // Compteur leads compatibles (moteur de matching côté client)
+  const matchCount = leadsCache.filter(l => leadMatchesProject(l, p)).length;
+  const matchBadge = matchCount > 0
+    ? `<span class="match-badge">👥 ${matchCount} lead${matchCount > 1 ? 's' : ''} compatible${matchCount > 1 ? 's' : ''}</span>`
+    : `<span class="match-badge zero">Aucun lead compatible</span>`;
+
   return `
     <div class="project-card">
       <div class="project-card-img ${img ? '' : 'empty'}" style="${img ? `background-image:url('${esc(img)}')` : ''}" onclick="openProject('${esc(p.id)}')">
@@ -1302,14 +1344,16 @@ function projectCard(p) {
       <div class="project-card-body" onclick="openProject('${esc(p.id)}')">
         <div class="project-card-title">${esc(p.title || 'Sans titre')}</div>
         <div class="project-card-meta">${meta.map(m => `<span>${esc(m)}</span>`).join('')}</div>
+        ${matchBadge}
         <div class="project-card-prices">
           <div class="project-card-price-main">${total}</div>
           <div class="project-card-price-sub"><strong>${loyer}</strong><br>Loyer Atom</div>
         </div>
       </div>
       <div class="project-card-actions">
-        ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐 Page publique</a>` : ''}
-        <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 Générer PDF</button>
+        ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐</a>` : ''}
+        ${matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')">📨 Envoyer (${matchCount})</button>` : ''}
+        <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 PDF</button>
       </div>
     </div>`;
 }
@@ -1942,11 +1986,6 @@ async function updateLeadStatus(id, status) {
     return;
   }
 
-  // Mettre à jour le dot de couleur dans le drawer
-  const s = STATUS_OPTS.find(o => o.v === status) || STATUS_OPTS[0];
-  const dot = document.getElementById('status-dot');
-  if (dot) dot.style.background = s.c;
-
   // Mettre à jour le bloc Responsable dans le drawer
   const assignedEmail = data.assigned_to;
   const assignedBlock = document.getElementById('drawer-assigned');
@@ -2185,9 +2224,9 @@ async function openFicheModal() {
     <div class="project-item" data-id="${esc(p.id)}" onclick="selectProject('${esc(p.id)}')">
       <span class="project-icon">🏠</span>
       <div class="project-info">
-        <div class="project-title">${esc(p.titre)}</div>
-        ${p.adresse ? `<div class="project-addr">📍 ${esc(p.adresse)}</div>` : ''}
-        ${p.prix ? `<div class="project-prix">${esc(p.prix)}</div>` : ''}
+        <div class="project-title">${esc(p.title || p.titre || 'Sans titre')}</div>
+        ${(p.address || p.adresse) ? `<div class="project-addr">📍 ${esc(p.address || p.adresse)}</div>` : ''}
+        ${p.total_all_in ? `<div class="project-prix">${fmtEuro(p.total_all_in)}</div>` : ''}
         ${p.pdf_url ? `<a class="project-pdf-link" href="${esc(p.pdf_url)}" target="_blank" onclick="event.stopPropagation()">Aperçu PDF ↗</a>` : ''}
       </div>
     </div>
@@ -2202,6 +2241,89 @@ function closeFicheModal() {
   document.getElementById('fiche-overlay').classList.remove('on');
   selectedProjectId = null;
 }
+
+/* ── Send Fiche depuis vue Projets (flux inversé) ───────────── */
+let sendLeadsProjectId    = null;
+let sendLeadsSelectedLead = null;
+
+function openSendToLeadsModal(projectId) {
+  sendLeadsProjectId    = projectId;
+  sendLeadsSelectedLead = null;
+
+  const project = projectsCache.find(p => p.id === projectId);
+  const title   = project?.title || 'ce projet';
+
+  document.getElementById('send-leads-sub').textContent = `Fiche : "${title}"`;
+  document.getElementById('send-leads-message').value   = '';
+  document.getElementById('send-leads-status').textContent = '';
+  document.getElementById('btn-send-leads').disabled    = true;
+  document.getElementById('btn-send-leads').textContent = '📄 Envoyer par email';
+  document.getElementById('send-leads-overlay').classList.add('on');
+
+  const matching = project ? leadsCache.filter(l => leadMatchesProject(l, project)) : [];
+  const listEl   = document.getElementById('send-leads-list');
+
+  if (!matching.length) {
+    listEl.innerHTML = '<div class="project-empty">Aucun lead compatible pour ce projet.<br><span style="font-size:11px;margin-top:6px;display:block">Vérifiez l\'arrondissement et les critères budget.</span></div>';
+    return;
+  }
+
+  listEl.innerHTML = matching.map(l => `
+    <div class="project-item" data-lead-id="${esc(l.id)}" onclick="selectLeadForFiche('${esc(l.id)}')">
+      <span class="project-icon">👤</span>
+      <div class="project-info">
+        <div class="project-title">${esc(l.prenom)} ${esc(l.nom)}</div>
+        <div class="project-addr">${esc(l.email)} · ${TIMING[l.timing] || l.timing || '—'} · ${FIN[l.financement] || l.financement || '—'}</div>
+      </div>
+      ${founderBadge(l.assigned_to)}
+    </div>
+  `).join('');
+}
+
+function selectLeadForFiche(leadId) {
+  sendLeadsSelectedLead = leadId;
+  document.querySelectorAll('#send-leads-list .project-item').forEach(el =>
+    el.classList.toggle('selected', el.dataset.leadId === leadId)
+  );
+  document.getElementById('btn-send-leads').disabled = false;
+}
+
+function closeSendLeadsModal() {
+  document.getElementById('send-leads-overlay').classList.remove('on');
+  sendLeadsProjectId    = null;
+  sendLeadsSelectedLead = null;
+}
+
+async function sendFicheToLead() {
+  if (!sendLeadsProjectId || !sendLeadsSelectedLead) return;
+  const btn      = document.getElementById('btn-send-leads');
+  const statusEl = document.getElementById('send-leads-status');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  statusEl.textContent = '';
+
+  const res = await fetch('/api/send-fiche', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      lead_id:    sendLeadsSelectedLead,
+      project_id: sendLeadsProjectId,
+      message:    document.getElementById('send-leads-message').value.trim(),
+    }),
+  });
+
+  btn.textContent = '📄 Envoyer par email';
+  if (res.ok) {
+    statusEl.textContent = '✅ Fiche envoyée avec succès !';
+    statusEl.style.color = 'var(--green)';
+    setTimeout(closeSendLeadsModal, 1800);
+  } else {
+    const d = await res.json().catch(() => ({}));
+    statusEl.textContent = '❌ ' + (d.error || 'Erreur inconnue');
+    statusEl.style.color = 'var(--red)';
+    btn.disabled = false;
+  }
+}
+
 async function sendFiche() {
   if (!selectedProjectId || !currentLead) return;
   const btn = document.getElementById('btn-send-fiche');
