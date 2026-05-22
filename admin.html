@@ -454,8 +454,13 @@
     .pc-action:hover { border-color: var(--gold); color: var(--gold); }
     .pc-action.pc-pdf  { background: rgba(184,151,90,.08); color: var(--gold); border-color: rgba(184,151,90,.25); }
     .pc-action.pc-send { background: rgba(76,175,125,.08); color: var(--green); border-color: rgba(76,175,125,.25); }
-    .pc-action.pc-del  { flex: 0 0 auto; padding: 7px 10px; color: var(--dim); border-color: var(--border); }
-    .pc-action.pc-del:hover { border-color: var(--red); color: var(--red); background: rgba(217,94,94,.08); }
+    .pc-del {
+      flex: 0 0 auto; background: none; border: none; color: transparent;
+      font-size: 14px; cursor: pointer; padding: 6px 8px; border-radius: 5px;
+      transition: color .15s, background .15s; line-height: 1;
+    }
+    .project-card:hover .pc-del { color: var(--dim); }
+    .pc-del:hover { color: var(--red) !important; background: rgba(217,94,94,.1); }
 
     /* ── Status tabs ─────────────────────────────────────────── */
     .project-tabs {
@@ -953,13 +958,10 @@
   <!-- ══ DELETE PROJECT MODAL ══════════════════════════════════ -->
   <div class="del-proj-overlay" id="del-proj-overlay" onclick="if(event.target===this)closeDelProjectModal()">
     <div class="del-proj-modal">
-      <div class="del-proj-icon">🗑</div>
-      <div class="del-proj-title">Archiver ce projet ?</div>
+      <div class="del-proj-icon" id="del-proj-icon">🗑</div>
+      <div class="del-proj-title" id="del-proj-title">Archiver ce projet ?</div>
       <div class="del-proj-name" id="del-proj-name">—</div>
-      <p class="del-proj-warn">
-        Le projet sera <strong>retiré de toutes les vues actives</strong> et passera en statut Archivé.<br>
-        Les leads ayant reçu une fiche ne seront pas notifiés.
-      </p>
+      <p class="del-proj-warn" id="del-proj-warn"></p>
       <div class="del-proj-btns">
         <button class="btn-del-cancel" onclick="closeDelProjectModal()">Annuler</button>
         <button class="btn-del-confirm" id="btn-del-proj-confirm" onclick="confirmDeleteProject()">Archiver le projet</button>
@@ -1542,7 +1544,7 @@ function projectCard(p) {
         ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐</a>` : ''}
         ${matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')">📨 Envoyer (${matchCount})</button>` : ''}
         <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 PDF</button>
-        <button class="pc-action pc-del" onclick="event.stopPropagation(); openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}')" title="Archiver">🗑</button>
+        <button class="pc-del" onclick="event.stopPropagation(); openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
       </div>
     </div>`;
 }
@@ -1576,27 +1578,50 @@ async function downloadPdf(projectId, btn) {
 }
 
 /* ── Delete project ─────────────────────────────────────────── */
-let delProjectId = null;
+let delProjectId       = null;
+let delProjectPermanent = false;
 
-function openDelProjectModal(id, title) {
-  delProjectId = id;
+function openDelProjectModal(id, title, status) {
+  delProjectId        = id;
+  delProjectPermanent = (status === 'archive');
+
   document.getElementById('del-proj-name').textContent = title;
-  const btn = document.getElementById('btn-del-proj-confirm');
-  btn.disabled = false; btn.textContent = 'Archiver le projet';
+
+  if (delProjectPermanent) {
+    document.getElementById('del-proj-icon').textContent  = '⚠️';
+    document.getElementById('del-proj-title').textContent = 'Supprimer définitivement ?';
+    document.getElementById('del-proj-warn').innerHTML    =
+      'Ce projet est déjà archivé. Cette action le <strong>supprimera définitivement</strong> de la base de données.<br>Aucune récupération possible.';
+    const btn = document.getElementById('btn-del-proj-confirm');
+    btn.textContent = 'Supprimer définitivement'; btn.disabled = false;
+  } else {
+    document.getElementById('del-proj-icon').textContent  = '🗑';
+    document.getElementById('del-proj-title').textContent = 'Archiver ce projet ?';
+    document.getElementById('del-proj-warn').innerHTML    =
+      'Le projet sera <strong>retiré de toutes les vues actives</strong> et passera en statut Archivé.<br>Les leads ayant reçu une fiche ne seront pas notifiés.';
+    const btn = document.getElementById('btn-del-proj-confirm');
+    btn.textContent = 'Archiver le projet'; btn.disabled = false;
+  }
+
   document.getElementById('del-proj-overlay').classList.add('on');
 }
 
 function closeDelProjectModal() {
   document.getElementById('del-proj-overlay').classList.remove('on');
-  delProjectId = null;
+  delProjectId = null; delProjectPermanent = false;
 }
 
 async function confirmDeleteProject() {
   if (!delProjectId) return;
   const btn = document.getElementById('btn-del-proj-confirm');
-  btn.disabled = true; btn.textContent = 'Archivage…';
+  btn.disabled = true;
+  btn.textContent = delProjectPermanent ? 'Suppression…' : 'Archivage…';
 
-  const res = await fetch(`/api/projects?id=${delProjectId}`, {
+  const url = delProjectPermanent
+    ? `/api/projects?id=${delProjectId}&permanent=true`
+    : `/api/projects?id=${delProjectId}`;
+
+  const res = await fetch(url, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -1604,15 +1629,15 @@ async function confirmDeleteProject() {
   if (res.status === 401) { logout(); return; }
   if (!res.ok) {
     const d = await res.json().catch(() => ({}));
-    btn.disabled = false; btn.textContent = 'Archiver le projet';
+    btn.disabled = false;
+    btn.textContent = delProjectPermanent ? 'Supprimer définitivement' : 'Archiver le projet';
     alert('Erreur : ' + (d.error || `HTTP ${res.status}`));
     return;
   }
 
+  const savedId = delProjectId;
   closeDelProjectModal();
-  // Retire le projet du cache local et rafraîchit sans appel réseau
-  projectsCache = projectsCache.filter(p => p.id !== delProjectId);
-  delProjectId = null;
+  projectsCache = projectsCache.filter(p => p.id !== savedId);
   updateProjectTabCounts();
   renderProjectsFiltered();
 }

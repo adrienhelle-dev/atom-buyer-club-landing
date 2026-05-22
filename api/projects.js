@@ -82,12 +82,23 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, project: data });
     }
 
-    // ─── DELETE (archivage soft) ────────────────────────────────
+    // ─── DELETE (archivage soft, ou suppression définitive si ?permanent=true) ──
     if (req.method === 'DELETE') {
-      const { id } = req.query;
+      const { id, permanent } = req.query;
       if (!id) return res.status(400).json({ error: 'id_required' });
-      const { error } = await supabase.from('projects').update({ status: 'archive' }).eq('id', id);
-      if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+
+      if (permanent === 'true') {
+        // Suppression définitive — uniquement si déjà archivé
+        const { data: proj } = await supabase.from('projects').select('status').eq('id', id).single();
+        if (!proj) return res.status(404).json({ error: 'not_found' });
+        if (proj.status !== 'archive') return res.status(400).json({ error: 'must_be_archived_first' });
+        const { error } = await supabase.from('projects').delete().eq('id', id);
+        if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+      } else {
+        // Archivage soft
+        const { error } = await supabase.from('projects').update({ status: 'archive' }).eq('id', id);
+        if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+      }
       return res.status(200).json({ ok: true });
     }
 
