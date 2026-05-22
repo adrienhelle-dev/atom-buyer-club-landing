@@ -2978,7 +2978,7 @@ async function sendEmailFromDrawer() {
 
   let res, data = {};
   try {
-    res  = await fetch('/api/send-email', {
+    res  = await fetch('/api/send-fiche', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ lead_id: emailComposeLeadId, subject, body }),
