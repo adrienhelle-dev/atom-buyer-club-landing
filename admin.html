@@ -1032,13 +1032,13 @@
         Disponible <span class="project-tab-count" id="ptc-disponible">0</span>
       </button>
       <button class="project-tab" data-tab="en_cours" onclick="setProjectTab('en_cours')">
-        En cours <span class="project-tab-count" id="ptc-en_cours">0</span>
+        Sous promesse <span class="project-tab-count" id="ptc-en_cours">0</span>
       </button>
       <button class="project-tab" data-tab="brouillon" onclick="setProjectTab('brouillon')">
         Brouillon <span class="project-tab-count" id="ptc-brouillon">0</span>
       </button>
       <button class="project-tab" data-tab="vendu" onclick="setProjectTab('vendu')">
-        Vendu <span class="project-tab-count" id="ptc-vendu">0</span>
+        Vendu par Atom <span class="project-tab-count" id="ptc-vendu">0</span>
       </button>
       <button class="project-tab" data-tab="archive" onclick="setProjectTab('archive')">
         Archivé <span class="project-tab-count" id="ptc-archive">0</span>
@@ -1288,8 +1288,8 @@
             <select class="filter-select" id="np-status" style="padding:9px 30px 9px 12px">
               <option value="brouillon">Brouillon</option>
               <option value="disponible" selected>Disponible</option>
-              <option value="en_cours">En cours</option>
-              <option value="vendu">Vendu</option>
+              <option value="en_cours">Sous promesse Atom</option>
+              <option value="vendu">Vendu par Atom</option>
               <option value="archive">Archivé</option>
             </select>
             <label class="np-toggle"><input type="checkbox" id="np-public"><label for="np-public" style="font-size:13px;color:var(--dim)">Visible sur le site public</label></label>
@@ -1572,16 +1572,16 @@ window.addEventListener('hashchange', handleRoute);
 /* ── Vue Projets ────────────────────────────────────────────── */
 const PROJECT_STATUS = {
   disponible: { label: 'Disponible', cls: 'pcs-disponible' },
-  en_cours:   { label: 'En cours',   cls: 'pcs-en_cours' },
-  vendu:      { label: 'Vendu',      cls: 'pcs-vendu' },
+  en_cours:   { label: 'Sous promesse Atom', cls: 'pcs-en_cours' },
+  vendu:      { label: 'Vendu par Atom',   cls: 'pcs-vendu' },
   archive:    { label: 'Archivé',    cls: 'pcs-archive' },
   brouillon:  { label: 'Brouillon',  cls: 'pcs-brouillon' },
 };
 
 const PROJECT_STATUS_ORDER = ['disponible', 'en_cours', 'brouillon', 'vendu', 'archive'];
 const PROJECT_STATUS_LABELS = {
-  disponible: 'Disponible', en_cours: 'En cours',
-  brouillon: 'Brouillon', vendu: 'Vendu', archive: 'Archivé',
+  disponible: 'Disponible', en_cours: 'Sous promesse Atom',
+  brouillon: 'Brouillon', vendu: 'Vendu par Atom', archive: 'Archivé',
 };
 
 let projectsSearchTimer = null;
