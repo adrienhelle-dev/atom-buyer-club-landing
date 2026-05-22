@@ -2623,15 +2623,20 @@ function selectProject(id) {
 function closeFicheModal() {
   document.getElementById('fiche-overlay').classList.remove('on');
   selectedProjectId = null;
+  // Reset bouton au cas où il a été modifié par warning anti-spam
+  const btn = document.getElementById('btn-send-fiche');
+  if (btn) { btn.style.background = ''; btn.style.color = ''; btn.onclick = () => sendFiche(); }
 }
 
 /* ── Send Fiche depuis vue Projets (flux inversé) ───────────── */
 let sendLeadsProjectId    = null;
 let sendLeadsSelectedLead = null;
+let sendLeadsForce        = false; // bypass anti-spam si confirmation
 
 function openSendToLeadsModal(projectId) {
   sendLeadsProjectId    = projectId;
   sendLeadsSelectedLead = null;
+  sendLeadsForce        = false;
 
   const project = projectsCache.find(p => p.id === projectId);
   const title   = project?.title || 'ce projet';
@@ -2639,8 +2644,10 @@ function openSendToLeadsModal(projectId) {
   document.getElementById('send-leads-sub').textContent = `Fiche : "${title}"`;
   document.getElementById('send-leads-message').value   = '';
   document.getElementById('send-leads-status').textContent = '';
+  document.getElementById('send-leads-status').style.color = 'var(--dim)';
   document.getElementById('btn-send-leads').disabled    = true;
   document.getElementById('btn-send-leads').textContent = '📄 Envoyer par email';
+  document.getElementById('btn-send-leads').onclick     = () => sendFicheToLead();
   document.getElementById('send-leads-overlay').classList.add('on');
 
   const matching = project ? leadsCache.filter(l => leadMatchesProject(l, project)) : [];
@@ -2675,17 +2682,17 @@ function closeSendLeadsModal() {
   document.getElementById('send-leads-overlay').classList.remove('on');
   sendLeadsProjectId    = null;
   sendLeadsSelectedLead = null;
+  sendLeadsForce        = false;
 }
 
-async function sendFicheToLead() {
+async function sendFicheToLead(force) {
   if (!sendLeadsProjectId || !sendLeadsSelectedLead) return;
   const btn      = document.getElementById('btn-send-leads');
   const statusEl = document.getElementById('send-leads-status');
   btn.disabled = true; btn.textContent = 'Envoi…';
   statusEl.textContent = '';
 
-  let resData = {};
-  let ok = false;
+  let resData = {}, httpStatus = 0;
   try {
     const res = await fetch('/api/send-fiche', {
       method: 'POST',
@@ -2694,59 +2701,109 @@ async function sendFicheToLead() {
         lead_id:    sendLeadsSelectedLead,
         project_id: sendLeadsProjectId,
         message:    document.getElementById('send-leads-message').value.trim(),
+        force:      force || sendLeadsForce,
       }),
     });
+    httpStatus = res.status;
     resData = await res.json().catch(() => ({}));
-    ok = res.ok;
   } catch (e) {
     console.error('sendFicheToLead fetch error:', e);
+    statusEl.textContent = '❌ Erreur réseau — réessaie';
+    statusEl.style.color = 'var(--red)';
+    btn.disabled = false; btn.textContent = '📄 Envoyer par email';
+    return;
   }
 
   btn.textContent = '📄 Envoyer par email';
-  if (ok) {
+
+  // ─── 200 : succès ─────────────────────────────────────────────
+  if (httpStatus === 200) {
     statusEl.textContent = '✅ Fiche envoyée !';
     statusEl.style.color = 'var(--green)';
     refreshDrawerAfterSend(sendLeadsSelectedLead, resData);
     setTimeout(closeSendLeadsModal, 1600);
-  } else {
-    statusEl.textContent = '❌ ' + (resData.error || resData.detail || 'Erreur inconnue');
-    statusEl.style.color = 'var(--red)';
-    btn.disabled = false;
+    return;
   }
+
+  // ─── 409 : déjà envoyée récemment ─────────────────────────────
+  if (httpStatus === 409) {
+    const h = resData.hours_ago ?? '—';
+    statusEl.innerHTML = `<span style="color:var(--gold)">⚠️ Fiche déjà envoyée il y a ${h}h</span>`;
+    btn.disabled = false;
+    btn.textContent = 'Renvoyer quand même →';
+    btn.style.background = 'rgba(184,151,90,.15)';
+    btn.style.color = 'var(--gold)';
+    btn.onclick = () => {
+      btn.style.background = ''; btn.style.color = '';
+      btn.onclick = () => sendFicheToLead();
+      sendFicheToLead(true);
+    };
+    return;
+  }
+
+  // ─── Autre erreur ──────────────────────────────────────────────
+  statusEl.textContent = '❌ ' + (resData.error || resData.detail || `Erreur ${httpStatus || 'inconnue'}`);
+  statusEl.style.color = 'var(--red)';
+  btn.disabled = false;
 }
 
-async function sendFiche() {
+async function sendFiche(force) {
   if (!selectedProjectId || !currentLead) return;
   const btn = document.getElementById('btn-send-fiche');
   const statusEl = document.getElementById('fiche-status');
   btn.disabled = true; btn.textContent = 'Envoi…';
   statusEl.textContent = ''; statusEl.style.color = 'var(--dim)';
 
-  let resData = {};
-  let ok = false;
+  let resData = {}, httpStatus = 0;
   try {
     const res = await fetch('/api/send-fiche', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lead_id: currentLead.id, project_id: selectedProjectId, message: document.getElementById('fiche-message').value.trim() }),
+      body: JSON.stringify({
+        lead_id: currentLead.id,
+        project_id: selectedProjectId,
+        message: document.getElementById('fiche-message').value.trim(),
+        force: !!force,
+      }),
     });
+    httpStatus = res.status;
     resData = await res.json().catch(() => ({}));
-    ok = res.ok;
   } catch (e) {
     console.error('sendFiche fetch error:', e);
+    statusEl.textContent = '❌ Erreur réseau — réessaie';
+    statusEl.style.color = 'var(--red)';
+    btn.disabled = false; btn.textContent = '📄 Envoyer par email';
+    return;
   }
 
   btn.textContent = '📄 Envoyer par email';
-  if (ok) {
+
+  if (httpStatus === 200) {
     statusEl.textContent = '✅ Fiche envoyée !';
     statusEl.style.color = 'var(--green)';
     refreshDrawerAfterSend(currentLead.id, resData);
     setTimeout(closeFicheModal, 1600);
-  } else {
-    statusEl.textContent = '❌ ' + (resData.error || resData.detail || 'Erreur inconnue');
-    statusEl.style.color = 'var(--red)';
-    btn.disabled = false;
+    return;
   }
+
+  if (httpStatus === 409) {
+    const h = resData.hours_ago ?? '—';
+    statusEl.innerHTML = `<span style="color:var(--gold)">⚠️ Déjà envoyée il y a ${h}h</span>`;
+    btn.disabled = false;
+    btn.textContent = 'Renvoyer quand même →';
+    btn.style.background = 'rgba(184,151,90,.15)';
+    btn.style.color = 'var(--gold)';
+    btn.onclick = () => {
+      btn.style.background = ''; btn.style.color = '';
+      btn.onclick = () => sendFiche();
+      sendFiche(true);
+    };
+    return;
+  }
+
+  statusEl.textContent = '❌ ' + (resData.error || resData.detail || `Erreur ${httpStatus || 'inconnue'}`);
+  statusEl.style.color = 'var(--red)';
+  btn.disabled = false;
 }
 
 function statusBadge(status) {

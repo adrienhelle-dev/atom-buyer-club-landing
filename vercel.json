@@ -8,6 +8,9 @@
     "api/generate-pdf.js": {
       "memory": 1024,
       "maxDuration": 60
+    },
+    "api/send-fiche.js": {
+      "maxDuration": 30
     }
   },
   "headers": [
