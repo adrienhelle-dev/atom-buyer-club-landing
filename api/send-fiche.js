@@ -155,16 +155,20 @@ function fmtPrice(v) {
 }
 
 function buildSimpleEmail(lead, subject, body, founder = {}, senderEmail = '') {
-  const bodyHtml = esc(body).replace(/\n/g, '<br>');
-  const sigName  = founder.name  ? `<strong style="color:#555">${esc(founder.name)}</strong><br>` : '';
-  const sigPhone = founder.phone ? `${esc(founder.phone)} · ` : '';
-  const sigEmail = senderEmail   ? `<a href="mailto:${esc(senderEmail)}" style="color:#B8975A;text-decoration:none">${esc(senderEmail)}</a><br>` : '';
+  // Supprime le "Bonjour X," en tête de corps s'il est présent (protection anti-doublon)
+  const cleanBody = body.replace(/^bonjour\s+\S+\s*,?\s*/i, '').trim();
+  const bodyHtml  = esc(cleanBody).replace(/\n/g, '<br>');
+  const greeting  = `<p style="margin:0 0 16px;font-size:14px;color:#444">Bonjour ${esc(lead.prenom)},</p>`;
+  const sigName   = founder.name  ? `<strong style="color:#555">${esc(founder.name)}</strong><br>` : '';
+  const sigPhone  = founder.phone ? `${esc(founder.phone)} · ` : '';
+  const sigEmail  = senderEmail   ? `<a href="mailto:${esc(senderEmail)}" style="color:#B8975A;text-decoration:none">${esc(senderEmail)}</a><br>` : '';
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f4;font-family:system-ui,-apple-system,sans-serif">
   <div style="max-width:580px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e5e5e5;box-shadow:0 2px 12px rgba(0,0,0,.07)">
     <div style="background:#0f0e0c;padding:22px 28px">
       <p style="margin:0;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#B8975A;font-weight:500">Atom Buyers Club</p>
     </div>
     <div style="padding:28px">
+      ${greeting}
       <p style="margin:0 0 24px;font-size:14px;color:#444;line-height:1.8">${bodyHtml}</p>
     </div>
     <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0;font-size:12px;color:#888;line-height:1.7">

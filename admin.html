@@ -2268,20 +2268,27 @@ async function saveProject(forceStatus) {
   const url    = isEdit ? `/api/projects?id=${editingProjectId}` : '/api/projects';
   const method = isEdit ? 'PUT' : 'POST';
 
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(payload),
-  });
-  if (res.status === 401) { logout(); return; }
+  let res, bodyText = '', data = {};
+  try {
+    res      = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body:    JSON.stringify(payload),
+    });
+    bodyText = await res.text();
+    try { data = JSON.parse(bodyText); } catch {}
+  } catch (e) {
+    // Erreur réseau (mobile offline, timeout…)
+    btn.disabled = false; btn.textContent = oldText;
+    alert(`Erreur réseau — vérifie ta connexion et réessaie.\n${e?.message || e}`);
+    return;
+  }
 
-  const bodyText = await res.text();
-  let data = {};
-  try { data = JSON.parse(bodyText); } catch {}
+  if (res.status === 401) { logout(); return; }
 
   if (!res.ok) {
     btn.disabled = false; btn.textContent = oldText;
-    const err = data?.error || `HTTP ${res.status}`;
+    const err    = data?.error  || `HTTP ${res.status}`;
     const detail = data?.detail || bodyText.slice(0, 300);
     alert(`Erreur à l'enregistrement.\n\n${err}\n${detail}`);
     return;
@@ -3073,7 +3080,7 @@ function openEmailComposeModal(leadId, prenom, email) {
   emailComposeLeadId = leadId;
   document.getElementById('email-compose-sub').textContent    = `${prenom} · ${email}`;
   document.getElementById('email-compose-subject').value      = 'Atom Buyers Club';
-  document.getElementById('email-compose-body').value         = `Bonjour ${prenom},\n\nOn a regardé votre dossier et j'aimerais qu'on en parle rapidement — vous avez 15 min cette semaine pour un appel ?\n\nBonne journée`;
+  document.getElementById('email-compose-body').value         = `On a regardé votre dossier et j'aimerais qu'on en parle rapidement — vous avez 15 min cette semaine pour un appel ?\n\nBonne journée`;
   document.getElementById('email-compose-status').textContent = '';
   document.getElementById('email-compose-status').style.color = '';
   const btn = document.getElementById('btn-email-compose');
