@@ -1570,7 +1570,7 @@ function projectCard(p) {
       </div>
       <div class="project-card-actions">
         ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐</a>` : ''}
-        ${matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')">📨 Envoyer (${matchCount})</button>` : ''}
+        ${p.status === 'disponible' && matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')">📨 Envoyer (${matchCount})</button>` : ''}
         <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 PDF</button>
         <button class="pc-del" onclick="event.stopPropagation(); openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
       </div>
