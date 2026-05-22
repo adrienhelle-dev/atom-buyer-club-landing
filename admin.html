@@ -467,6 +467,7 @@
     .pc-action:hover { border-color: var(--gold); color: var(--gold); }
     .pc-action.pc-pdf  { background: rgba(184,151,90,.08); color: var(--gold); border-color: rgba(184,151,90,.25); }
     .pc-action.pc-send { background: rgba(76,175,125,.08); color: var(--green); border-color: rgba(76,175,125,.25); }
+    .pc-action.pc-wa   { background: rgba(37,211,102,.08); color: #25d366; border-color: rgba(37,211,102,.25); }
     .pc-del {
       flex: 0 0 auto; background: none; border: none; color: transparent;
       font-size: 14px; cursor: pointer; padding: 6px 8px; border-radius: 5px;
@@ -643,6 +644,56 @@
     .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
     .btn-secondary { padding: 10px 20px; background: transparent; border: 1px solid var(--border); border-radius: var(--r); color: var(--cream); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: border-color .15s; }
     .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Upload photos ──────────────────────────────────────────── */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--r);
+      padding: 32px 20px; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s; margin-bottom: 16px;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--gold); background: rgba(184,151,90,.05);
+    }
+    .upload-zone input[type=file] { display: none; }
+    .upload-zone-icon { font-size: 32px; margin-bottom: 8px; opacity: .6; }
+    .upload-zone-label { font-size: 13px; color: var(--dim); line-height: 1.6; }
+    .upload-zone-label span { color: var(--gold); cursor: pointer; text-decoration: underline; }
+    .upload-zone-hint { font-size: 11px; color: var(--dim); margin-top: 4px; opacity: .7; }
+
+    .upload-progress {
+      display: none; height: 3px; background: var(--border);
+      border-radius: 2px; margin-bottom: 12px; overflow: hidden;
+    }
+    .upload-progress.on { display: block; }
+    .upload-progress-bar {
+      height: 100%; background: var(--gold);
+      transition: width .2s ease; width: 0%;
+    }
+
+    .img-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px; margin-bottom: 16px;
+    }
+    .img-grid-item {
+      position: relative; aspect-ratio: 1;
+      border-radius: 6px; overflow: hidden;
+      background: var(--bg3); border: 1px solid var(--border);
+    }
+    .img-grid-item img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .img-grid-item-del {
+      position: absolute; top: 4px; right: 4px;
+      background: rgba(0,0,0,.65); border: none; border-radius: 4px;
+      color: #fff; font-size: 13px; cursor: pointer; padding: 2px 6px;
+      opacity: 0; transition: opacity .15s;
+    }
+    .img-grid-item:hover .img-grid-item-del { opacity: 1; }
+    .img-grid-item-uploading {
+      position: absolute; inset: 0; background: rgba(0,0,0,.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #fff;
+    }
 
     /* Sticky calculations panel */
     .np-calcs {
@@ -1135,18 +1186,38 @@
           </div>
         </div>
 
-        <!-- Section 3 — Visuels (URLs en attendant Supabase Storage) -->
+        <!-- Section 3 — Visuels -->
         <div class="np-section" data-section="3">
-          <h3 class="np-section-title">Visuels</h3>
-          <p style="font-size:13px;color:var(--dim);margin-bottom:18px;font-style:italic">
-            Pour l'instant, colle les URLs des images hébergées ailleurs (Drive public, Imgur, etc.).
-            On migrera vers Supabase Storage à activation.
-          </p>
-          <div class="np-grid-2">
-            <div class="np-field span-2">
-              <label for="np-images">Photos état actuel (URLs séparées par des virgules)</label>
-              <textarea id="np-images" placeholder="https://...image1.jpg, https://...image2.jpg"></textarea>
+          <h3 class="np-section-title">Photos du bien</h3>
+
+          <!-- Zone upload principale -->
+          <div class="upload-zone" id="np-upload-zone"
+            onclick="document.getElementById('np-file-input').click()"
+            ondragover="event.preventDefault(); this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleImageDrop(event)">
+            <div class="upload-zone-icon">📷</div>
+            <div class="upload-zone-label">
+              Glisser-déposer des photos ici<br>
+              ou <span onclick="event.stopPropagation(); document.getElementById('np-file-input').click()">parcourir</span>
             </div>
+            <div class="upload-zone-hint">JPG, PNG, WebP — max 10 Mo par image</div>
+            <input type="file" id="np-file-input" multiple accept="image/jpeg,image/png,image/webp,image/jpg"
+              onchange="handleImageFiles(this.files)"/>
+          </div>
+
+          <!-- Barre de progression -->
+          <div class="upload-progress" id="np-upload-progress">
+            <div class="upload-progress-bar" id="np-upload-bar"></div>
+          </div>
+
+          <!-- Grille de prévisualisation -->
+          <div class="img-grid" id="np-img-grid"></div>
+
+          <!-- Champ caché pour rétrocompatibilité (saveProject lit npImages) -->
+          <input type="hidden" id="np-images" value=""/>
+
+          <div class="np-grid-2" style="margin-top:8px">
             <div class="np-field span-2">
               <label for="np-images-3d">Projections 3D (URLs séparées par des virgules)</label>
               <textarea id="np-images-3d" placeholder="https://...3d1.jpg, https://...3d2.jpg"></textarea>
@@ -1536,6 +1607,25 @@ function renderProjectsSections(all) {
   container.innerHTML = html;
 }
 
+function waProjectText(p) {
+  const adminRaw    = (localStorage.getItem('abc_admin_email') || '').split('@')[0].split(/[.\-_]/)[0];
+  const adminPrenom = adminRaw.charAt(0).toUpperCase() + adminRaw.slice(1);
+  const arr   = p.arrondissement ? `${p.arrondissement}` : '';
+  const surf  = p.surface_carrez ? `${p.surface_carrez} m²` : '';
+  const prix  = p.price_fai ? p.price_fai.toLocaleString('fr-FR') + ' € FAI' : '';
+  const loyer = p.loyer_atom ? `${p.loyer_atom.toLocaleString('fr-FR')} €/mois` : '';
+  const slug  = p.slug || null;
+  const ficheUrl = slug ? `https://join.atombuyerclub.fr/projet/${slug}` : '';
+
+  const details = [arr, surf, prix].filter(Boolean).join(' · ');
+  const loyerLine = loyer ? `\nLoyer estimé : ${loyer}` : '';
+  const ctaLine   = ficheUrl
+    ? `\nFiche complète : ${ficheUrl}`
+    : `\nJe te fais suivre la fiche PDF dans la foulée.`;
+
+  return `Hello, c'est ${adminPrenom} de chez Atom.\n\nJ'ai un bien dispo qui pourrait t'intéresser — ${details}.${loyerLine}${ctaLine}\n\nBonne journée !`;
+}
+
 function projectCard(p) {
   const img    = p.images_3d?.[0] || p.images?.[0] || null;
   const status = PROJECT_STATUS[p.status] || PROJECT_STATUS.disponible;
@@ -1571,6 +1661,7 @@ function projectCard(p) {
       <div class="project-card-actions">
         ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐</a>` : ''}
         ${p.status === 'disponible' && matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')">📨 Envoyer (${matchCount})</button>` : ''}
+        ${p.status === 'disponible' ? `<a class="pc-action pc-wa" href="https://wa.me/?text=${encodeURIComponent(waProjectText(p))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Partager sur WhatsApp">💬 WA</a>` : ''}
         <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 PDF</button>
         <button class="pc-del" onclick="event.stopPropagation(); openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
       </div>
@@ -1734,6 +1825,103 @@ function leadMatchesProject(lead, project) {
 /* ── Vue Nouveau Projet ─────────────────────────────────────── */
 let notaireTouched = false;
 
+// ── Gestion photos upload Supabase Storage ───────────────────
+let npImages = []; // [{ url, path }]
+
+async function handleImageDrop(event) {
+  event.preventDefault();
+  document.getElementById('np-upload-zone').classList.remove('drag-over');
+  await handleImageFiles(event.dataTransfer.files);
+}
+
+async function handleImageFiles(files) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!arr.length) return;
+  const zone   = document.getElementById('np-upload-zone');
+  const bar    = document.getElementById('np-upload-bar');
+  const prog   = document.getElementById('np-upload-progress');
+  prog.style.display = 'block';
+  let done = 0;
+  bar.style.width = '0%';
+  zone.style.pointerEvents = 'none';
+  // Upload in parallel (max 3 à la fois)
+  const CHUNK = 3;
+  for (let i = 0; i < arr.length; i += CHUNK) {
+    const batch = arr.slice(i, i + CHUNK);
+    const results = await Promise.all(batch.map(f => uploadImageFile(f)));
+    results.forEach(r => { if (r) npImages.push(r); });
+    done += batch.length;
+    bar.style.width = Math.round((done / arr.length) * 100) + '%';
+  }
+  // Réinitialise l'input file pour permettre de re-sélectionner les mêmes fichiers
+  const fi = document.getElementById('np-file-input');
+  if (fi) fi.value = '';
+  zone.style.pointerEvents = '';
+  setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 700);
+  renderImagePreviews();
+}
+
+async function uploadImageFile(file) {
+  const token = localStorage.getItem('abc_token');
+  // 1. Obtenir URL signée
+  let meta;
+  try {
+    const r = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        filename:   file.name,
+        project_id: editingProjectId || null,
+        mime_type:  file.type,
+      }),
+    });
+    if (!r.ok) { console.error('upload-image POST', await r.text()); return null; }
+    meta = await r.json();
+  } catch (e) { console.error('upload-image fetch', e); return null; }
+
+  // 2. Upload direct vers Supabase Storage
+  try {
+    const up = await fetch(meta.signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+    if (!up.ok) { console.error('PUT signedUrl', up.status, await up.text()); return null; }
+  } catch (e) { console.error('PUT storage', e); return null; }
+
+  return { url: meta.publicUrl, path: meta.path };
+}
+
+async function removeImage(index) {
+  const img = npImages[index];
+  if (!img) return;
+  // Supprimer du storage si on a le path
+  if (img.path) {
+    const token = localStorage.getItem('abc_token');
+    fetch('/api/upload-image', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ path: img.path }),
+    }).catch(() => {});
+  }
+  npImages.splice(index, 1);
+  renderImagePreviews();
+}
+
+function renderImagePreviews() {
+  const grid = document.getElementById('np-img-grid');
+  if (!grid) return;
+  if (!npImages.length) {
+    grid.innerHTML = '';
+    return;
+  }
+  grid.innerHTML = npImages.map((img, i) => `
+    <div class="img-grid-item">
+      <img src="${esc(img.url)}" alt="Photo ${i+1}" style="width:100%;height:100%;object-fit:cover"/>
+      <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removeImage(${i})" style="background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>`).join('');
+}
+
 function resetNewProjectForm() {
   // Champs texte/number
   ['np-title','np-address','np-arr','np-surface','np-floor','np-metro-dist','np-metro-name',
@@ -1751,6 +1939,9 @@ function resetNewProjectForm() {
   document.getElementById('np-public').checked = false;
   document.querySelectorAll('#np-eq-grid input[type=checkbox]').forEach(cb => { cb.checked = false; cb.parentElement.classList.remove('checked'); });
   notaireTouched = false;
+  // Reset photos
+  npImages = [];
+  renderImagePreviews();
   // Titre selon le mode (édition vs création)
   updateNpTitle();
   // Reset section visible
@@ -1790,7 +1981,9 @@ function populateProjectForm(p) {
   setVal('np-budget-travaux',  p.budget_travaux ?? 35000);
   setVal('np-budget-meuble',   p.budget_meuble ?? 3000);
   setVal('np-loyer',           p.loyer_atom);
-  setVal('np-images',          (p.images || []).join(', '));
+  // Photos upload (npImages) — chaque URL existante sans path connu
+  npImages = (p.images || []).map(url => ({ url: String(url), path: null }));
+  renderImagePreviews();
   setVal('np-images-3d',       (p.images_3d || []).join(', '));
   setVal('np-plan-2d',         p.plan_2d_url);
   setVal('np-ameublement-desc',p.ameublement_desc);
@@ -1917,7 +2110,7 @@ async function saveProject(forceStatus) {
     budget_travaux:   num('np-budget-travaux') || 0,
     budget_meuble:    num('np-budget-meuble') || 0,
     loyer_atom:       num('np-loyer') || null,
-    images:           parseImagesList(document.getElementById('np-images').value),
+    images:           npImages.map(i => i.url),
     images_3d:        parseImagesList(document.getElementById('np-images-3d').value),
     plan_2d_url:      document.getElementById('np-plan-2d').value.trim() || null,
     ameublement_desc: document.getElementById('np-ameublement-desc').value.trim() || null,
@@ -2129,8 +2322,10 @@ function openDrawer(lead) {
   const curStatus = STATUS_OPTS.find(o => o.v === (lead.status || 'nouveau')) || STATUS_OPTS[0];
   const phone = phoneIntl(lead.tel);
 
+  const _adminRaw   = (localStorage.getItem('abc_admin_email') || '').split('@')[0].split(/[.\-_]/)[0];
+  const _adminPrenom = _adminRaw.charAt(0).toUpperCase() + _adminRaw.slice(1);
   const waText = encodeURIComponent(
-    `Bonjour ${lead.prenom} 👋\n\nJe suis de l'équipe Atom Buyers Club.\n\nSuite à votre inscription sur notre plateforme, j'aimerais échanger avec vous sur votre projet immobilier à Paris.\n\nÊtes-vous disponible pour un appel dans les prochains jours ?\n\nCordialement,\nL'équipe Atom Buyers Club`
+    `Hello ${lead.prenom}, c'est ${_adminPrenom} de chez Atom. Vous êtes dispo pour qu'on s'appelle rapidement ? Bonne journée`
   );
   const mailSubject = encodeURIComponent(`Atom Buyers Club — Vos opportunités immobilières à Paris`);
   const mailBody = encodeURIComponent(
