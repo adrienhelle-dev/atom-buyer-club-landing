@@ -2150,7 +2150,29 @@ function resetNewProjectForm() {
   // Reset section visible
   showNpSection(1);
   recalc();
+  // Nouveau projet → bouton activé d'emblée ; édition → désactivé jusqu'à modif
+  setSaveBtnDirty(!editingProjectId);
 }
+
+function setSaveBtnDirty(dirty) {
+  const btn = document.getElementById('btn-save-project');
+  if (!btn) return;
+  btn.disabled = !dirty;
+  if (dirty && btn.textContent === '✓ Enregistré') btn.textContent = 'Enregistrer';
+}
+
+// Délégation : tout input/change dans le formulaire projet active le bouton
+(function attachProjectFormListeners() {
+  const container = document.getElementById('view-new-project');
+  if (!container) return;
+  ['input', 'change'].forEach(evt =>
+    container.addEventListener(evt, () => {
+      if (document.getElementById('view-new-project').classList.contains('active')) {
+        setSaveBtnDirty(true);
+      }
+    })
+  );
+})();
 
 function updateNpTitle() {
   const titleEl = document.getElementById('np-page-title');
@@ -2206,6 +2228,8 @@ function populateProjectForm(p) {
   // Titre + calculs
   updateNpTitle();
   recalc();
+  // Formulaire chargé = propre → désactive le bouton jusqu'à une modification
+  setSaveBtnDirty(false);
 }
 
 function setVal(id, v) {
@@ -2364,6 +2388,7 @@ async function saveProject(forceStatus) {
   }
 
   btn.textContent = '✓ Enregistré';
+  setSaveBtnDirty(false);
   setTimeout(() => {
     editingProjectId = null;
     resetNewProjectForm();
