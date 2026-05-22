@@ -2645,7 +2645,7 @@ function openDrawer(lead) {
 
     <div class="drawer-section">
       <p class="drawer-section-label">Financement</p>
-      <div class="drawer-row"><span class="drawer-key">Étude bancaire</span><span class="drawer-val">${lead.accord === 'oui' ? '✅ Étude validée' : lead.accord === 'courtier' ? '🤝 Courtier souhaité' : lead.accord === 'non' ? 'Gère seul' : '—'}</span></div>
+      <div class="drawer-row"><span class="drawer-key">Étude bancaire</span><span class="drawer-val">${lead.accord === 'oui' ? '✅ Étude validée' : lead.accord === 'courtier' ? '🤝 Courtier souhaité' : lead.accord === 'non' ? 'Pas encore fait de demande' : '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Mode</span><span class="drawer-val">${FIN[lead.financement] || lead.financement || '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Budget emprunt</span><span class="drawer-val">${BUDGET[lead.capacite] || lead.capacite || '—'}</span></div>
     </div>
@@ -2876,13 +2876,14 @@ function srcBadge(src) {
 //   Financement comptant: +6  (plafond infini + certitude maximale)
 //   Financement emprunt :
 //     accord=oui       : +4  (étude bancaire validée)
-//     accord=non       : +3  (gère avec sa banque — autonome et motivé)
-//     accord=courtier  : +2  (souhaite être accompagné)
-//     Budget emprunt   : >1M/600k-1M/400-600k=+2  150-250k=+1  <150k=+0
+//     accord=oui       : +4  (étude bancaire validée)
+//     accord=courtier  : +2  (courtier souhaité)
+//     accord=non       : +1  (pas encore fait de demande — intention non confirmée)
+//     Budget emprunt   : >1M/600k-1M/400-600k=+2  150-400k=+1  <150k=+0
 //   → max emprunt = asap(4) + oui(4) + budget(2) = 10
 //
 //   RÈGLE VERROU : score ≥ 8 UNIQUEMENT si timing=asap
-//   ET financement fort (comptant | accord=oui | accord=non)
+//   ET financement fort (comptant | accord=oui seulement)
 //   Sinon plafonné à 7 quelle que soit la somme brute.
 function computeScore(lead) {
   let s = 0;
@@ -2893,14 +2894,14 @@ function computeScore(lead) {
     s += 6; // cash = financement parfait + pas de plafond d'emprunt → max des 2 composantes
   } else {
     if      (lead.accord === 'oui')      s += 4; // étude bancaire validée
-    else if (lead.accord === 'non')      s += 3; // gère avec sa banque, autonome
-    else if (lead.accord === 'courtier') s += 2; // souhaite être accompagné
+    else if (lead.accord === 'courtier') s += 2; // courtier souhaité
+    else if (lead.accord === 'non')      s += 1; // pas encore fait de demande
     s += ({ 'plus-1m': 2, '600k-1m': 2, '400-600k': 2, '250-400k': 1, '150-250k': 1, 'moins-150k': 0 }[lead.capacite] || 0);
   }
   const raw = Math.min(10, s);
   // Verrou : 8+ réservé aux leads asap + financement fort (comptant | validé | autonome)
   const isHotEligible = lead.timing === 'asap'
-    && (lead.financement === 'comptant' || lead.accord === 'oui' || lead.accord === 'non');
+    && (lead.financement === 'comptant' || lead.accord === 'oui');
   return (raw >= 8 && !isHotEligible) ? 7 : raw;
 }
 function scoreBadge(lead) {

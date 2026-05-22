@@ -205,7 +205,7 @@ function buildHotLeadEmail(l) {
         ${row('Téléphone', l.tel)}
         ${row('Arrondissements', l.arrondissements)}
         ${row('Horizon', TIMING[l.timing] || l.timing)}
-        ${row('Financement bancaire', l.accord === 'oui' ? '✅ Étude validée' : l.accord === 'courtier' ? '🤝 Courtier souhaité' : l.accord === 'non' ? 'Gère seul' : null)}
+        ${row('Financement bancaire', l.accord === 'oui' ? '✅ Étude validée' : l.accord === 'courtier' ? '🤝 Courtier souhaité' : l.accord === 'non' ? 'Pas encore fait de demande' : null)}
         ${row('Financement', FIN[l.financement] || l.financement)}
         ${row('Budget emprunt', BUDGET[l.capacite] || l.capacite)}
         ${row('Source', src)}
