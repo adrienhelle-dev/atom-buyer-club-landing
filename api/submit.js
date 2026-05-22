@@ -52,9 +52,20 @@ module.exports = async function handler(req, res) {
   let isUpdate = false;
 
   if (existing) {
+    // Pour un lead existant :
+    // 1. On ne touche jamais aux UTMs/source d'acquisition originaux
+    // 2. On n'écrase jamais un champ renseigné avec une valeur null
+    //    (évite de perdre le profiling quand le formulaire ne contient pas tous les champs)
+    const UTM_FIELDS = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid','referrer'];
+    const safeUpdate = { updated_at: new Date().toISOString() };
+    Object.entries(leadData).forEach(([k, v]) => {
+      if (UTM_FIELDS.includes(k)) return;   // jamais écraser l'acquisition originale
+      if (v != null)              safeUpdate[k] = v; // seulement si valeur non-null
+    });
+
     const { error } = await supabase
       .from('leads')
-      .update({ ...leadData, updated_at: new Date().toISOString() })
+      .update(safeUpdate)
       .eq('id', existing.id);
     if (error) { console.error('DB update:', error); return res.status(500).json({ error: 'db_error' }); }
     leadId   = existing.id;
