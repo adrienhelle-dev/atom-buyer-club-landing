@@ -452,8 +452,68 @@
       display: inline-flex; align-items: center; justify-content: center; gap: 4px;
     }
     .pc-action:hover { border-color: var(--gold); color: var(--gold); }
-    .pc-action.pc-pdf { background: rgba(184,151,90,.08); color: var(--gold); border-color: rgba(184,151,90,.25); }
+    .pc-action.pc-pdf  { background: rgba(184,151,90,.08); color: var(--gold); border-color: rgba(184,151,90,.25); }
     .pc-action.pc-send { background: rgba(76,175,125,.08); color: var(--green); border-color: rgba(76,175,125,.25); }
+    .pc-action.pc-del  { flex: 0 0 auto; padding: 7px 10px; color: var(--dim); border-color: var(--border); }
+    .pc-action.pc-del:hover { border-color: var(--red); color: var(--red); background: rgba(217,94,94,.08); }
+
+    /* ── Status tabs ─────────────────────────────────────────── */
+    .project-tabs {
+      display: flex; gap: 4px; padding: 16px 28px 0;
+      border-bottom: 1px solid var(--border); overflow-x: auto;
+    }
+    .project-tab {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 14px; font-size: 13px; font-weight: 500;
+      font-family: var(--sans); background: none; border: none;
+      color: var(--dim); cursor: pointer; white-space: nowrap;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .15s;
+    }
+    .project-tab:hover { color: var(--cream); }
+    .project-tab.active { color: var(--cream); border-bottom-color: var(--gold); }
+    .project-tab-count {
+      font-size: 11px; font-weight: 600; padding: 1px 7px;
+      border-radius: 20px; background: var(--bg3); color: var(--dim);
+      min-width: 20px; text-align: center;
+    }
+    .project-tab.active .project-tab-count { background: rgba(184,151,90,.2); color: var(--gold); }
+
+    /* ── Section headers in grid ─────────────────────────────── */
+    .projects-section-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 24px 0 12px; font-size: 12px; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--dim); font-weight: 500;
+    }
+    .projects-section-header::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .projects-section-count {
+      font-size: 11px; background: var(--bg3); padding: 1px 8px;
+      border-radius: 20px; color: var(--dim);
+    }
+
+    /* ── Delete project modal ─────────────────────────────────── */
+    .del-proj-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.75); z-index: 1100;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .del-proj-overlay.on { display: flex; }
+    .del-proj-modal {
+      background: var(--bg2); border: 1px solid var(--red);
+      border-radius: 12px; padding: 32px 28px; max-width: 420px; width: 100%;
+      text-align: center;
+    }
+    .del-proj-icon { font-size: 40px; margin-bottom: 12px; }
+    .del-proj-title { font-family: var(--serif); font-size: 22px; font-weight: 300; color: var(--cream); margin-bottom: 6px; }
+    .del-proj-name { font-size: 15px; font-weight: 600; color: var(--gold); margin-bottom: 14px; padding: 8px 14px; background: rgba(184,151,90,.08); border-radius: 6px; display: inline-block; }
+    .del-proj-warn { font-size: 13px; color: var(--dim); line-height: 1.6; margin-bottom: 24px; }
+    .del-proj-warn strong { color: var(--red); }
+    .del-proj-btns { display: flex; gap: 10px; }
+    .btn-del-cancel { flex: 1; padding: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); color: var(--cream); font-family: var(--sans); font-size: 14px; cursor: pointer; }
+    .btn-del-confirm { flex: 1; padding: 12px; background: var(--red); border: none; border-radius: var(--r); color: white; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .btn-del-confirm:hover { opacity: .85; }
 
     .match-badge {
       display: inline-flex; align-items: center; gap: 5px;
@@ -836,20 +896,13 @@
 
   <!-- ══ VUE PROJETS ═══════════════════════════════════════════ -->
   <div class="view" id="view-projects">
+    <!-- Toolbar -->
     <div class="projects-toolbar">
       <div class="search-wrap" style="max-width:280px">
         <span class="search-icon">⌕</span>
         <input type="text" id="projects-search" placeholder="Rechercher un projet…" oninput="debounceProjectsSearch()"/>
       </div>
-      <select class="filter-select" id="projects-status-filter" onchange="loadProjects()">
-        <option value="">Tous les statuts</option>
-        <option value="disponible">Disponible</option>
-        <option value="en_cours">En cours</option>
-        <option value="vendu">Vendu</option>
-        <option value="archive">Archivé</option>
-        <option value="brouillon">Brouillon</option>
-      </select>
-      <select class="filter-select" id="projects-arr-filter" onchange="loadProjects()">
+      <select class="filter-select" id="projects-arr-filter" onchange="renderProjectsFiltered()">
         <option value="">Tous arrondissements</option>
         <option value="1e">1er</option>  <option value="2e">2e</option>
         <option value="3e">3e</option>   <option value="4e">4e</option>
@@ -866,10 +919,50 @@
         <button class="btn-new-project" onclick="startNewProject()">+ Nouveau projet</button>
       </div>
     </div>
+
+    <!-- Status tabs -->
+    <div class="project-tabs">
+      <button class="project-tab active" data-tab="" onclick="setProjectTab('')">
+        Tous <span class="project-tab-count" id="ptc-all">0</span>
+      </button>
+      <button class="project-tab" data-tab="disponible" onclick="setProjectTab('disponible')">
+        Disponible <span class="project-tab-count" id="ptc-disponible">0</span>
+      </button>
+      <button class="project-tab" data-tab="en_cours" onclick="setProjectTab('en_cours')">
+        En cours <span class="project-tab-count" id="ptc-en_cours">0</span>
+      </button>
+      <button class="project-tab" data-tab="brouillon" onclick="setProjectTab('brouillon')">
+        Brouillon <span class="project-tab-count" id="ptc-brouillon">0</span>
+      </button>
+      <button class="project-tab" data-tab="vendu" onclick="setProjectTab('vendu')">
+        Vendu <span class="project-tab-count" id="ptc-vendu">0</span>
+      </button>
+      <button class="project-tab" data-tab="archive" onclick="setProjectTab('archive')">
+        Archivé <span class="project-tab-count" id="ptc-archive">0</span>
+      </button>
+    </div>
+
     <div id="projects-container">
       <div class="projects-empty">
         <div class="projects-empty-icon">🏠</div>
         <div class="projects-empty-title">Chargement…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DELETE PROJECT MODAL ══════════════════════════════════ -->
+  <div class="del-proj-overlay" id="del-proj-overlay" onclick="if(event.target===this)closeDelProjectModal()">
+    <div class="del-proj-modal">
+      <div class="del-proj-icon">🗑</div>
+      <div class="del-proj-title">Archiver ce projet ?</div>
+      <div class="del-proj-name" id="del-proj-name">—</div>
+      <p class="del-proj-warn">
+        Le projet sera <strong>retiré de toutes les vues actives</strong> et passera en statut Archivé.<br>
+        Les leads ayant reçu une fiche ne seront pas notifiés.
+      </p>
+      <div class="del-proj-btns">
+        <button class="btn-del-cancel" onclick="closeDelProjectModal()">Annuler</button>
+        <button class="btn-del-confirm" id="btn-del-proj-confirm" onclick="confirmDeleteProject()">Archiver le projet</button>
       </div>
     </div>
   </div>
@@ -1304,34 +1397,89 @@ const PROJECT_STATUS = {
   brouillon:  { label: 'Brouillon',  cls: 'pcs-brouillon' },
 };
 
+const PROJECT_STATUS_ORDER = ['disponible', 'en_cours', 'brouillon', 'vendu', 'archive'];
+const PROJECT_STATUS_LABELS = {
+  disponible: 'Disponible', en_cours: 'En cours',
+  brouillon: 'Brouillon', vendu: 'Vendu', archive: 'Archivé',
+};
+
 let projectsSearchTimer = null;
-let projectsCache = [];
+let projectsCache       = [];
+let projectsActiveTab   = '';   // '' = tous
 
 function debounceProjectsSearch() {
   clearTimeout(projectsSearchTimer);
-  projectsSearchTimer = setTimeout(loadProjects, 300);
+  projectsSearchTimer = setTimeout(renderProjectsFiltered, 300);
 }
 
+// Charge TOUS les projets (pas de filtre statut côté serveur → filtrage client-side)
 async function loadProjects() {
   const container = document.getElementById('projects-container');
   if (!container) return;
-  const search = document.getElementById('projects-search')?.value.trim() || '';
-  const status = document.getElementById('projects-status-filter')?.value || '';
-  const arr    = document.getElementById('projects-arr-filter')?.value || '';
   const params = new URLSearchParams();
+  const search = document.getElementById('projects-search')?.value.trim() || '';
   if (search) params.set('search', search);
-  if (status) params.set('status', status);
-  if (arr)    params.set('arrondissement', arr);
   const res = await fetch(`/api/projects?${params}`, { headers: { Authorization: `Bearer ${token}` } });
   if (res.status === 401) { logout(); return; }
   const { projects } = await res.json();
   projectsCache = projects || [];
-  renderProjects(projectsCache);
+  updateProjectTabCounts();
+  renderProjectsFiltered();
 }
 
-function renderProjects(projects) {
+function setProjectTab(status) {
+  projectsActiveTab = status;
+  document.querySelectorAll('.project-tab').forEach(el =>
+    el.classList.toggle('active', el.dataset.tab === status)
+  );
+  renderProjectsFiltered();
+}
+
+function updateProjectTabCounts() {
+  document.getElementById('ptc-all').textContent       = projectsCache.length;
+  for (const s of PROJECT_STATUS_ORDER) {
+    const el = document.getElementById('ptc-' + s);
+    if (el) el.textContent = projectsCache.filter(p => p.status === s).length;
+  }
+}
+
+function renderProjectsFiltered() {
+  const search = (document.getElementById('projects-search')?.value || '').trim().toLowerCase();
+  const arr    = document.getElementById('projects-arr-filter')?.value || '';
+
+  let list = projectsCache;
+  if (search) list = list.filter(p => (p.title || '').toLowerCase().includes(search) || (p.address || '').toLowerCase().includes(search));
+  if (arr)    list = list.filter(p => p.arrondissement === arr);
+
+  if (projectsActiveTab) {
+    // Vue statut unique : grille plate
+    const filtered = list.filter(p => p.status === projectsActiveTab);
+    renderProjectsGrid(filtered, projectsActiveTab);
+  } else {
+    // Vue "Tous" : sections groupées par statut
+    renderProjectsSections(list);
+  }
+}
+
+function renderProjectsGrid(projects, status) {
   const container = document.getElementById('projects-container');
   if (!projects.length) {
+    const label = PROJECT_STATUS_LABELS[status] || status;
+    container.innerHTML = `
+      <div class="projects-empty">
+        <div class="projects-empty-icon">🏠</div>
+        <div class="projects-empty-title">Aucun projet "${label}"</div>
+        <div class="projects-empty-sub">Les projets dans ce statut apparaîtront ici.</div>
+        <button class="btn-new-project" onclick="startNewProject()">+ Créer un projet</button>
+      </div>`;
+    return;
+  }
+  container.innerHTML = `<div class="projects-grid" style="padding:24px 28px">${projects.map(projectCard).join('')}</div>`;
+}
+
+function renderProjectsSections(all) {
+  const container = document.getElementById('projects-container');
+  if (!all.length) {
     container.innerHTML = `
       <div class="projects-empty">
         <div class="projects-empty-icon">🏠</div>
@@ -1341,7 +1489,21 @@ function renderProjects(projects) {
       </div>`;
     return;
   }
-  container.innerHTML = `<div class="projects-grid">${projects.map(projectCard).join('')}</div>`;
+
+  let html = '<div style="padding:0 28px 28px">';
+  for (const s of PROJECT_STATUS_ORDER) {
+    const group = all.filter(p => p.status === s);
+    if (!group.length) continue;
+    const label = PROJECT_STATUS_LABELS[s] || s;
+    html += `
+      <div class="projects-section-header">
+        ${label}
+        <span class="projects-section-count">${group.length}</span>
+      </div>
+      <div class="projects-grid" style="margin-bottom:8px">${group.map(projectCard).join('')}</div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 function projectCard(p) {
@@ -1380,6 +1542,7 @@ function projectCard(p) {
         ${p.public_visible ? `<a class="pc-action" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()">🌐</a>` : ''}
         ${matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')">📨 Envoyer (${matchCount})</button>` : ''}
         <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)">📄 PDF</button>
+        <button class="pc-action pc-del" onclick="event.stopPropagation(); openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}')" title="Archiver">🗑</button>
       </div>
     </div>`;
 }
@@ -1410,6 +1573,48 @@ async function downloadPdf(projectId, btn) {
     btn.innerHTML = original;
     btn.disabled = false;
   }
+}
+
+/* ── Delete project ─────────────────────────────────────────── */
+let delProjectId = null;
+
+function openDelProjectModal(id, title) {
+  delProjectId = id;
+  document.getElementById('del-proj-name').textContent = title;
+  const btn = document.getElementById('btn-del-proj-confirm');
+  btn.disabled = false; btn.textContent = 'Archiver le projet';
+  document.getElementById('del-proj-overlay').classList.add('on');
+}
+
+function closeDelProjectModal() {
+  document.getElementById('del-proj-overlay').classList.remove('on');
+  delProjectId = null;
+}
+
+async function confirmDeleteProject() {
+  if (!delProjectId) return;
+  const btn = document.getElementById('btn-del-proj-confirm');
+  btn.disabled = true; btn.textContent = 'Archivage…';
+
+  const res = await fetch(`/api/projects?id=${delProjectId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (res.status === 401) { logout(); return; }
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    btn.disabled = false; btn.textContent = 'Archiver le projet';
+    alert('Erreur : ' + (d.error || `HTTP ${res.status}`));
+    return;
+  }
+
+  closeDelProjectModal();
+  // Retire le projet du cache local et rafraîchit sans appel réseau
+  projectsCache = projectsCache.filter(p => p.id !== delProjectId);
+  delProjectId = null;
+  updateProjectTabCounts();
+  renderProjectsFiltered();
 }
 
 async function openProject(id) {
