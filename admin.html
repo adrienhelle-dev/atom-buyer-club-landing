@@ -1369,6 +1369,32 @@
   </div>
 </div>
 
+<!-- ══ MODAL COMPOSE EMAIL ════════════════════════════════════ -->
+<div class="fiche-overlay" id="email-compose-overlay" onclick="if(event.target===this)closeEmailComposeModal()">
+  <div class="fiche-modal">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <h3 class="fiche-modal-title" id="email-compose-title">Envoyer un email</h3>
+        <p class="fiche-modal-sub" id="email-compose-sub"></p>
+      </div>
+      <button style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 0 0 12px" onclick="closeEmailComposeModal()">✕</button>
+    </div>
+    <div class="np-field" style="margin-bottom:12px">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);display:block;margin-bottom:4px">Objet</label>
+      <input type="text" id="email-compose-subject" style="width:100%;box-sizing:border-box" placeholder="Objet de l'email"/>
+    </div>
+    <div class="fiche-msg-wrap">
+      <span class="fiche-modal-label">Message</span>
+      <textarea id="email-compose-body" style="min-height:140px" placeholder="Votre message…"></textarea>
+    </div>
+    <div class="fiche-btns">
+      <button class="btn-cancel" onclick="closeEmailComposeModal()">Annuler</button>
+      <button class="btn-send-fiche" id="btn-email-compose" onclick="sendEmailFromDrawer()">✉ Envoyer</button>
+    </div>
+    <p class="fiche-status" id="email-compose-status"></p>
+  </div>
+</div>
+
 <!-- ══ DETAIL DRAWER ══════════════════════════════════════════ -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer(event)">
   <div class="drawer" id="drawer">
@@ -1615,13 +1641,13 @@ function waProjectText(p) {
   const prix  = p.price_fai ? p.price_fai.toLocaleString('fr-FR') + ' € FAI' : '';
   const loyer = p.loyer_atom ? `${p.loyer_atom.toLocaleString('fr-FR')} €/mois` : '';
   const slug  = p.slug || null;
-  const ficheUrl = slug ? `https://join.atombuyerclub.fr/projet/${slug}` : '';
+  const ficheUrl = (slug && p.public_visible) ? `https://join.atombuyerclub.fr/projet/${slug}` : '';
 
   const details = [arr, surf, prix].filter(Boolean).join(' · ');
   const loyerLine = loyer ? `\nLoyer estimé : ${loyer}` : '';
   const ctaLine   = ficheUrl
     ? `\nFiche complète : ${ficheUrl}`
-    : `\nJe te fais suivre la fiche PDF dans la foulée.`;
+    : `\nJe te fais suivre la fiche PDF directement sur WhatsApp.`;
 
   return `Hello, c'est ${adminPrenom} de chez Atom.\n\nJ'ai un bien dispo qui pourrait t'intéresser — ${details}.${loyerLine}${ctaLine}\n\nBonne journée !`;
 }
@@ -2372,12 +2398,12 @@ function openDrawer(lead) {
         <a class="cta-btn cta-call" href="tel:${esc(lead.tel)}" onclick="trackCta('${esc(lead.id)}','appel')">
           <span class="cta-icon">📞</span><span>Appeler</span>
         </a>
-        <a class="cta-btn cta-whatsapp" href="https://wa.me/${phone}?text=${waText}" target="_blank" rel="noopener noreferrer" onclick="trackCta('${esc(lead.id)}','whatsapp')">
+        <a class="cta-btn cta-whatsapp" href="https://wa.me/${phone}?text=${waText}" target="_blank" rel="noopener noreferrer" onclick="trackCta('${esc(lead.id)}','whatsapp',{context:'contact'})">
           <span class="cta-icon">💬</span><span>WhatsApp</span>
         </a>
-        <a class="cta-btn cta-email" href="mailto:${esc(lead.email)}?subject=${mailSubject}&body=${mailBody}" onclick="trackCta('${esc(lead.id)}','email_manuel')">
+        <button class="cta-btn cta-email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom)}','${esc(lead.email)}')">
           <span class="cta-icon">✉</span><span>Email</span>
-        </a>
+        </button>
         <button class="cta-btn" style="background:rgba(184,151,90,.1);color:var(--gold);border-color:rgba(184,151,90,.2)" onclick="openFicheModal()">
           <span class="cta-icon">📄</span><span>Envoyer fiche</span>
         </button>
@@ -2486,7 +2512,7 @@ async function updateLeadStatus(id, status) {
 }
 
 // ─── CTA tracking : timeline + responsable + statut min "contacté" ────────────
-async function trackCta(leadId, ctaType) {
+async function trackCta(leadId, ctaType, extra = null) {
   if (!leadId || !token) return;
 
   // Détermine si on doit passer le statut à "contacté"
@@ -2499,7 +2525,7 @@ async function trackCta(leadId, ctaType) {
     fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lead_id: leadId, type: ctaType }),
+      body: JSON.stringify({ lead_id: leadId, type: ctaType, content: extra ? JSON.stringify(extra) : null }),
     }).catch(() => null),
     fetch(`/api/patch?id=${leadId}`, {
       method: 'PATCH',
@@ -2674,9 +2700,19 @@ const TL_INFO = {
   resoumission:  { icon: '🔄', label: ()  => 'Dossier mis à jour' },
   status_change: { icon: '🏷', label: (c) => { try { const d=JSON.parse(c); return 'Statut → '+(STATUS_OPTS.find(o=>o.v===d.status)?.l||d.status); } catch { return 'Changement de statut'; } } },
   fiche_envoyee: { icon: '📄', label: (c) => { try { const d=JSON.parse(c); return 'Fiche envoyée — '+(d.title||d.titre||'projet'); } catch { return 'Fiche envoyée'; } } },
-  appel:         { icon: '📞', label: ()  => 'Appel téléphonique' },
-  whatsapp:      { icon: '💬', label: ()  => 'Message WhatsApp' },
-  email_manuel:  { icon: '✉',  label: ()  => 'Email envoyé' },
+  appel:         { icon: '📞', label: () => 'Appel téléphonique' },
+  whatsapp:      { icon: '💬', label: (c) => {
+    try {
+      const d = JSON.parse(c);
+      if (d.context === 'projet' && d.title) return `WhatsApp — ${d.title}`;
+      if (d.context === 'projet') return 'WhatsApp — présentation projet';
+    } catch {}
+    return 'WhatsApp — prise de contact';
+  }},
+  email_manuel:  { icon: '✉',  label: (c) => {
+    try { const d = JSON.parse(c); if (d.subject) return `Email — ${d.subject}`; } catch {}
+    return 'Email envoyé';
+  }},
   rdv:           { icon: '📅', label: (c) => c || 'RDV pris' },
   note:          { icon: '💬', label: (c) => c || 'Note' },
 };
@@ -2904,9 +2940,66 @@ function openWaForSelectedLead() {
     return;
   }
   const text = waProjectText(project);
-  trackCta(lead.id, 'whatsapp');
+  trackCta(lead.id, 'whatsapp', { context: 'projet', project_id: project.id, title: project.title });
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   closeSendLeadsModal();
+}
+
+/* ── Modal compose email depuis drawer lead ─────────────────── */
+let emailComposeLeadId = null;
+
+function openEmailComposeModal(leadId, prenom, email) {
+  emailComposeLeadId = leadId;
+  document.getElementById('email-compose-sub').textContent    = `${prenom} — ${email}`;
+  document.getElementById('email-compose-subject').value      = 'Atom Buyers Club — À votre attention';
+  document.getElementById('email-compose-body').value         = `Bonjour ${prenom},\n\nSuite à votre inscription sur Atom Buyers Club, nous souhaitons échanger avec vous sur votre projet.\n\nPouvez-vous nous indiquer vos disponibilités pour un appel ?\n\nBonne journée`;
+  document.getElementById('email-compose-status').textContent = '';
+  const btn = document.getElementById('btn-email-compose');
+  btn.disabled = false; btn.textContent = '✉ Envoyer';
+  document.getElementById('email-compose-overlay').classList.add('on');
+  setTimeout(() => document.getElementById('email-compose-body').focus(), 80);
+}
+
+function closeEmailComposeModal() {
+  document.getElementById('email-compose-overlay').classList.remove('on');
+  emailComposeLeadId = null;
+}
+
+async function sendEmailFromDrawer() {
+  if (!emailComposeLeadId) return;
+  const subject = document.getElementById('email-compose-subject').value.trim();
+  const body    = document.getElementById('email-compose-body').value.trim();
+  const btn     = document.getElementById('btn-email-compose');
+  const statusEl = document.getElementById('email-compose-status');
+  if (!subject || !body) { statusEl.textContent = 'Objet et message requis.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  statusEl.textContent = '';
+
+  let res, data = {};
+  try {
+    res  = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ lead_id: emailComposeLeadId, subject, body }),
+    });
+    data = await res.json().catch(() => ({}));
+  } catch (e) {
+    statusEl.textContent = 'Erreur réseau — réessaie.';
+    btn.disabled = false; btn.textContent = '✉ Envoyer';
+    return;
+  }
+
+  if (res.ok) {
+    statusEl.textContent = '✅ Email envoyé !';
+    statusEl.style.color = 'var(--green)';
+    refreshDrawerAfterSend(emailComposeLeadId, data);
+    setTimeout(closeEmailComposeModal, 1400);
+  } else {
+    statusEl.textContent = '❌ ' + (data.error || data.detail || `Erreur ${res.status}`);
+    statusEl.style.color = 'var(--red)';
+    btn.disabled = false; btn.textContent = '✉ Envoyer';
+  }
 }
 
 async function sendFicheToLead(force) {

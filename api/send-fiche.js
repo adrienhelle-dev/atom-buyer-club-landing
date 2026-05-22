@@ -1,5 +1,6 @@
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
+const { getFounder } = require('../lib/founders');
 const { Resend } = require('resend');
 
 module.exports = async function handler(req, res) {
@@ -64,7 +65,7 @@ module.exports = async function handler(req, res) {
       from,
       to: [lead.email],
       subject: `Atom Buyers Club — ${title}`,
-      html: buildFicheEmail(lead, project, message),
+      html: buildFicheEmail(lead, project, message, getFounder(payload.email), payload.email),
     });
   } catch (e) {
     console.error('send-fiche throw:', e?.message || e);
@@ -117,7 +118,7 @@ function fmtPrice(v) {
   return isNaN(n) ? '' : n.toLocaleString('fr-FR') + ' €';
 }
 
-function buildFicheEmail(lead, project, message) {
+function buildFicheEmail(lead, project, message, founder = {}, senderEmail = '') {
   const title   = project.title   || project.titre   || 'Nouvelle opportunité';
   const address = project.address || project.adresse || '';
   const price   = project.price_fai ? fmtPrice(project.price_fai) + ' FAI' : '';
@@ -160,7 +161,8 @@ function buildFicheEmail(lead, project, message) {
       <p style="margin:0 0 16px;font-size:14px;color:#444;line-height:1.7">Nous avons sélectionné pour vous une opportunité immobilière qui correspond à votre projet.</p>
       ${descHtml}${ctaHtml}
     </div>
-    <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0;font-size:12px;color:#aaa">
+    <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0;font-size:12px;color:#888;line-height:1.7">
+      ${founder.name ? `<strong style="color:#555">${esc(founder.name)}</strong><br>` : ''}${founder.phone ? `${esc(founder.phone)} · ` : ''}${senderEmail ? `<a href="mailto:${esc(senderEmail)}" style="color:#B8975A;text-decoration:none">${esc(senderEmail)}</a><br>` : ''}
       Atom Buyers Club · Paris · <a href="https://join.atombuyerclub.fr" style="color:#B8975A;text-decoration:none">join.atombuyerclub.fr</a>
     </div>
   </div></body></html>`;
