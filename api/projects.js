@@ -173,6 +173,10 @@ Champs attendus :
           { type: 'text', text: promptText },
         ];
 
+        // Log payload size pour diagnostic
+        const visionPayloadSize = images.reduce((acc, img) => acc + img.length, 0);
+        console.log(`parse-pdf-vision: ${images.length} image(s), payload ~${Math.round(visionPayloadSize/1024)}KB base64`);
+
         let apiRes;
         try {
           apiRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -183,7 +187,7 @@ Champs attendus :
               'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
-              model: 'claude-3-5-haiku-20241022',
+              model: 'claude-3-haiku-20240307',
               max_tokens: 1024,
               messages: [{ role: 'user', content }],
             }),
@@ -194,7 +198,13 @@ Champs attendus :
 
         if (!apiRes.ok) {
           const errBody = await apiRes.json().catch(() => ({}));
-          return res.status(500).json({ error: 'anthropic_api_error', status: apiRes.status, detail: errBody.error?.message });
+          console.error('Anthropic vision error:', JSON.stringify(errBody));
+          return res.status(500).json({
+            error: 'anthropic_api_error',
+            status: apiRes.status,
+            detail: errBody.error?.message,
+            type: errBody.error?.type,
+          });
         }
 
         const apiData2 = await apiRes.json();
