@@ -2917,33 +2917,20 @@ function compatItem(p) {
         <div class="compat-title">${esc(p.title)}</div>
         <div class="compat-meta">${esc(parts)} · <strong>${total}</strong></div>
       </div>
-      <button class="compat-send" onclick="sendFicheDirect('${esc(p.id)}')">Envoyer</button>
+      <button class="compat-send" onclick="sendFicheDirect('${esc(p.id)}')">📄 Envoyer</button>
     </div>`;
 }
 
 async function sendFicheDirect(projectId) {
   if (!currentLead) return;
-  if (!confirm('Envoyer cette fiche par email à ' + currentLead.prenom + ' ' + currentLead.nom + ' ?')) return;
-  let resData = {}, ok = false;
-  try {
-    const res = await fetch('/api/send-fiche', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lead_id: currentLead.id, project_id: projectId, message: '' }),
-    });
-    resData = await res.json().catch(() => ({}));
-    ok = res.ok;
-  } catch (e) { console.error('sendFicheDirect:', e); }
-  if (ok) {
-    refreshDrawerAfterSend(currentLead.id, resData);
-  } else {
-    alert('❌ ' + (resData.error || resData.detail || 'Erreur d\'envoi'));
-  }
+  // Ouvre le modal complet avec ce projet pré-sélectionné
+  // (message modifiable + gestion anti-spam 409)
+  openFicheModal(projectId);
 }
 
 /* ── Send Fiche ─────────────────────────────────────────────── */
 let selectedProjectId = null;
-async function openFicheModal() {
+async function openFicheModal(preSelectProjectId = null) {
   if (!currentLead) return;
   selectedProjectId = null;
   document.getElementById('fiche-modal-sub').textContent = `Pour ${currentLead.prenom} ${currentLead.nom} · ${currentLead.email}`;
@@ -2972,6 +2959,12 @@ async function openFicheModal() {
       </div>
     </div>
   `).join('');
+  // Auto-sélection si on vient d'un bouton "Envoyer" dans les projets compatibles
+  if (preSelectProjectId) {
+    selectProject(preSelectProjectId);
+    const selectedEl = projectList.querySelector(`[data-id="${CSS.escape(preSelectProjectId)}"]`);
+    if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
+  }
 }
 function selectProject(id) {
   selectedProjectId = id;
