@@ -195,6 +195,24 @@
     .notif-empty-icon { font-size: 28px; opacity: .3; margin-bottom: 10px; }
     .notif-loading { padding: 24px; text-align: center; color: var(--dim); font-size: 12px; }
 
+    /* ── Sections Nouvelles / Lues ─────────────────────────────── */
+    .notif-section-hdr {
+      padding: 8px 18px 7px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--gold); background: var(--bg2);
+      position: sticky; top: 0; z-index: 2;
+      border-bottom: 1px solid var(--border);
+    }
+    .notif-section-hdr.read {
+      color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+    .notif-section-count {
+      background: rgba(184,151,90,.15); color: var(--gold);
+      font-size: 10px; font-weight: 600; letter-spacing: 0;
+      padding: 1px 7px; border-radius: 10px;
+    }
+
     /* FAB */
     .notif-fab {
       width: 50px; height: 50px; border-radius: 50%;
@@ -3176,15 +3194,17 @@ function _renderNotifList() {
     return;
   }
 
-  list.innerHTML = _notifEvents.map(ev => {
-    const isUnread = ev.created_at > lastSeen;
+  // ── Séparer nouvelles / lues ───────────────────────────────────
+  const unread = _notifEvents.filter(ev => ev.created_at > lastSeen);
+  const read   = _notifEvents.filter(ev => ev.created_at <= lastSeen);
+
+  function _buildItem(ev, isNew) {
     const meta     = NOTIF_LABELS[ev.type] || { label: ev.type, color: 'var(--dim)', icon: '·' };
     const lead     = ev.lead;
     const leadName = lead
       ? (`${lead.prenom || ''} ${lead.nom || ''}`).trim() || lead.email || 'Lead'
       : 'Lead inconnu';
 
-    // Description enrichie
     let desc = meta.label;
     try {
       const c = ev.content ? (typeof ev.content === 'string' ? JSON.parse(ev.content) : ev.content) : {};
@@ -3197,7 +3217,7 @@ function _renderNotifList() {
 
     return `
       <div class="notif-item" onclick="openLeadFromNotif('${esc(ev.lead_id)}')">
-        <div class="notif-dot ${isUnread ? 'unread' : ''}"></div>
+        <div class="notif-dot ${isNew ? 'unread' : ''}"></div>
         <div class="notif-item-body">
           <div class="notif-item-lead">${esc(leadName)}</div>
           <div class="notif-item-desc" style="color:${meta.color}">${esc(desc)}</div>
@@ -3205,7 +3225,24 @@ function _renderNotifList() {
         </div>
         <div class="notif-item-arrow">›</div>
       </div>`;
-  }).join('');
+  }
+
+  let html = '';
+
+  if (unread.length) {
+    html += `<div class="notif-section-hdr">
+      <span>Nouvelles</span>
+      <span class="notif-section-count">${unread.length}</span>
+    </div>`;
+    html += unread.map(ev => _buildItem(ev, true)).join('');
+  }
+
+  if (read.length) {
+    html += `<div class="notif-section-hdr read"><span>Lues</span></div>`;
+    html += read.map(ev => _buildItem(ev, false)).join('');
+  }
+
+  list.innerHTML = html;
 }
 
 function openLeadFromNotif(leadId) {
