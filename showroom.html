@@ -219,8 +219,8 @@
         <div class="detail-gallery">
           <div id="ba-toggle-wrap" style="display:none">
             <div class="ba-toggle">
-              <button class="ba-btn active" onclick="switchGallery('before')">Avant travaux</button>
-              <button class="ba-btn" onclick="switchGallery('after')">Après travaux</button>
+              <button class="ba-btn active" onclick="switchGallery('after')">Après travaux</button>
+              <button class="ba-btn" onclick="switchGallery('before')">Avant travaux</button>
             </div>
           </div>
           <img id="gallery-main" class="gallery-main" src="" alt="" style="display:none"/>
@@ -476,16 +476,10 @@
 
     document.getElementById('ba-toggle-wrap').style.display = bothExist ? '' : 'none';
 
-    // Avant travaux en premier si les deux existent, sinon après, sinon cover
-    if (bothExist) {
-      galleryMode = 'before';
-      setGalleryImages(beforeImgs);
-      // Sync boutons : Avant actif
-      document.querySelectorAll('.ba-btn').forEach(b => b.classList.toggle('active', b.textContent.includes('Avant')));
-    } else {
-      galleryMode = 'after';
-      setGalleryImages(hasAfter ? afterImgs : (item.image_cover ? [item.image_cover] : []));
-    }
+    // Après travaux en premier (projet fini), puis Avant sur clic
+    galleryMode = 'after';
+    setGalleryImages(hasAfter ? afterImgs : (item.image_cover ? [item.image_cover] : []));
+    document.querySelectorAll('.ba-btn').forEach(b => b.classList.toggle('active', b.textContent.includes('Après')));
   }
 
   function setGalleryImages(imgs) {
@@ -569,6 +563,34 @@
 
   // ── Modal CTA ───────────────────────────────────────────────
   function openCta() {
+    // Si le lead vient de la landing page et a déjà rempli ses infos → soumettre directement
+    const sl = _storedLead;
+    if (sl && sl.prenom && sl.nom && sl.email && sl.tel) {
+      // Afficher confirmation immédiate + soumettre en arrière-plan
+      document.getElementById('cta-modal').classList.add('on');
+      document.getElementById('cta-form-wrap').style.display = 'none';
+      const conf = document.getElementById('cta-confirm');
+      conf.style.display = '';
+      conf.innerHTML = `
+        <div style="font-size:36px;margin-bottom:12px">✅</div>
+        <p style="font-family:var(--serif);font-size:22px;font-weight:300;margin-bottom:8px">Parfait, ${esc(sl.prenom)} !</p>
+        <p style="font-size:13px;color:var(--dim)">L'équipe Atom vous recontacte sous 24h pour vous présenter les opportunités en cours.</p>`;
+      setTimeout(closeCta, 3500);
+      // Soumettre en arrière-plan
+      fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prenom: sl.prenom, nom: sl.nom, email: sl.email, tel: sl.tel,
+          utm_source: 'showroom', utm_content: currentItem?.slug || null,
+          project_id: currentItem?.projet_similaire?.id || null,
+          referrer: location.href,
+          ...(leadId ? { lead_id_hint: leadId } : {}),
+        }),
+      }).catch(() => {});
+      return;
+    }
+    // Sinon : afficher le formulaire normalement
     document.getElementById('cta-modal').classList.add('on');
     document.getElementById('cta-form-wrap').style.display = '';
     document.getElementById('cta-confirm').style.display   = 'none';
@@ -576,12 +598,11 @@
       document.getElementById('cta-sub').textContent =
         `Vous êtes intéressé(e) par "${currentItem.name}". L'équipe Atom vous contacte sous 24h.`;
     }
-    // Pré-remplissage si lead connu (vient du formulaire landing page)
-    if (_storedLead) {
-      if (_storedLead.prenom) document.getElementById('cta-prenom').value = _storedLead.prenom;
-      if (_storedLead.nom)    document.getElementById('cta-nom').value    = _storedLead.nom;
-      if (_storedLead.email)  document.getElementById('cta-email').value  = _storedLead.email;
-      if (_storedLead.tel)    document.getElementById('cta-tel').value    = _storedLead.tel;
+    if (sl) {
+      if (sl.prenom) document.getElementById('cta-prenom').value = sl.prenom;
+      if (sl.nom)    document.getElementById('cta-nom').value    = sl.nom;
+      if (sl.email)  document.getElementById('cta-email').value  = sl.email;
+      if (sl.tel)    document.getElementById('cta-tel').value    = sl.tel;
     }
   }
 

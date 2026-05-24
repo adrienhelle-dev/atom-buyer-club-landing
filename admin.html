@@ -300,15 +300,15 @@
 
     /* Delete + Edit btns in rows */
     .btn-del-row, .btn-edit-row {
-      background: none; border: none; color: transparent;
-      font-size: 13px; cursor: pointer; padding: 4px 6px;
-      border-radius: 5px; transition: color .15s, background .15s;
-      line-height: 1;
+      background: none; border: 1px solid transparent; color: transparent;
+      font-size: 12px; cursor: pointer; padding: 5px 7px;
+      border-radius: 6px; transition: color .15s, background .15s, border-color .15s;
+      line-height: 1; display: inline-flex; align-items: center; justify-content: center;
     }
     tbody tr:hover .btn-del-row,
-    tbody tr:hover .btn-edit-row  { color: var(--dim); }
-    .btn-del-row:hover  { color: var(--red) !important; background: rgba(217,94,94,.1); }
-    .btn-edit-row:hover { color: var(--gold) !important; background: rgba(184,151,90,.1); }
+    tbody tr:hover .btn-edit-row  { color: var(--dim); border-color: var(--border); }
+    .btn-del-row:hover  { color: var(--red) !important; background: rgba(217,94,94,.08); border-color: rgba(217,94,94,.3) !important; }
+    .btn-edit-row:hover { color: var(--gold) !important; background: rgba(184,151,90,.08); border-color: rgba(184,151,90,.3) !important; }
 
     /* Lead edit modal */
     .edit-lead-modal { max-width: 540px; padding: 28px 28px 24px; }
@@ -884,13 +884,19 @@
       .stat-value { font-size: 20px; }
       .stat-label { font-size: 9px; margin-top: 2px; }
 
-      /* Toolbar two-row */
-      .toolbar-top { padding: 10px 14px; gap: 8px; }
-      .toolbar-filters { padding: 0 14px 10px; gap: 6px; }
+      /* Toolbar two-row — compact mobile */
+      .toolbar-top { padding: 8px 12px; gap: 7px; }
+      .toolbar-filters { padding: 0 12px 8px; gap: 5px; flex-wrap: nowrap; overflow-x: auto; }
+      .toolbar-filters::-webkit-scrollbar { display: none; }
       .search-wrap { flex: 1; min-width: 0; }
-      .filter-select { font-size: 11px; padding: 7px 22px 7px 9px; }
+      .search-wrap input { padding: 8px 12px 8px 30px; font-size: 12px; border-radius: 8px; }
+      .search-icon { font-size: 12px; left: 10px; }
+      .filter-select { font-size: 11px; padding: 6px 20px 6px 9px; border-radius: 8px; flex-shrink: 0; }
+      /* Masquer "Importer PDF" sur mobile (inutile en mobilité) */
+      #pdf-import-input + button { display: none; }
       .btn-export { font-size: 12px; padding: 8px 12px; }
       .btn-refresh { padding: 8px 10px; }
+      .btn-new-project { font-size: 12px; padding: 8px 12px; border-radius: 8px; }
 
       /* Score → col 1 */
       thead th:nth-child(1) { text-align:center; }
@@ -916,10 +922,11 @@
       td, thead th { padding: 10px 10px; font-size: 12px; }
       /* Score: min width */
       td:nth-child(1), thead th:nth-child(1) { width: 36px; padding-right: 4px; }
-      /* Nom: masque le badge statut + wrap sur 2 lignes → nom complet visible */
-      td:nth-child(2) { width: 100%; max-width: 0; }
+      /* Nom: masque badge statut, nom wrap libre, founder badge reste inline */
+      td:nth-child(2) { width: 100%; max-width: 0; overflow: hidden; }
       td:nth-child(2) .status-badge { display: none; }
-      td:nth-child(2) strong { white-space: normal; word-break: break-word; display: block; line-height: 1.35; }
+      td:nth-child(2) .lead-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+      td:nth-child(2) .lead-name-row strong { white-space: normal; word-break: break-word; min-width: 0; flex: 1; }
       /* Horizon */
       td:nth-child(3) { white-space: nowrap; min-width: 80px; }
 
@@ -927,9 +934,9 @@
 
       .drawer { max-width: 100%; }
 
-      /* Boutons ✎ ✕ toujours visibles sur mobile (pas de hover tactile) */
+      /* Boutons edit/del toujours visibles sur mobile (pas de hover tactile) */
       td:nth-child(5) .btn-edit-row,
-      td:nth-child(5) .btn-del-row { color: var(--dim) !important; opacity: 1 !important; }
+      td:nth-child(5) .btn-del-row { color: var(--dim) !important; border-color: var(--border) !important; }
 
       /* Projects on mobile */
       .projects-grid { padding: 16px; gap: 12px; }
@@ -1091,7 +1098,7 @@
     <table id="leads-table">
       <thead>
         <tr>
-          <th class="sortable" id="th-score" onclick="toggleScoreSort()">Score <span class="sort-arrow">↕</span></th>
+          <th class="sortable" id="th-score" onclick="toggleScoreSort()" title="Trier par score">Score <span class="sort-arrow"><svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 1v10M2 8.5l3 3 3-3M2 3.5l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></th>
           <th>Nom</th>
           <th>Horizon</th>
           <th>Source</th>
@@ -2987,12 +2994,12 @@ function renderTable(leads) {
   tbody.innerHTML = sorted.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td style="text-align:center">${scoreBadge(l)}</td>
-      <td>${statusBadge(l.status)}<strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</td>
+      <td>${statusBadge(l.status)}<div class="lead-name-row"><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</div></td>
       <td>${l.timing ? `<span class="timing-badge ${l.timing === 'asap' ? 'timing-asap' : ''}">${TIMING[l.timing] || l.timing}</span>` : '<span class="muted">—</span>'}</td>
       <td>${srcBadge(l.utm_source)}</td>
       <td style="white-space:nowrap;text-align:right">
-        <button class="btn-edit-row" title="Modifier ce lead">✎</button>
-        <button class="btn-del-row"  title="Supprimer">✕</button>
+        <button class="btn-edit-row" title="Modifier ce lead"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn-del-row"  title="Supprimer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
       </td>
       <td class="muted">${fmtDate(l.created_at)}</td>
       <td class="muted">${esc(l.email)}</td>
@@ -3405,11 +3412,22 @@ function scoreBadge(lead) {
 }
 let sortByScore = false;
 let sortScoreDir = 'desc';
+// 3 états : 0=date (défaut), 1=score↓, 2=score↑
+let scoreSortState = 0;
+const SORT_ICONS = [
+  `<svg width="10" height="12" viewBox="0 0 10 12" fill="none"><path d="M5 1v10M2 8.5l3 3 3-3M2 3.5l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  `<svg width="10" height="12" viewBox="0 0 10 12" fill="none"><path d="M5 1v10M2 8.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  `<svg width="10" height="12" viewBox="0 0 10 12" fill="none"><path d="M5 11V1M2 3.5l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+];
 function toggleScoreSort() {
-  if (!sortByScore) { sortByScore = true; sortScoreDir = 'desc'; }
-  else { sortScoreDir = sortScoreDir === 'desc' ? 'asc' : 'desc'; }
+  scoreSortState = (scoreSortState + 1) % 3;
+  sortByScore    = scoreSortState !== 0;
+  sortScoreDir   = scoreSortState === 1 ? 'desc' : 'asc';
   const th = document.getElementById('th-score');
-  if (th) { th.classList.add('sorted'); th.querySelector('.sort-arrow').textContent = sortScoreDir === 'desc' ? '↓' : '↑'; }
+  if (th) {
+    th.classList.toggle('sorted', scoreSortState !== 0);
+    th.querySelector('.sort-arrow').innerHTML = SORT_ICONS[scoreSortState];
+  }
   renderTable(leadsCache);
 }
 
@@ -4384,7 +4402,7 @@ function resetShowroomForm() {
   if (subEl)   subEl.textContent   = editingShowroomId ? 'Mets à jour les informations puis enregistre' : 'Complète les informations puis publie';
   showSrSection(1);
   recalcSr();
-  setSrBtnDirty(!editingShowroomId);
+  setSrBtnDirty(true); // toujours actif : nouvelle réalisation ET édition
 }
 
 function populateShowroomForm(item) {
