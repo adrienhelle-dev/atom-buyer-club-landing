@@ -886,6 +886,34 @@
       .project-tabs { padding: 12px 14px 0; }
       .project-tab { padding: 8px 10px; font-size: 11px; }
     }
+
+    /* ── Showroom ───────────────────────────────────────────── */
+    .sr-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; cursor: pointer; transition: border-color .15s;
+    }
+    .sr-card:hover { border-color: var(--gold); }
+    .sr-card-cover {
+      width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--bg3);
+      display: block;
+    }
+    .sr-card-cover-placeholder {
+      width: 100%; aspect-ratio: 4/3; background: var(--bg3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; color: var(--dim);
+    }
+    .sr-card-body { padding: 14px; }
+    .sr-card-name { font-size: 14px; font-weight: 500; color: var(--cream); margin: 0 0 4px; }
+    .sr-card-meta { font-size: 12px; color: var(--dim); margin: 0 0 10px; }
+    .sr-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .sr-badge-featured { background: rgba(184,151,90,.15); color: var(--gold); border: 1px solid rgba(184,151,90,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-badge-draft    { background: rgba(122,120,116,.12); color: var(--dim); border: 1px solid var(--border); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-badge-pub      { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-toggle-pub { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--dim); cursor: pointer; transition: all .15s; }
+    .sr-toggle-pub:hover { border-color: var(--gold); color: var(--gold); }
+    .sr-tab.active { color: var(--cream) !important; border-bottom-color: var(--gold) !important; }
+    .sr-section { display: none; }
+    .sr-section.active { display: block; }
   </style>
 </head>
 <body>
@@ -935,6 +963,7 @@
   <nav class="nav-tabs">
     <button class="nav-tab" data-view="leads"    onclick="setRoute('leads')">Leads</button>
     <button class="nav-tab" data-view="projects" onclick="setRoute('projects')">Projets</button>
+    <button class="nav-tab" data-view="showroom" onclick="setRoute('showroom')">Showroom</button>
   </nav>
 
   <!-- ══ VUE LEADS ═════════════════════════════════════════════ -->
@@ -1362,6 +1391,223 @@
       </aside>
     </div>
   </div>
+  <!-- ══ VUE SHOWROOM — LISTE ══════════════════════════════════ -->
+  <div class="view" id="view-showroom">
+    <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px">
+      <div>
+        <h2 style="margin:0;font-size:20px;font-weight:400;color:var(--cream)">Showroom</h2>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--dim)">Réalisations Atom — gestion des fiches publiées</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-secondary" id="btn-scrape-all" onclick="confirmScrapeAll()">⚡ Scraper atom.living</button>
+        <button class="btn-primary"   onclick="openShowroomEdit(null)">+ Nouvelle réalisation</button>
+      </div>
+    </div>
+    <div id="showroom-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
+  </div>
+
+  <!-- ══ VUE SHOWROOM — FORMULAIRE ÉDITION ══════════════════════ -->
+  <div class="view" id="view-showroom-edit">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+      <button class="btn-back" onclick="setRoute('showroom')">← Retour</button>
+      <div>
+        <h2 id="sr-page-title" style="margin:0;font-size:20px;font-weight:400;color:var(--cream)">Nouvelle réalisation</h2>
+        <p id="sr-page-sub" style="margin:3px 0 0;font-size:12px;color:var(--dim)">Complète les informations puis publie</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:24px;align-items:flex-start">
+      <!-- Formulaire principal -->
+      <div style="flex:1;min-width:0">
+        <!-- Tabs -->
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px">
+          <button class="sr-tab active" data-sr-section="1" onclick="showSrSection(1)" style="padding:10px 18px;background:none;border:none;border-bottom:2px solid var(--gold);color:var(--cream);cursor:pointer;font-size:12px;font-weight:500">1. Identité</button>
+          <button class="sr-tab" data-sr-section="2" onclick="showSrSection(2)" style="padding:10px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);cursor:pointer;font-size:12px">2. Visuels</button>
+          <button class="sr-tab" data-sr-section="3" onclick="showSrSection(3)" style="padding:10px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);cursor:pointer;font-size:12px">3. Financials</button>
+          <button class="sr-tab" data-sr-section="4" onclick="showSrSection(4)" style="padding:10px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);cursor:pointer;font-size:12px">4. Publication</button>
+        </div>
+
+        <!-- Section 1 — Identité -->
+        <div class="sr-section active" data-sr-section="1">
+          <div class="form-section-title">Identité</div>
+          <div class="form-row">
+            <label class="form-label">NOM COMMERCIAL *</label>
+            <input type="text" id="sr-name" class="form-input" placeholder="ex: Studio Marais — Temple"/>
+          </div>
+          <div class="form-row">
+            <label class="form-label">SLUG (URL)</label>
+            <input type="text" id="sr-slug" class="form-input" placeholder="studio-marais-temple"/>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-row">
+              <label class="form-label">QUARTIER</label>
+              <input type="text" id="sr-quartier" class="form-input" placeholder="Marais"/>
+            </div>
+            <div class="form-row">
+              <label class="form-label">ARRONDISSEMENT</label>
+              <select id="sr-arr" class="form-select">
+                <option value="">—</option>
+                <option>1er</option><option>2e</option><option>3e</option><option>4e</option>
+                <option>5e</option><option>6e</option><option>7e</option><option>8e</option>
+                <option>9e</option><option>10e</option><option>11e</option><option>12e</option>
+                <option>13e</option><option>14e</option><option>15e</option><option>16e</option>
+                <option>17e</option><option>18e</option><option>19e</option><option>20e</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-row">
+              <label class="form-label">SURFACE (m²)</label>
+              <input type="number" id="sr-surface" class="form-input" placeholder="12.5" step="0.1"/>
+            </div>
+            <div class="form-row">
+              <label class="form-label">STYLE ARCHITECTURAL</label>
+              <select id="sr-style" class="form-select">
+                <option value="">—</option>
+                <option>Contemporain</option><option>Loft</option><option>Haussmannien</option>
+                <option>Design</option><option>Industriel</option><option>Minimaliste</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">DPE</label>
+            <select id="sr-dpe" class="form-select" style="width:120px">
+              <option value="">—</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">TAGLINE (max 100 caractères)</label>
+            <input type="text" id="sr-desc-courte" class="form-input" maxlength="100" placeholder="Ex: Studio rénové, lumineux, plein cœur du Marais."/>
+          </div>
+          <div class="form-row">
+            <label class="form-label">DESCRIPTION LONGUE</label>
+            <textarea id="sr-desc-longue" class="form-input" rows="5" style="resize:vertical;font-family:inherit;font-size:13px"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-label">ÉQUIPEMENTS (un par ligne)</label>
+            <textarea id="sr-equipements" class="form-input" rows="4" style="resize:vertical;font-family:inherit;font-size:13px" placeholder="Lit double&#10;Cuisine équipée&#10;Salle de bain&#10;Smart TV"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-label">CARACTÉRISTIQUES (un par ligne)</label>
+            <textarea id="sr-caracteristiques" class="form-input" rows="3" style="resize:vertical;font-family:inherit;font-size:13px" placeholder="Étage élevé&#10;Vue dégagée&#10;Ascenseur"></textarea>
+          </div>
+        </div>
+
+        <!-- Section 2 — Visuels -->
+        <div class="sr-section" data-sr-section="2" style="display:none">
+          <div class="form-section-title">Visuels</div>
+          <div class="form-row">
+            <label class="form-label">PHOTO DE COUVERTURE (URL)</label>
+            <input type="text" id="sr-cover" class="form-input" placeholder="https://..."/>
+            <div id="sr-cover-preview" style="margin-top:8px"></div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">PHOTOS APRÈS TRAVAUX (une URL par ligne)</label>
+            <textarea id="sr-images-after" class="form-input" rows="5" style="resize:vertical;font-family:inherit;font-size:12px" placeholder="https://image1.jpg&#10;https://image2.jpg"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-label">PHOTOS AVANT TRAVAUX (une URL par ligne)</label>
+            <textarea id="sr-images-before" class="form-input" rows="4" style="resize:vertical;font-family:inherit;font-size:12px" placeholder="https://avant1.jpg&#10;https://avant2.jpg"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-label">URL VIDÉO (YouTube / Vimeo)</label>
+            <input type="text" id="sr-video" class="form-input" placeholder="https://youtube.com/..."/>
+          </div>
+        </div>
+
+        <!-- Section 3 — Financials -->
+        <div class="sr-section" data-sr-section="3" style="display:none">
+          <div class="form-section-title">Financials</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-row">
+              <label class="form-label">PRIX ACQUISITION (€ FAI)</label>
+              <input type="number" id="sr-prix" class="form-input" oninput="recalcSr()"/>
+            </div>
+            <div class="form-row">
+              <label class="form-label">BUDGET TRAVAUX (€)</label>
+              <input type="number" id="sr-travaux" class="form-input" oninput="recalcSr()"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-row">
+              <label class="form-label">LOYER MENSUEL ACTUEL (€)</label>
+              <input type="number" id="sr-loyer" class="form-input" oninput="recalcSr()"/>
+            </div>
+            <div class="form-row">
+              <label class="form-label">TYPE DE LOCATAIRE</label>
+              <input type="text" id="sr-locataire" class="form-input" placeholder="ex: Entreprise tech, mission 6 mois"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-label">STATUT LOCATION</label>
+            <select id="sr-statut-loc" class="form-select" style="width:200px">
+              <option value="Loué">Loué</option>
+              <option value="Disponible">Disponible</option>
+              <option value="En rotation">En rotation</option>
+            </select>
+          </div>
+          <!-- Synthèse calculée -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:8px">
+            <p style="margin:0 0 12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Synthèse calculée</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:3px">Total all-in</div><div id="sr-calc-total" style="font-size:15px;font-weight:500;color:var(--cream)">—</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:3px">Rendement brut</div><div id="sr-calc-rdt" style="font-size:15px;font-weight:500;color:var(--gold)">—</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:3px">Mensualité type</div><div id="sr-calc-mens" style="font-size:15px;font-weight:500;color:var(--cream)">—</div></div>
+            </div>
+          </div>
+          <!-- Matching projet similaire -->
+          <div class="form-row" style="margin-top:16px">
+            <label class="form-label">PROJET SIMILAIRE DISPONIBLE À LA VENTE</label>
+            <select id="sr-projet-similaire" class="form-select">
+              <option value="">— Aucun —</option>
+            </select>
+            <p style="margin:6px 0 0;font-size:11px;color:var(--dim)">Quand un lead clique "Je veux ce type de projet", il est redirigé vers ce projet.</p>
+          </div>
+        </div>
+
+        <!-- Section 4 — Publication -->
+        <div class="sr-section" data-sr-section="4" style="display:none">
+          <div class="form-section-title">Publication</div>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+            <label class="np-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="sr-published" style="width:18px;height:18px"/>
+              <span style="font-size:13px;color:var(--cream)">Publié sur le showroom public</span>
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+            <label class="np-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="sr-featured" style="width:18px;height:18px"/>
+              <span style="font-size:13px;color:var(--cream)">Mise en avant (featured)</span>
+            </label>
+          </div>
+          <div class="form-row">
+            <label class="form-label">ORDRE D'AFFICHAGE</label>
+            <input type="number" id="sr-ordre" class="form-input" value="0" style="width:100px"/>
+          </div>
+          <div class="form-row">
+            <label class="form-label">URL SOURCE (atom.living)</label>
+            <input type="text" id="sr-source-url" class="form-input" placeholder="https://atom.living/fr/properties/..."/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar synthèse -->
+      <aside style="width:200px;flex-shrink:0;position:sticky;top:24px">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px">
+          <p style="margin:0 0 8px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Statut</p>
+          <div id="sr-status-badge" style="font-size:12px;color:var(--dim)">Brouillon</div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Footer actions -->
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn-secondary" onclick="saveShowroomItem('brouillon')">Enregistrer brouillon</button>
+      <button class="btn-primary" id="btn-save-showroom" onclick="saveShowroomItem()" disabled>Enregistrer</button>
+    </div>
+  </div>
+
 </div><!-- /#dashboard -->
 
 <!-- ══ DELETE MODAL ═══════════════════════════════════════════ -->
@@ -1612,7 +1858,7 @@ function applyScoreViewFilter() {
 }
 
 /* ── Routeur SPA par hash ───────────────────────────────────── */
-const VALID_VIEWS = ['leads', 'projects', 'new-project'];
+const VALID_VIEWS = ['leads', 'projects', 'new-project', 'showroom', 'showroom-edit'];
 
 function setRoute(view) {
   location.hash = '#' + view;
@@ -1630,10 +1876,11 @@ function showView(view) {
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   // Show the requested one
   document.getElementById('view-' + view)?.classList.add('active');
-  document.querySelector(`.nav-tab[data-view="${view === 'new-project' ? 'projects' : view}"]`)?.classList.add('active');
-  // Chargement à la demande (sera implémenté dans les tâches suivantes)
-  if (view === 'projects'    && typeof loadProjects        === 'function') loadProjects();
-  if (view === 'new-project' && typeof resetNewProjectForm === 'function') resetNewProjectForm();
+  const navView = view === 'new-project' ? 'projects' : view === 'showroom-edit' ? 'showroom' : view;
+  document.querySelector(`.nav-tab[data-view="${navView}"]`)?.classList.add('active');
+  if (view === 'projects'     && typeof loadProjects        === 'function') loadProjects();
+  if (view === 'new-project'  && typeof resetNewProjectForm === 'function') resetNewProjectForm();
+  if (view === 'showroom'     && typeof loadShowroom        === 'function') loadShowroom();
 }
 
 window.addEventListener('hashchange', handleRoute);
@@ -2544,7 +2791,7 @@ async function confirmDelete() {
   btn.disabled = true;
   btn.textContent = 'Suppression…';
 
-  const res = await fetch(`/api/delete?id=${pendingDeleteId}`, {
+  const res = await fetch(`/api/leads?id=${pendingDeleteId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -2688,7 +2935,7 @@ function closeDrawer(e) {
 
 /* ── Status & Notes ─────────────────────────────────────────── */
 async function updateLeadStatus(id, status) {
-  const res = await fetch(`/api/patch?id=${id}`, {
+  const res = await fetch(`/api/leads?id=${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ status }),
@@ -2743,7 +2990,7 @@ async function trackCta(leadId, ctaType, extra = null) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ lead_id: leadId, type: ctaType, content: extra ? JSON.stringify(extra) : null }),
     }).catch(() => null),
-    fetch(`/api/patch?id=${leadId}`, {
+    fetch(`/api/leads?id=${leadId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(body),
@@ -2817,7 +3064,7 @@ async function saveNotes(id) {
   const notes = textarea.value;
   const statusEl = document.getElementById('notes-status');
   if (statusEl) { statusEl.textContent = 'Sauvegarde…'; statusEl.style.color = 'var(--dim)'; }
-  const res = await fetch(`/api/patch?id=${id}`, {
+  const res = await fetch(`/api/leads?id=${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ notes }),
@@ -3651,6 +3898,340 @@ function phoneIntl(tel) {
 }
 
 init();
+
+/* ══ SHOWROOM ═══════════════════════════════════════════════════ */
+let showroomCache    = [];
+let editingShowroomId = null;
+
+async function loadShowroom() {
+  const grid = document.getElementById('showroom-grid');
+  grid.innerHTML = '<p style="color:var(--dim);padding:20px">Chargement…</p>';
+  const res  = await fetch('/api/showroom', { headers: { Authorization: `Bearer ${token}` } });
+  if (res.status === 401) { logout(); return; }
+  const { items } = await res.json();
+  showroomCache = items || [];
+  renderShowroomGrid();
+  await loadAvailableProjects(); // pour le dropdown matching
+}
+
+function renderShowroomGrid() {
+  const grid = document.getElementById('showroom-grid');
+  if (!showroomCache.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--dim)">
+      <p style="font-size:32px;margin:0 0 12px">🏠</p>
+      <p style="margin:0">Aucune réalisation. <a href="#" onclick="openShowroomEdit(null);return false" style="color:var(--gold)">Créer la première →</a></p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = showroomCache.map(item => `
+    <div class="sr-card" onclick="openShowroomEdit('${item.id}')">
+      ${item.image_cover
+        ? `<img class="sr-card-cover" src="${esc(item.image_cover)}" alt="${esc(item.name)}" loading="lazy"/>`
+        : `<div class="sr-card-cover-placeholder">🏠</div>`}
+      <div class="sr-card-body">
+        <p class="sr-card-name">${esc(item.name)}</p>
+        <p class="sr-card-meta">${[item.quartier, item.arrondissement, item.surface ? item.surface + ' m²' : null].filter(Boolean).join(' · ')}</p>
+        <div class="sr-card-footer">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${item.is_featured ? '<span class="sr-badge-featured">⭐ Vedette</span>' : ''}
+            <span class="${item.is_published ? 'sr-badge-pub' : 'sr-badge-draft'}">${item.is_published ? 'Publié' : 'Brouillon'}</span>
+            ${item.style ? `<span style="font-size:10px;color:var(--dim)">${esc(item.style)}</span>` : ''}
+          </div>
+          <button class="sr-toggle-pub" onclick="event.stopPropagation();toggleShowroomPublish('${item.id}',${!item.is_published})"
+            title="${item.is_published ? 'Dépublier' : 'Publier'}">
+            ${item.is_published ? '⬇ Dépublier' : '⬆ Publier'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function toggleShowroomPublish(id, val) {
+  await fetch(`/api/showroom?id=${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ is_published: val }),
+  });
+  const item = showroomCache.find(i => i.id === id);
+  if (item) item.is_published = val;
+  renderShowroomGrid();
+}
+
+function openShowroomEdit(id) {
+  editingShowroomId = id;
+  resetShowroomForm();
+  setRoute('showroom-edit');
+  if (id) {
+    const item = showroomCache.find(i => i.id === id);
+    if (item) setTimeout(() => populateShowroomForm(item), 50);
+  }
+}
+
+function resetShowroomForm() {
+  ['sr-name','sr-slug','sr-quartier','sr-arr','sr-surface','sr-style','sr-dpe',
+   'sr-desc-courte','sr-desc-longue','sr-equipements','sr-caracteristiques',
+   'sr-cover','sr-images-after','sr-images-before','sr-video',
+   'sr-prix','sr-travaux','sr-loyer','sr-locataire','sr-statut-loc',
+   'sr-ordre','sr-source-url','sr-projet-similaire'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = el.tagName === 'SELECT' ? (el.options[0]?.value || '') : '';
+  });
+  document.getElementById('sr-published').checked = false;
+  document.getElementById('sr-featured').checked  = false;
+  document.getElementById('sr-ordre').value = '0';
+  document.getElementById('sr-statut-loc').value = 'Loué';
+  const titleEl = document.getElementById('sr-page-title');
+  const subEl   = document.getElementById('sr-page-sub');
+  if (titleEl) titleEl.textContent = editingShowroomId ? 'Modifier la réalisation' : 'Nouvelle réalisation';
+  if (subEl)   subEl.textContent   = editingShowroomId ? 'Mets à jour les informations puis enregistre' : 'Complète les informations puis publie';
+  showSrSection(1);
+  recalcSr();
+  setSrBtnDirty(!editingShowroomId);
+}
+
+function populateShowroomForm(item) {
+  const sv = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+  sv('sr-name',         item.name);
+  sv('sr-slug',         item.slug);
+  sv('sr-quartier',     item.quartier);
+  sv('sr-arr',          item.arrondissement);
+  sv('sr-surface',      item.surface);
+  sv('sr-style',        item.style);
+  sv('sr-dpe',          item.dpe);
+  sv('sr-desc-courte',  item.description_courte);
+  sv('sr-desc-longue',  item.description_longue);
+  sv('sr-equipements',  (item.equipements || []).join('\n'));
+  sv('sr-caracteristiques', (item.caracteristiques || []).join('\n'));
+  sv('sr-cover',        item.image_cover);
+  sv('sr-images-after', (item.images_after || []).join('\n'));
+  sv('sr-images-before',(item.images_before || []).join('\n'));
+  sv('sr-video',        item.video_url);
+  sv('sr-prix',         item.prix_acquisition);
+  sv('sr-travaux',      item.budget_travaux);
+  sv('sr-loyer',        item.loyer_mensuel);
+  sv('sr-locataire',    item.locataire_type);
+  sv('sr-statut-loc',   item.statut_location || 'Loué');
+  sv('sr-ordre',        item.ordre ?? 0);
+  sv('sr-source-url',   item.source_url);
+  sv('sr-projet-similaire', item.projet_similaire_id || '');
+  document.getElementById('sr-published').checked = !!item.is_published;
+  document.getElementById('sr-featured').checked  = !!item.is_featured;
+  recalcSr();
+  setSrBtnDirty(false);
+}
+
+async function loadAvailableProjects() {
+  const sel = document.getElementById('sr-projet-similaire');
+  if (!sel) return;
+  const res  = await fetch('/api/projects?status=disponible', { headers: { Authorization: `Bearer ${token}` } });
+  const { projects } = await res.json().catch(() => ({ projects: [] }));
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">— Aucun —</option>' +
+    (projects || []).map(p => `<option value="${p.id}">${esc(p.title)} — ${p.arrondissement || '?'}</option>`).join('');
+  sel.value = currentVal;
+}
+
+function showSrSection(n) {
+  document.querySelectorAll('.sr-tab').forEach(t => {
+    const active = +t.dataset.srSection === n;
+    t.classList.toggle('active', active);
+    t.style.color = active ? 'var(--cream)' : 'var(--dim)';
+    t.style.borderBottom = active ? '2px solid var(--gold)' : '2px solid transparent';
+  });
+  document.querySelectorAll('.sr-section').forEach(s => {
+    s.style.display = +s.dataset.srSection === n ? 'block' : 'none';
+  });
+}
+
+function recalcSr() {
+  const prix   = parseFloat(document.getElementById('sr-prix')?.value)   || 0;
+  const travaux = parseFloat(document.getElementById('sr-travaux')?.value) || 0;
+  const loyer  = parseFloat(document.getElementById('sr-loyer')?.value)  || 0;
+  const total  = prix + travaux;
+  const fmt = v => v > 0 ? v.toLocaleString('fr-FR') + ' €' : '—';
+
+  document.getElementById('sr-calc-total').textContent = fmt(total);
+
+  if (total > 0 && loyer > 0) {
+    const rdt = ((loyer * 12 / total) * 100).toFixed(2);
+    document.getElementById('sr-calc-rdt').textContent = rdt + ' %';
+  } else {
+    document.getElementById('sr-calc-rdt').textContent = '—';
+  }
+
+  if (total > 0) {
+    const apport    = Math.round(total * 0.10);
+    const principal = total - apport;
+    const r = 0.036 / 12;
+    const m = 25 * 12;
+    const mens = Math.round((principal * r) / (1 - Math.pow(1 + r, -m)));
+    document.getElementById('sr-calc-mens').textContent = mens.toLocaleString('fr-FR') + ' €';
+  } else {
+    document.getElementById('sr-calc-mens').textContent = '—';
+  }
+}
+
+function setSrBtnDirty(dirty) {
+  const btn = document.getElementById('btn-save-showroom');
+  if (!btn) return;
+  btn.disabled = !dirty;
+  if (dirty && btn.textContent === '✓ Enregistré') btn.textContent = 'Enregistrer';
+}
+
+// Dirty tracking sur le formulaire showroom-edit
+(function attachSrListeners() {
+  const container = document.getElementById('view-showroom-edit');
+  if (!container) return;
+  ['input','change'].forEach(evt =>
+    container.addEventListener(evt, () => {
+      if (document.getElementById('view-showroom-edit').classList.contains('active')) setSrBtnDirty(true);
+    })
+  );
+})();
+
+function getSrPayload() {
+  const lines = id => (document.getElementById(id)?.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+  return {
+    name:               document.getElementById('sr-name').value.trim(),
+    slug:               document.getElementById('sr-slug').value.trim()
+                          || slugifySr(document.getElementById('sr-name').value.trim()),
+    quartier:           document.getElementById('sr-quartier').value.trim() || null,
+    arrondissement:     document.getElementById('sr-arr').value || null,
+    surface:            parseFloat(document.getElementById('sr-surface').value) || null,
+    style:              document.getElementById('sr-style').value || null,
+    dpe:                document.getElementById('sr-dpe').value || null,
+    description_courte: document.getElementById('sr-desc-courte').value.trim() || null,
+    description_longue: document.getElementById('sr-desc-longue').value.trim() || null,
+    equipements:        lines('sr-equipements'),
+    caracteristiques:   lines('sr-caracteristiques'),
+    image_cover:        document.getElementById('sr-cover').value.trim() || null,
+    images_after:       lines('sr-images-after'),
+    images_before:      lines('sr-images-before'),
+    video_url:          document.getElementById('sr-video').value.trim() || null,
+    prix_acquisition:   parseFloat(document.getElementById('sr-prix').value) || null,
+    budget_travaux:     parseFloat(document.getElementById('sr-travaux').value) || null,
+    loyer_mensuel:      parseFloat(document.getElementById('sr-loyer').value) || null,
+    locataire_type:     document.getElementById('sr-locataire').value.trim() || null,
+    statut_location:    document.getElementById('sr-statut-loc').value || 'Loué',
+    projet_similaire_id: document.getElementById('sr-projet-similaire').value || null,
+    is_published:       document.getElementById('sr-published').checked,
+    is_featured:        document.getElementById('sr-featured').checked,
+    ordre:              parseInt(document.getElementById('sr-ordre').value) || 0,
+    source_url:         document.getElementById('sr-source-url').value.trim() || null,
+  };
+}
+
+async function saveShowroomItem(forceStatus) {
+  const btn = document.getElementById('btn-save-showroom');
+  const payload = getSrPayload();
+  if (!payload.name) { alert('Le nom est obligatoire.'); showSrSection(1); return; }
+  if (!payload.slug) { alert('Le slug est obligatoire.'); showSrSection(1); return; }
+  if (forceStatus === 'brouillon') payload.is_published = false;
+
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = 'Enregistrement…';
+
+  const isEdit = !!editingShowroomId;
+  const url    = isEdit ? `/api/showroom?id=${editingShowroomId}` : '/api/showroom';
+  const method = isEdit ? 'PUT' : 'POST';
+
+  let res, data = {};
+  try {
+    res  = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+    data = await res.json().catch(() => ({}));
+  } catch (e) {
+    btn.disabled = false; btn.textContent = oldText;
+    alert('Erreur réseau — ' + e.message); return;
+  }
+
+  if (res.status === 401) { logout(); return; }
+  if (!res.ok) {
+    btn.disabled = false; btn.textContent = oldText;
+    alert('Erreur : ' + (data?.detail || data?.error || res.status)); return;
+  }
+
+  btn.textContent = '✓ Enregistré';
+  setSrBtnDirty(false);
+  // Met à jour le cache local
+  if (data.item) {
+    const idx = showroomCache.findIndex(i => i.id === data.item.id);
+    if (idx >= 0) showroomCache[idx] = data.item;
+    else showroomCache.unshift(data.item);
+  }
+  setTimeout(() => { editingShowroomId = null; setRoute('showroom'); }, 700);
+}
+
+function slugifySr(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+// Auto-slug depuis le nom
+document.getElementById('sr-name')?.addEventListener('input', function() {
+  const slugEl = document.getElementById('sr-slug');
+  if (slugEl && !editingShowroomId) slugEl.value = slugifySr(this.value);
+});
+
+async function confirmScrapeAll() {
+  const urls = [
+    'https://atom.living/fr/properties/honore',
+    'https://atom.living/fr/properties/panoramas',
+    'https://atom.living/fr/properties/saint-claude',
+    'https://atom.living/fr/properties/loft-republique-design',
+    'https://atom.living/fr/properties/studio-saint-germain-charme',
+    'https://atom.living/fr/properties/appartement-bastille-lumineux',
+    'https://atom.living/fr/properties/studio-marais-temple',
+  ];
+  if (!confirm(`Scraper ${urls.length} pages atom.living ?\n\nNote : si les pages sont des SPAs JS, utilise le script local scripts/seed-showroom.js pour de meilleurs résultats.`)) return;
+
+  const btn = document.getElementById('btn-scrape-all');
+  btn.disabled = true; btn.textContent = '⏳ Scraping…';
+  let ok = 0, errors = 0;
+
+  for (const url of urls) {
+    const slug = url.split('/').pop();
+    btn.textContent = `⏳ ${slug}…`;
+    try {
+      const res  = await fetch('/api/showroom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'scrape', url }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.item) {
+        // Crée la fiche en brouillon
+        const createRes = await fetch('/api/showroom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            ...data.item,
+            slug,
+            images_after: data.images_found || [],
+            image_cover:  data.images_found?.[0] || null,
+            source_url:   url,
+            is_published: false,
+          }),
+        });
+        if (createRes.ok) ok++;
+        else errors++;
+      } else {
+        console.warn('Scrape failed for', url, data);
+        errors++;
+      }
+    } catch (e) { errors++; }
+  }
+
+  btn.disabled = false; btn.textContent = '⚡ Scraper atom.living';
+  alert(`Scraping terminé : ${ok} fiches créées${errors ? `, ${errors} erreurs` : ''}.\nNote : si des fiches sont vides, utilise le script local scripts/seed-showroom.js avec Puppeteer.`);
+  loadShowroom();
+}
 </script>
 </body>
 </html>

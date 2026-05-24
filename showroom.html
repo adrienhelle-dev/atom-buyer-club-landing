@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>Nos réalisations — Atom Buyers Club</title>
+  <meta name="description" content="Découvrez des micro-logements Atom déjà rénovés, loués et performants. Inspirez-vous, puis trouvez votre projet."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:    #0f0e0c; --bg2: #161512; --bg3: #1e1d1a;
+      --cream: #F5F2ED; --cream-dim: #C7C2BB;
+      --border:#2c2b27; --dim: #7a7874;
+      --gold:  #B8975A; --green: #4caf7d;
+      --sans:  'DM Sans', system-ui, sans-serif;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--cream); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    a { color: var(--gold); text-decoration: none; }
+
+    /* Header */
+    .header {
+      padding: 20px 32px; border-bottom: 1px solid var(--border);
+      background: var(--bg2); display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header svg { width: 56px; height: auto; }
+    @media(max-width:600px){ .header { padding: 14px 16px; } }
+
+    /* Hero */
+    .hero {
+      max-width: 860px; margin: 0 auto; padding: 56px 32px 40px;
+      text-align: center;
+    }
+    .hero-eyebrow { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+    .hero-title { font-family: var(--serif); font-size: 48px; font-weight: 300; line-height: 1.08; margin-bottom: 18px; }
+    .hero-sub { font-size: 15px; color: var(--cream-dim); max-width: 560px; margin: 0 auto 32px; line-height: 1.7; }
+    .hero-welcome { font-size: 14px; color: var(--gold); margin-bottom: 24px; font-style: italic; }
+    @media(max-width:600px){ .hero { padding: 36px 16px 28px; } .hero-title { font-size: 32px; } }
+
+    /* Stats bar */
+    .stats-bar {
+      max-width: 860px; margin: 0 auto 40px;
+      display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;
+      padding: 0 32px;
+    }
+    .stat-item { text-align: center; }
+    .stat-value { font-family: var(--serif); font-size: 32px; font-weight: 300; color: var(--cream); }
+    .stat-label { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    @media(max-width:600px){ .stats-bar { gap: 24px; } .stat-value { font-size: 24px; } }
+
+    /* Filters */
+    .filters {
+      max-width: 1100px; margin: 0 auto 32px;
+      padding: 0 32px; display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .filter-pill {
+      padding: 7px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;
+      border: 1px solid var(--border); background: none; color: var(--dim);
+      transition: all .15s;
+    }
+    .filter-pill:hover { border-color: var(--gold); color: var(--gold); }
+    .filter-pill.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 500; }
+    @media(max-width:600px){ .filters { padding: 0 16px; gap: 6px; } .filter-pill { font-size: 11px; padding: 6px 12px; } }
+
+    /* Grid */
+    .grid {
+      max-width: 1100px; margin: 0 auto; padding: 0 32px 80px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+    }
+    @media(max-width:600px){ .grid { padding: 0 16px 60px; grid-template-columns: 1fr; gap: 14px; } }
+
+    /* Card */
+    .card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; cursor: pointer; transition: border-color .18s, transform .18s;
+      text-decoration: none; display: block;
+    }
+    .card:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .card-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: var(--bg3); }
+    .card-img-placeholder { width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; background: var(--bg3); font-size: 32px; opacity: .4; }
+    .card-body { padding: 16px; }
+    .card-style { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .card-name { font-family: var(--serif); font-size: 20px; font-weight: 300; color: var(--cream); margin-bottom: 4px; }
+    .card-meta { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+    .card-stats { display: flex; gap: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .card-stat-val { font-size: 15px; font-weight: 500; color: var(--cream); }
+    .card-stat-label { font-size: 10px; color: var(--dim); margin-top: 2px; }
+    .card-cta { margin-top: 14px; }
+    .btn-voir { display: inline-block; padding: 9px 18px; background: var(--gold); color: var(--bg); border-radius: 6px; font-size: 12px; font-weight: 500; }
+
+    /* Empty */
+    .empty { grid-column: 1/-1; text-align: center; padding: 64px 20px; color: var(--dim); }
+
+    /* ── PAGE DÉTAIL ────────────────────────────────────────────── */
+    #page-detail { display: none; }
+    .detail-back { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13px; cursor: pointer; margin-bottom: 24px; }
+    .detail-back:hover { color: var(--cream); }
+    .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: start; }
+    @media(max-width:900px){ .detail-layout { grid-template-columns: 1fr; } }
+
+    /* Gallery detail */
+    .detail-gallery { margin-bottom: 32px; }
+    .gallery-main { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
+    .gallery-thumbs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .gallery-thumbs img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: .6; flex-shrink: 0; transition: opacity .15s; }
+    .gallery-thumbs img.active { opacity: 1; outline: 2px solid var(--gold); }
+
+    /* Before/after toggle */
+    .ba-toggle { display: flex; gap: 0; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; width: fit-content; }
+    .ba-btn { padding: 7px 16px; font-size: 12px; background: none; border: none; color: var(--dim); cursor: pointer; }
+    .ba-btn.active { background: var(--gold); color: var(--bg); font-weight: 500; }
+
+    /* Detail text */
+    .detail-name { font-family: var(--serif); font-size: 36px; font-weight: 300; line-height: 1.1; margin-bottom: 10px; }
+    .detail-meta { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 13px; color: var(--cream-dim); margin-bottom: 24px; }
+    .detail-section-title { font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .detail-desc { font-size: 14px; color: var(--cream-dim); line-height: 1.75; margin-bottom: 28px; }
+    .equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-bottom: 28px; }
+    .equip-item { font-size: 12px; color: var(--cream-dim); background: var(--bg3); border-radius: 6px; padding: 8px 12px; }
+
+    /* Sidebar */
+    .sidebar-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .sidebar-title { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+    .fin-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .fin-row:last-of-type { border-bottom: none; }
+    .fin-label { font-size: 12px; color: var(--dim); }
+    .fin-val { font-size: 14px; font-weight: 500; color: var(--cream); }
+    .fin-val.gold { color: var(--gold); }
+    .statut-badge { display: inline-block; background: rgba(76,175,125,.1); color: var(--green); border: 1px solid rgba(76,175,125,.25); border-radius: 20px; font-size: 11px; padding: 3px 10px; margin-top: 12px; }
+
+    /* Matching card */
+    .match-card { background: rgba(184,151,90,.05); border: 1px solid rgba(184,151,90,.2); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .match-tag { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+    .match-title { font-size: 15px; font-weight: 500; color: var(--cream); margin-bottom: 6px; }
+    .match-meta { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+    .btn-match { display: block; width: 100%; padding: 13px; background: var(--gold); color: var(--bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
+    .btn-match:hover { opacity: .9; }
+
+    /* Modal CTA */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
+    .modal-overlay.on { display: flex; }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 32px; max-width: 440px; width: 100%; }
+    .modal-title { font-family: var(--serif); font-size: 24px; font-weight: 300; margin-bottom: 8px; }
+    .modal-sub { font-size: 13px; color: var(--dim); margin-bottom: 24px; line-height: 1.6; }
+    .modal-field { margin-bottom: 14px; }
+    .modal-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; display: block; }
+    .modal-input { width: 100%; padding: 11px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--cream); font-family: var(--sans); font-size: 14px; }
+    .modal-input:focus { outline: none; border-color: var(--gold); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-submit { flex: 1; padding: 13px; background: var(--gold); color: var(--bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; }
+    .btn-cancel { padding: 13px 18px; background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 7px; font-size: 13px; cursor: pointer; }
+    .modal-confirm { display: none; text-align: center; padding: 20px 0; }
+    .modal-confirm-icon { font-size: 40px; margin-bottom: 12px; }
+    .modal-confirm-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 8px; }
+    .modal-confirm-sub { font-size: 13px; color: var(--dim); }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <a href="/">
+    <svg viewBox="0 0 120 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <text x="0" y="22" font-family="Georgia,serif" font-size="22" font-weight="300" fill="#F5F2ED" letter-spacing="6">atom</text>
+    </svg>
+  </a>
+  <span style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#7a7874">Buyers Club</span>
+</header>
+
+<!-- ── PAGE LISTE ────────────────────────────────────────────── -->
+<div id="page-list">
+  <section class="hero">
+    <p class="hero-eyebrow">Atom Buyers Club</p>
+    <h1 class="hero-title">Nos réalisations</h1>
+    <p id="hero-welcome" class="hero-welcome" style="display:none"></p>
+    <p class="hero-sub">Découvrez des micro-logements déjà rénovés, loués et performants. Inspirez-vous, puis trouvez votre projet.</p>
+  </section>
+
+  <div class="stats-bar" id="stats-bar" style="display:none">
+    <div class="stat-item"><div class="stat-value" id="stat-nb">—</div><div class="stat-label">réalisations</div></div>
+    <div class="stat-item"><div class="stat-value gold" id="stat-rdt" style="color:var(--gold)">—</div><div class="stat-label">rendement moyen</div></div>
+    <div class="stat-item"><div class="stat-value" id="stat-loues">—</div><div class="stat-label">% loués</div></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter-pill active" data-filter="all" onclick="applyFilter(this)">Tous</button>
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="empty"><p style="font-size:32px;opacity:.3">🏠</p><p style="margin-top:12px">Chargement…</p></div>
+  </div>
+</div>
+
+<!-- ── PAGE DÉTAIL ────────────────────────────────────────────── -->
+<div id="page-detail">
+  <main style="max-width:1100px;margin:0 auto;padding:32px 32px 80px">
+    <div class="detail-back" onclick="showList()">← Retour aux réalisations</div>
+    <div class="detail-layout">
+      <!-- Colonne gauche -->
+      <div>
+        <!-- Galerie -->
+        <div class="detail-gallery">
+          <div id="ba-toggle-wrap" style="display:none">
+            <div class="ba-toggle">
+              <button class="ba-btn active" onclick="switchGallery('after')">Après travaux</button>
+              <button class="ba-btn" onclick="switchGallery('before')">Avant travaux</button>
+            </div>
+          </div>
+          <img id="gallery-main" class="gallery-main" src="" alt="" style="display:none"/>
+          <div id="gallery-placeholder" style="width:100%;aspect-ratio:4/3;background:var(--bg3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.3">🏠</div>
+          <div class="gallery-thumbs" id="gallery-thumbs"></div>
+        </div>
+
+        <h1 class="detail-name" id="detail-name"></h1>
+        <div class="detail-meta" id="detail-meta"></div>
+
+        <p class="detail-section-title">Description</p>
+        <p class="detail-desc" id="detail-desc"></p>
+
+        <p class="detail-section-title" id="equip-title" style="display:none">Équipements</p>
+        <div class="equip-grid" id="equip-grid"></div>
+      </div>
+
+      <!-- Colonne droite (sidebar sticky) -->
+      <div style="position:sticky;top:88px">
+        <!-- Financials -->
+        <div class="sidebar-card" id="sidebar-fin" style="display:none">
+          <p class="sidebar-title">Cette réalisation</p>
+          <div id="fin-rows"></div>
+          <div id="statut-badge-wrap"></div>
+        </div>
+
+        <!-- Projet similaire -->
+        <div class="match-card" id="match-card" style="display:none">
+          <p class="match-tag">📍 Un projet similaire est disponible</p>
+          <p class="match-title" id="match-title"></p>
+          <p class="match-meta" id="match-meta"></p>
+          <button class="btn-match" onclick="openCta()">Je veux ce type de projet →</button>
+        </div>
+
+        <!-- CTA WA (si pas de projet similaire) -->
+        <div class="sidebar-card" id="wa-card" style="display:none">
+          <p class="sidebar-title">Vous êtes intéressé(e) ?</p>
+          <p style="font-size:13px;color:var(--dim);margin-bottom:14px;line-height:1.6">Discutez directement avec l'équipe Atom.</p>
+          <a id="wa-link" href="#" target="_blank" style="display:block;padding:12px;background:#25D366;color:#fff;border-radius:7px;text-align:center;font-size:13px;font-weight:500">💬 Contacter sur WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── MODAL CTA ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="cta-modal" onclick="if(event.target===this)closeCta()">
+  <div class="modal-box">
+    <div id="cta-form-wrap">
+      <h2 class="modal-title">Je veux ce type de projet</h2>
+      <p class="modal-sub" id="cta-sub">L'équipe Atom vous contacte sous 24h pour vous présenter les opportunités disponibles.</p>
+      <div class="modal-field">
+        <label class="modal-label">Prénom *</label>
+        <input class="modal-input" id="cta-prenom" type="text" placeholder="Votre prénom"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Nom *</label>
+        <input class="modal-input" id="cta-nom" type="text" placeholder="Votre nom"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Email *</label>
+        <input class="modal-input" id="cta-email" type="email" placeholder="vous@email.com"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Téléphone *</label>
+        <input class="modal-input" id="cta-tel" type="tel" placeholder="+33 6 ..."/>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeCta()">Annuler</button>
+        <button class="btn-submit" id="btn-submit-cta" onclick="submitCta()">Envoyer ma demande →</button>
+      </div>
+      <p id="cta-err" style="color:#d95e5e;font-size:12px;margin-top:10px;display:none"></p>
+    </div>
+    <div class="modal-confirm" id="cta-confirm">
+      <div class="modal-confirm-icon">✅</div>
+      <h3 class="modal-confirm-title">Parfait !</h3>
+      <p class="modal-confirm-sub">L'équipe Atom vous contacte sous 24h.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const _sp  = new URLSearchParams(location.search);
+  const leadId = _sp.get('lead_id') || null;
+  const styleFilter = _sp.get('style') || null;
+
+  let allItems      = [];
+  let currentItem   = null;
+  let currentFilter = 'all';
+  let galleryMode   = 'after'; // 'after' | 'before'
+
+  // ── Pré-remplissage modal depuis sessionStorage ─────────────
+  let _storedLead = null;
+  try {
+    const raw = sessionStorage.getItem('atom_lead');
+    if (raw) {
+      _storedLead = JSON.parse(raw);
+      sessionStorage.removeItem('atom_lead'); // lecture unique
+    }
+  } catch {}
+
+  // ── Chargement initial ──────────────────────────────────────
+  async function init() {
+
+    const res  = await fetch('/api/showroom');
+    const data = await res.json().catch(() => ({ items: [] }));
+    allItems   = data.items || [];
+
+    renderStats();
+    renderFilters();
+    renderGrid(allItems);
+
+    // Filtre initial depuis URL
+    if (styleFilter) {
+      const pill = document.querySelector(`.filter-pill[data-filter="${styleFilter}"]`);
+      if (pill) applyFilter(pill);
+    }
+
+    // Détail depuis hash
+    if (location.hash.startsWith('#/')) {
+      const slug = location.hash.slice(2);
+      const item = allItems.find(i => i.slug === slug);
+      if (item) showDetail(item);
+    }
+  }
+
+  function renderStats() {
+    if (!allItems.length) return;
+    const withRdt  = allItems.filter(i => i.rendement_brut > 0);
+    const loues    = allItems.filter(i => i.statut_location === 'Loué');
+    const avgRdt   = withRdt.length ? (withRdt.reduce((a, i) => a + i.rendement_brut, 0) / withRdt.length).toFixed(1) : null;
+
+    document.getElementById('stat-nb').textContent    = allItems.length;
+    document.getElementById('stat-rdt').textContent   = avgRdt ? avgRdt + ' %' : '—';
+    document.getElementById('stat-loues').textContent = allItems.length ? Math.round(loues.length / allItems.length * 100) + ' %' : '—';
+    document.getElementById('stats-bar').style.display = '';
+  }
+
+  function renderFilters() {
+    const styles = [...new Set(allItems.map(i => i.style).filter(Boolean))];
+    const arrs   = [...new Set(allItems.map(i => i.arrondissement).filter(Boolean))].sort();
+    const wrap   = document.getElementById('filters');
+    const pills  = ['<button class="filter-pill active" data-filter="all" onclick="applyFilter(this)">Tous</button>'];
+    styles.forEach(s => pills.push(`<button class="filter-pill" data-filter="style:${esc(s)}" onclick="applyFilter(this)">${esc(s)}</button>`));
+    arrs.forEach(a => pills.push(`<button class="filter-pill" data-filter="arr:${esc(a)}" onclick="applyFilter(this)">${esc(a)}</button>`));
+    wrap.innerHTML = pills.join('');
+  }
+
+  function applyFilter(el) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    const f = el.dataset.filter;
+    currentFilter = f;
+    let filtered = allItems;
+    if (f.startsWith('style:')) filtered = allItems.filter(i => i.style === f.slice(6));
+    if (f.startsWith('arr:'))   filtered = allItems.filter(i => i.arrondissement === f.slice(4));
+    renderGrid(filtered);
+  }
+
+  function renderGrid(items) {
+    const grid = document.getElementById('grid');
+    if (!items.length) {
+      grid.innerHTML = '<div class="empty"><p>Aucune réalisation dans cette catégorie.</p></div>';
+      return;
+    }
+    grid.innerHTML = items.map(item => `
+      <a class="card" href="#/${esc(item.slug)}" onclick="showDetail(allItems.find(i=>i.slug==='${esc(item.slug)}'));return false">
+        ${item.image_cover
+          ? `<img class="card-img" src="${esc(item.image_cover)}" alt="${esc(item.name)}" loading="lazy"/>`
+          : `<div class="card-img-placeholder">🏠</div>`}
+        <div class="card-body">
+          ${item.style ? `<p class="card-style">${esc(item.style)}</p>` : ''}
+          <p class="card-name">${esc(item.name)}</p>
+          <p class="card-meta">${[item.quartier, item.arrondissement, item.surface ? item.surface + ' m²' : null].filter(Boolean).join(' · ')}</p>
+          ${(item.loyer_mensuel || item.rendement_brut) ? `
+          <div class="card-stats">
+            ${item.loyer_mensuel ? `<div><div class="card-stat-val">${item.loyer_mensuel.toLocaleString('fr-FR')} €</div><div class="card-stat-label">loyer/mois</div></div>` : ''}
+            ${item.rendement_brut ? `<div><div class="card-stat-val" style="color:var(--gold)">${item.rendement_brut} %</div><div class="card-stat-label">rendement brut</div></div>` : ''}
+          </div>` : ''}
+          <div class="card-cta"><span class="btn-voir">Voir la réalisation →</span></div>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  // ── Détail ──────────────────────────────────────────────────
+  function showDetail(item) {
+    if (!item) return;
+    currentItem = item;
+    history.pushState(null, '', '#/' + item.slug);
+    document.getElementById('page-list').style.display   = 'none';
+    document.getElementById('page-detail').style.display = 'block';
+    window.scrollTo(0, 0);
+
+    // Meta
+    document.title = item.name + ' — Atom Buyers Club';
+    document.getElementById('detail-name').textContent = item.name;
+    const metaParts = [
+      item.quartier && `<span>${esc(item.quartier)}</span>`,
+      item.arrondissement && `<span>${esc(item.arrondissement)}</span>`,
+      item.surface && `<span>${item.surface} m²</span>`,
+      item.style && `<span style="color:var(--gold)">${esc(item.style)}</span>`,
+    ].filter(Boolean);
+    document.getElementById('detail-meta').innerHTML = metaParts.join('<span style="color:var(--border)"> · </span>');
+
+    // Description
+    document.getElementById('detail-desc').textContent = item.description_longue || item.description_courte || '';
+
+    // Équipements
+    const equip = [...(item.equipements || []), ...(item.caracteristiques || [])];
+    const equipGrid = document.getElementById('equip-grid');
+    document.getElementById('equip-title').style.display = equip.length ? '' : 'none';
+    equipGrid.innerHTML = equip.map(e => `<div class="equip-item">✓ ${esc(e)}</div>`).join('');
+
+    // Galerie
+    buildGallery(item);
+
+    // Financials
+    buildFinancials(item);
+
+    // Matching
+    buildMatching(item);
+  }
+
+  function buildGallery(item) {
+    galleryMode = 'after';
+    const afterImgs  = item.images_after  || [];
+    const beforeImgs = item.images_before || [];
+    const hasAfter   = afterImgs.length > 0;
+    const hasBefore  = beforeImgs.length > 0;
+
+    document.getElementById('ba-toggle-wrap').style.display = (hasAfter && hasBefore) ? '' : 'none';
+    setGalleryImages(hasAfter ? afterImgs : (item.image_cover ? [item.image_cover] : []));
+  }
+
+  function setGalleryImages(imgs) {
+    const main    = document.getElementById('gallery-main');
+    const ph      = document.getElementById('gallery-placeholder');
+    const thumbs  = document.getElementById('gallery-thumbs');
+    if (!imgs.length) {
+      main.style.display = 'none'; ph.style.display = 'flex'; thumbs.innerHTML = ''; return;
+    }
+    ph.style.display   = 'none';
+    main.style.display = 'block';
+    main.src = imgs[0];
+    thumbs.innerHTML = imgs.map((u, i) =>
+      `<img src="${esc(u)}" class="${i === 0 ? 'active' : ''}" onclick="setMainImg(this,'${esc(u)}')" loading="lazy"/>`
+    ).join('');
+  }
+
+  function switchGallery(mode) {
+    galleryMode = mode;
+    document.querySelectorAll('.ba-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(mode === 'after' ? 'Après' : 'Avant')));
+    const imgs = mode === 'after' ? (currentItem.images_after || []) : (currentItem.images_before || []);
+    setGalleryImages(imgs);
+  }
+
+  function setMainImg(el, url) {
+    document.getElementById('gallery-main').src = url;
+    document.querySelectorAll('.gallery-thumbs img').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function buildFinancials(item) {
+    const card = document.getElementById('sidebar-fin');
+    const rows = [];
+    if (item.total_all_in)    rows.push({ l: 'Total investi',      v: fmt(item.total_all_in) + ' €' });
+    if (item.loyer_mensuel)   rows.push({ l: 'Loyer actuel',       v: fmt(item.loyer_mensuel) + ' €/mois', gold: true });
+    if (item.rendement_brut)  rows.push({ l: 'Rendement brut',     v: item.rendement_brut + ' %', gold: true });
+    if (item.mensualite_type) rows.push({ l: 'Mensualité type',    v: fmt(item.mensualite_type) + ' €' });
+    if (!rows.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    document.getElementById('fin-rows').innerHTML = rows.map(r =>
+      `<div class="fin-row"><span class="fin-label">${esc(r.l)}</span><span class="fin-val${r.gold ? ' gold' : ''}">${esc(r.v)}</span></div>`
+    ).join('');
+    const statut = item.statut_location;
+    const locType = item.locataire_type;
+    document.getElementById('statut-badge-wrap').innerHTML = statut
+      ? `<span class="statut-badge">● ${esc(statut)}${locType ? ' — ' + esc(locType) : ''}</span>` : '';
+  }
+
+  function buildMatching(item) {
+    const matchCard = document.getElementById('match-card');
+    const waCard    = document.getElementById('wa-card');
+    const proj      = item.projet_similaire;
+
+    if (proj) {
+      matchCard.style.display = '';
+      waCard.style.display    = 'none';
+      document.getElementById('match-title').textContent = proj.title || '';
+      const meta = [proj.arrondissement, proj.surface_carrez ? proj.surface_carrez + ' m²' : null,
+        proj.total_all_in ? 'All-in ~' + fmt(proj.total_all_in) + ' €' : null].filter(Boolean).join(' · ');
+      document.getElementById('match-meta').textContent = meta;
+    } else {
+      matchCard.style.display = 'none';
+      waCard.style.display    = '';
+      document.getElementById('wa-link').href = 'https://wa.me/33686475656?text=' +
+        encodeURIComponent(`Bonjour, j'ai consulté la réalisation "${item.name}" sur le Showroom Atom Buyers Club et je souhaite en savoir plus.`);
+    }
+  }
+
+  function showList() {
+    document.getElementById('page-detail').style.display = 'none';
+    document.getElementById('page-list').style.display   = '';
+    document.title = 'Nos réalisations — Atom Buyers Club';
+    history.pushState(null, '', location.pathname + (leadId ? '?lead_id=' + leadId : ''));
+    window.scrollTo(0, 0);
+  }
+
+  // ── Modal CTA ───────────────────────────────────────────────
+  function openCta() {
+    document.getElementById('cta-modal').classList.add('on');
+    document.getElementById('cta-form-wrap').style.display = '';
+    document.getElementById('cta-confirm').style.display   = 'none';
+    if (currentItem?.projet_similaire) {
+      document.getElementById('cta-sub').textContent =
+        `Vous êtes intéressé(e) par "${currentItem.name}". L'équipe Atom vous contacte sous 24h.`;
+    }
+    // Pré-remplissage si lead connu (vient du formulaire landing page)
+    if (_storedLead) {
+      if (_storedLead.prenom) document.getElementById('cta-prenom').value = _storedLead.prenom;
+      if (_storedLead.nom)    document.getElementById('cta-nom').value    = _storedLead.nom;
+      if (_storedLead.email)  document.getElementById('cta-email').value  = _storedLead.email;
+      if (_storedLead.tel)    document.getElementById('cta-tel').value    = _storedLead.tel;
+    }
+  }
+
+  function closeCta() { document.getElementById('cta-modal').classList.remove('on'); }
+
+  async function submitCta() {
+    const prenom = document.getElementById('cta-prenom').value.trim();
+    const nom    = document.getElementById('cta-nom').value.trim();
+    const email  = document.getElementById('cta-email').value.trim();
+    const tel    = document.getElementById('cta-tel').value.trim();
+    const errEl  = document.getElementById('cta-err');
+
+    if (!prenom || !nom || !email || !tel) {
+      errEl.textContent = 'Tous les champs sont obligatoires.';
+      errEl.style.display = '';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    const btn = document.getElementById('btn-submit-cta');
+    btn.disabled = true; btn.textContent = 'Envoi…';
+
+    const payload = {
+      prenom, nom, email, tel,
+      utm_source:  'showroom',
+      utm_content: currentItem?.slug || null,
+      project_id:  currentItem?.projet_similaire?.id || null,
+      referrer:    location.href,
+    };
+
+    // Si lead existant (url avec lead_id), on met à jour
+    if (leadId) payload.lead_id_hint = leadId;
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      document.getElementById('cta-form-wrap').style.display = 'none';
+      document.getElementById('cta-confirm').style.display   = '';
+      setTimeout(closeCta, 3000);
+    } catch (e) {
+      errEl.textContent = 'Erreur d\'envoi. Réessaie ou contacte-nous directement.';
+      errEl.style.display = '';
+    }
+    btn.disabled = false; btn.textContent = 'Envoyer ma demande →';
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────
+  function fmt(n) { return Number(n).toLocaleString('fr-FR'); }
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  window.addEventListener('popstate', () => {
+    if (location.hash.startsWith('#/')) {
+      const slug = location.hash.slice(2);
+      const item = allItems.find(i => i.slug === slug);
+      if (item) showDetail(item);
+    } else {
+      showList();
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>

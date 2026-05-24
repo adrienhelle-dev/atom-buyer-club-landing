@@ -414,8 +414,8 @@
     }
     .success-title { font-family: var(--serif); font-size: 28px; font-weight: 300; }
     .success-sub { font-size: 14px; color: var(--cream-dim); max-width: 320px; line-height: 1.6; }
+    .success-links { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; width: 100%; }
     .success-link {
-      margin-top: 12px;
       padding: 11px 22px;
       border: 1px solid var(--border);
       border-radius: var(--r);
@@ -423,8 +423,15 @@
       font-size: 13px;
       text-decoration: none;
       transition: border-color var(--t), color var(--t);
+      display: block;
     }
     .success-link:hover { border-color: var(--cream); color: var(--cream); }
+    .success-link.primary {
+      border-color: var(--gold);
+      color: var(--gold);
+      font-weight: 500;
+    }
+    .success-link.primary:hover { background: var(--gold); color: var(--bg); }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(14px); }
@@ -770,7 +777,10 @@
         <div class="success-icon" id="s-icon">✦</div>
         <h2 class="success-title" id="s-title">Demande envoyée !</h2>
         <p class="success-sub" id="s-sub">Merci <strong id="s-name"></strong>. Notre équipe vous contactera dans les 24h pour discuter de votre projet.</p>
-        <a href="https://www.atombuyersclub.fr" target="_blank" class="success-link">Découvrir nos projets →</a>
+        <div class="success-links">
+          <a href="/showroom.html" id="success-showroom-link" class="success-link primary">Découvrez nos réalisations →</a>
+          <a href="https://www.atombuyersclub.fr" target="_blank" class="success-link">En savoir plus sur Atom →</a>
+        </div>
       </div>
 
     </div>
@@ -946,6 +956,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error('server_error');
     const data = await res.json();
     isUpdate = !!data.updated;
+    if (data.lead_id) payload._leadId = data.lead_id;
   } catch {
     btn.disabled = false;
     btn.textContent = 'Envoyer ma demande ✦';
@@ -963,6 +974,21 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     document.getElementById('s-sub').innerHTML =
       `Merci <strong>${payload.prenom}</strong>. Vos nouvelles informations ont été enregistrées. Notre équipe en prendra note.`;
   }
+
+  // Lien showroom personnalisé avec lead_id + pré-remplissage modal via sessionStorage
+  const showroomHref = payload._leadId
+    ? `/showroom.html?lead_id=${payload._leadId}`
+    : '/showroom.html';
+  const showroomLink = document.getElementById('success-showroom-link');
+  if (showroomLink) showroomLink.href = showroomHref;
+  // Stocke les infos du lead pour pré-remplir le modal CTA du showroom
+  try {
+    sessionStorage.setItem('atom_lead', JSON.stringify({
+      prenom: payload.prenom, nom: payload.nom,
+      email: payload.email, tel: payload.tel,
+      lead_id: payload._leadId || null,
+    }));
+  } catch {}
 
   document.getElementById('success').classList.add('on');
   window.scrollTo({ top: 0, behavior: 'smooth' });

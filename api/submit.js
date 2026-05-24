@@ -51,6 +51,8 @@ module.exports = async function handler(req, res) {
   let leadId   = null;
   let isUpdate = false;
 
+  const isShowroomCta = b.utm_source === 'showroom';
+
   if (existing) {
     // Pour un lead existant :
     // 1. On ne touche jamais aux UTMs/source d'acquisition originaux
@@ -80,6 +82,16 @@ module.exports = async function handler(req, res) {
     leadId = newLead.id;
     // Log inscription dans la timeline (fire & forget)
     supabase.from('lead_events').insert([{ lead_id: leadId, type: 'inscription', content: null, author: null }]);
+  }
+
+  // ── Log showroom CTA dans la timeline du lead ──────────────────
+  if (isShowroomCta && leadId) {
+    supabase.from('lead_events').insert([{
+      lead_id: leadId,
+      type:    'showroom_cta',
+      content: b.utm_content ? JSON.stringify({ showroom_slug: b.utm_content }) : null,
+      author:  null,
+    }]);
   }
 
   // ── Intérêt projet ─────────────────────────────────────────────
@@ -154,7 +166,7 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ ok: true, updated: isUpdate });
+  return res.status(200).json({ ok: true, updated: isUpdate, lead_id: leadId });
 };
 
 // ─── Templates email ────────────────────────────────────────────
