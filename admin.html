@@ -2382,7 +2382,7 @@ function founderNameFromEmail(email) {
   return FOUNDER_NAMES[email.toLowerCase()] || email.split('@')[0].split(/[.\-_]/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 }
 
-function waProjectText(p) {
+function waProjectText(p, leadId = null) {
   const adminRaw    = (localStorage.getItem('abc_admin_email') || '').split('@')[0].split(/[.\-_]/)[0];
   const adminPrenom = adminRaw.charAt(0).toUpperCase() + adminRaw.slice(1);
   const arr   = p.arrondissement ? `${p.arrondissement}` : '';
@@ -2390,7 +2390,9 @@ function waProjectText(p) {
   const prix  = p.price_fai ? p.price_fai.toLocaleString('fr-FR') + ' € FAI' : '';
   const loyer = p.loyer_atom ? `${p.loyer_atom.toLocaleString('fr-FR')} €/mois` : '';
   const slug  = p.slug || null;
-  const ficheUrl = (slug && p.public_visible) ? `https://join.atombuyerclub.fr/projet/${slug}` : '';
+  const ficheUrl = (slug && p.public_visible)
+    ? `https://join.atombuyerclub.fr/projet/${slug}${leadId ? '?lead_id=' + leadId : ''}`
+    : '';
 
   const details = [arr, surf, prix].filter(Boolean).join(' · ');
   const loyerLine = loyer ? `\nLoyer estimé : ${loyer}` : '';
@@ -3159,7 +3161,7 @@ function _renderNotifList() {
       <div class="notif-empty">
         <div class="notif-empty-icon">🔔</div>
         <div>Aucune activité récente</div>
-        <div style="font-size:11px;margin-top:4px;opacity:.6">Les nouvelles inscriptions et intérêts apparaîtront ici</div>
+        <div style="font-size:11px;margin-top:4px;opacity:.6">Les intérêts sur les projets et réalisations apparaîtront ici</div>
       </div>`;
     return;
   }
@@ -3871,7 +3873,7 @@ async function openFicheModal(preSelectProjectId = null) {
   document.getElementById('fiche-overlay').classList.add('on');
   const projectList = document.getElementById('project-list');
   projectList.innerHTML = '<div class="project-empty">Chargement…</div>';
-  const res = await fetch('/api/projects?status=disponible', { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch('/api/projects', { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) { projectList.innerHTML = '<div class="project-empty">Erreur de chargement</div>'; return; }
   const { projects } = await res.json();
   if (!projects.length) {
@@ -3990,7 +3992,7 @@ function openWaForSelectedLead() {
     document.getElementById('send-leads-status').style.color = 'var(--red)';
     return;
   }
-  const text = waProjectText(project);
+  const text = waProjectText(project, lead.id);
   trackCta(lead.id, 'whatsapp', { context: 'projet', project_id: project.id, title: project.title });
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   closeSendLeadsModal();

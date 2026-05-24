@@ -182,7 +182,7 @@ function buildFicheEmail(lead, project, message, founder = {}, senderEmail = '')
   const address = project.address || project.adresse || '';
   const price   = project.price_fai ? fmtPrice(project.price_fai) + ' FAI' : '';
   const slug    = project.slug;
-  const ficheUrl = slug ? `https://join.atombuyerclub.fr/projet/${slug}` : '';
+  const ficheUrl = slug ? `https://join.atombuyerclub.fr/projet/${slug}?lead_id=${lead_id}` : '';
 
   const surface   = project.surface_carrez ? `${project.surface_carrez} m²` : '';
   const arr       = project.arrondissement || '';

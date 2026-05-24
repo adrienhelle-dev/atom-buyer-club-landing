@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
     // ── Mode "recent" : centre de notifications admin ────────────
     if (recent === '1') {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const NOTIF_TYPES = ['inscription', 'resoumission', 'interet_projet', 'showroom_interest', 'showroom_cta'];
+      const NOTIF_TYPES = ['interet_projet', 'showroom_interest'];
 
       // Étape 1 : récupérer les événements
       const { data: events, error } = await supabase
