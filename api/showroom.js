@@ -59,7 +59,7 @@ module.exports = async function handler(req, res) {
       let _b = {};
       try { _b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch {}
       if (_b.action === 'update_all') {
-        if (_b.token !== 'atom-update-2026') return res.status(403).json({ error: 'invalid_token' });
+        return res.status(410).json({ error: 'action_removed' }); // already executed
 
         const BASE = 'https://api.atom.living/uploads/properties';
         const UPDATES = [
