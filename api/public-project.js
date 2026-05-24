@@ -76,9 +76,11 @@ module.exports = async function handler(req, res) {
     }
 
     // ── GET ?id=... ou ?slug=... : projet unique ─────────────────
+    // Pas de filtre public_visible ici : la page projet.html gère l'affichage
+    // et indique si le projet n'est pas encore disponible publiquement.
     if (!id && !slug) return res.status(400).json({ error: 'id_or_slug_required' });
 
-    let q = supabase.from('projects').select(PUBLIC_FIELDS).eq('public_visible', true);
+    let q = supabase.from('projects').select(PUBLIC_FIELDS);
     if (id)   q = q.eq('id', id);
     if (slug) q = q.eq('slug', slug);
 
