@@ -1417,17 +1417,58 @@
   </div>
   <!-- ══ VUE SHOWROOM — LISTE ══════════════════════════════════ -->
   <div class="view" id="view-showroom">
-    <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px">
-      <div>
-        <h2 style="margin:0;font-size:20px;font-weight:400;color:var(--cream)">Showroom</h2>
-        <p style="margin:4px 0 0;font-size:13px;color:var(--dim)">Réalisations Atom — gestion des fiches publiées</p>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-top">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="sr-search" placeholder="Rechercher une réalisation…" oninput="renderShowroomGrid()"/>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-new-project" onclick="openShowroomEdit(null)">+ Nouvelle réalisation</button>
+        </div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn-secondary" id="btn-scrape-all" onclick="confirmScrapeAll()">⚡ Scraper atom.living</button>
-        <button class="btn-primary"   onclick="openShowroomEdit(null)">+ Nouvelle réalisation</button>
+      <div class="toolbar-filters">
+        <select class="filter-select" id="sr-arr-filter" onchange="renderShowroomGrid()">
+          <option value="">Tous arrondissements</option>
+          <option value="1e">1er</option>  <option value="2e">2e</option>
+          <option value="3e">3e</option>   <option value="4e">4e</option>
+          <option value="5e">5e</option>   <option value="6e">6e</option>
+          <option value="7e">7e</option>   <option value="8e">8e</option>
+          <option value="9e">9e</option>   <option value="10e">10e</option>
+          <option value="11e">11e</option> <option value="12e">12e</option>
+          <option value="13e">13e</option> <option value="14e">14e</option>
+          <option value="15e">15e</option> <option value="16e">16e</option>
+          <option value="17e">17e</option> <option value="18e">18e</option>
+          <option value="19e">19e</option> <option value="20e">20e</option>
+        </select>
+        <select class="filter-select" id="sr-style-filter" onchange="renderShowroomGrid()">
+          <option value="">Tous styles</option>
+          <option value="Contemporain">Contemporain</option>
+          <option value="Loft">Loft</option>
+          <option value="Haussmannien">Haussmannien</option>
+          <option value="Design">Design</option>
+          <option value="Industriel">Industriel</option>
+          <option value="Minimaliste">Minimaliste</option>
+        </select>
       </div>
     </div>
-    <div id="showroom-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
+    <!-- Tabs statut -->
+    <div class="project-tabs">
+      <button class="project-tab active" data-srtab="" onclick="setSrTab(this,'')">
+        Tous <span class="project-tab-count" id="srtc-all">0</span>
+      </button>
+      <button class="project-tab" data-srtab="published" onclick="setSrTab(this,'published')">
+        Publiés <span class="project-tab-count" id="srtc-published">0</span>
+      </button>
+      <button class="project-tab" data-srtab="draft" onclick="setSrTab(this,'draft')">
+        Brouillons <span class="project-tab-count" id="srtc-draft">0</span>
+      </button>
+      <button class="project-tab" data-srtab="featured" onclick="setSrTab(this,'featured')">
+        Vedettes <span class="project-tab-count" id="srtc-featured">0</span>
+      </button>
+    </div>
+    <div id="showroom-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:24px 28px"></div>
   </div>
 
   <!-- ══ VUE SHOWROOM — FORMULAIRE ÉDITION ══════════════════════ -->
@@ -4131,16 +4172,56 @@ async function loadShowroom() {
   await loadAvailableProjects(); // pour le dropdown matching
 }
 
+let srActiveTab = '';
+
+function setSrTab(el, tab) {
+  srActiveTab = tab;
+  document.querySelectorAll('.project-tab[data-srtab]').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderShowroomGrid();
+}
+
 function renderShowroomGrid() {
-  const grid = document.getElementById('showroom-grid');
-  if (!showroomCache.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--dim)">
-      <p style="font-size:32px;margin:0 0 12px">🏠</p>
-      <p style="margin:0">Aucune réalisation. <a href="#" onclick="openShowroomEdit(null);return false" style="color:var(--gold)">Créer la première →</a></p>
-    </div>`;
+  const grid   = document.getElementById('showroom-grid');
+  const search = (document.getElementById('sr-search')?.value || '').toLowerCase().trim();
+  const arr    = document.getElementById('sr-arr-filter')?.value   || '';
+  const style  = document.getElementById('sr-style-filter')?.value || '';
+
+  // Compteurs onglets (sur la totalité du cache, sans filtre texte/arr/style)
+  const counts = { all: showroomCache.length, published: 0, draft: 0, featured: 0 };
+  showroomCache.forEach(i => {
+    if (i.is_published)  counts.published++;
+    if (!i.is_published) counts.draft++;
+    if (i.is_featured)   counts.featured++;
+  });
+  ['all','published','draft','featured'].forEach(k => {
+    const el = document.getElementById(`srtc-${k}`);
+    if (el) el.textContent = counts[k];
+  });
+
+  // Filtrage
+  let filtered = showroomCache.filter(item => {
+    if (srActiveTab === 'published' && !item.is_published) return false;
+    if (srActiveTab === 'draft'     &&  item.is_published) return false;
+    if (srActiveTab === 'featured'  && !item.is_featured)  return false;
+    if (arr   && item.arrondissement !== arr)   return false;
+    if (style && item.style          !== style) return false;
+    if (search) {
+      const hay = [item.name, item.quartier, item.arrondissement, item.style].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    const msg = !showroomCache.length
+      ? `<p style="font-size:32px;margin:0 0 12px">🏠</p><p style="margin:0">Aucune réalisation. <a href="#" onclick="openShowroomEdit(null);return false" style="color:var(--gold)">Créer la première →</a></p>`
+      : `<p style="font-size:28px;margin:0 0 12px">🔍</p><p style="margin:0">Aucun résultat pour ces filtres.</p>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--dim)">${msg}</div>`;
     return;
   }
-  grid.innerHTML = showroomCache.map(item => `
+
+  grid.innerHTML = filtered.map(item => `
     <div class="sr-card" onclick="openShowroomEdit('${item.id}')">
       ${item.image_cover
         ? `<img class="sr-card-cover" src="${esc(item.image_cover)}" alt="${esc(item.name)}" loading="lazy"/>`
@@ -4149,7 +4230,7 @@ function renderShowroomGrid() {
         <p class="sr-card-name">${esc(item.name)}</p>
         <p class="sr-card-meta">${[item.quartier, item.arrondissement, item.surface ? item.surface + ' m²' : null].filter(Boolean).join(' · ')}</p>
         <div class="sr-card-footer">
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
             ${item.is_featured ? '<span class="sr-badge-featured">⭐ Vedette</span>' : ''}
             <span class="${item.is_published ? 'sr-badge-pub' : 'sr-badge-draft'}">${item.is_published ? 'Publié' : 'Brouillon'}</span>
             ${item.style ? `<span style="font-size:10px;color:var(--dim)">${esc(item.style)}</span>` : ''}
@@ -4428,63 +4509,6 @@ document.getElementById('sr-name')?.addEventListener('input', function() {
   if (slugEl && !editingShowroomId) slugEl.value = slugifySr(this.value);
 });
 
-async function confirmScrapeAll() {
-  const urls = [
-    'https://atom.living/fr/properties/honore',
-    'https://atom.living/fr/properties/panoramas',
-    'https://atom.living/fr/properties/saint-claude',
-    'https://atom.living/fr/properties/loft-republique-design',
-    'https://atom.living/fr/properties/studio-saint-germain-charme',
-    'https://atom.living/fr/properties/appartement-bastille-lumineux',
-    'https://atom.living/fr/properties/studio-marais-temple',
-  ];
-  if (!confirm(`Scraper ${urls.length} pages atom.living ?\n\nNote : si les pages sont des SPAs JS, utilise le script local scripts/seed-showroom.js pour de meilleurs résultats.`)) return;
-
-  const btn = document.getElementById('btn-scrape-all');
-  btn.disabled = true; btn.textContent = '⏳ Scraping…';
-  let ok = 0, errors = 0;
-
-  for (const url of urls) {
-    const slug = url.split('/').pop();
-    btn.textContent = `⏳ ${slug}…`;
-    try {
-      const res  = await fetch('/api/showroom', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ action: 'scrape', url }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.item) {
-        // Crée la fiche en brouillon (qu'elle soit issue du scrape ou d'un stub)
-        const createRes = await fetch('/api/showroom', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            ...data.item,
-            slug,
-            images_after: data.images_found || [],
-            image_cover:  data.images_found?.[0] || null,
-            source_url:   url,
-            is_published: false,
-          }),
-        });
-        if (createRes.ok) { ok++; if (data.stub) errors++; } // stub compte dans erreurs pour info
-        else errors++;
-      } else {
-        console.warn('Scrape failed for', url, data);
-        errors++;
-      }
-    } catch (e) { errors++; }
-  }
-
-  btn.disabled = false; btn.textContent = '⚡ Scraper atom.living';
-  const stubCount = ok > 0 && errors > 0 ? errors : 0;
-  const msg = stubCount
-    ? `${ok} fiches créées (dont ${stubCount} stubs vides — à compléter manuellement dans l'admin).\n\nLes fiches vides sont dues au fait qu'atom.living est une SPA JS. Clique sur chaque card pour renseigner les infos.`
-    : `${ok} fiches créées${errors ? ` · ${errors} erreurs (slugs déjà existants ?)` : ' ✓'}.`;
-  alert(msg);
-  loadShowroom();
-}
 </script>
 </body>
 </html>
