@@ -916,14 +916,20 @@
       td, thead th { padding: 10px 10px; font-size: 12px; }
       /* Score: min width */
       td:nth-child(1), thead th:nth-child(1) { width: 36px; padding-right: 4px; }
-      /* Nom: fills space — width:100% force le comportement greedy */
-      td:nth-child(2) { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      /* Nom: masque le badge statut + wrap sur 2 lignes → nom complet visible */
+      td:nth-child(2) { width: 100%; max-width: 0; }
+      td:nth-child(2) .status-badge { display: none; }
+      td:nth-child(2) strong { white-space: normal; word-break: break-word; display: block; line-height: 1.35; }
       /* Horizon */
       td:nth-child(3) { white-space: nowrap; min-width: 80px; }
 
       .pagination { padding: 12px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
 
       .drawer { max-width: 100%; }
+
+      /* Boutons ✎ ✕ toujours visibles sur mobile (pas de hover tactile) */
+      td:nth-child(5) .btn-edit-row,
+      td:nth-child(5) .btn-del-row { color: var(--dim) !important; opacity: 1 !important; }
 
       /* Projects on mobile */
       .projects-grid { padding: 16px; gap: 12px; }
@@ -1774,7 +1780,7 @@
       <p class="modal-title">✎ Modifier le lead</p>
       <div id="edit-score-preview" style="display:flex;align-items:center;gap:7px;flex-shrink:0;padding-top:2px">
         <span style="font-size:11px;color:var(--dim);letter-spacing:.05em">SCORE</span>
-        <span id="edit-score-badge" class="score-badge score-mid" style="width:32px;height:32px;font-size:13px">—</span>
+        <span id="edit-score-badge" class="score-badge score-mid"><span class="sn">—</span><span class="sb"></span></span>
       </div>
     </div>
     <p class="modal-sub" id="edit-lead-name" style="margin-bottom:20px"></p>
@@ -4136,7 +4142,7 @@ function updateEditScorePreview() {
   };
   const s = computeScore(fake);
   const badge = document.getElementById('edit-score-badge');
-  badge.textContent = s;
+  badge.innerHTML = `<span class="sn">${s}</span><span class="sb"></span>`;
   badge.className = 'score-badge ' + (s >= 8 ? 'score-high' : s >= 5 ? 'score-mid' : 'score-low');
 }
 
