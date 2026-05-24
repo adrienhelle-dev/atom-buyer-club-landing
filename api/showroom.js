@@ -7,7 +7,7 @@ const WRITE_FIELDS = [
   'images_before', 'images_after', 'image_cover', 'video_url',
   'prix_acquisition', 'budget_travaux', 'loyer_mensuel', 'statut_location', 'locataire_type',
   'projet_similaire_id', 'ordre', 'is_published', 'is_featured',
-  'source_url', 'scraped_at',
+  'source_url', 'scraped_at', 'responsible_admin',
 ];
 
 module.exports = async function handler(req, res) {
@@ -54,10 +54,32 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ items: data || [] });
     }
 
-    // ── Action update_all (one-shot, own token) ─────────────────────────────
+    // ── Action publique "interest" — enregistre l'intérêt d'un lead existant ──
+    // Appelée depuis showroom.html quand lead_id est connu (lien email, fiche projet…)
+    // Pas d'auth admin : authentification par lead_id uniquement (UUID opaque)
     if (req.method === 'POST') {
       let _b = {};
       try { _b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch {}
+
+      if (_b.action === 'interest') {
+        const { lead_id, slug, item_name } = _b;
+        if (!lead_id) return res.status(400).json({ error: 'lead_id requis' });
+
+        // Vérifier que le lead existe
+        const { data: lead } = await supabase.from('leads').select('id').eq('id', lead_id).maybeSingle();
+        if (!lead) return res.status(404).json({ error: 'lead_not_found' });
+
+        // Insérer l'événement dans la timeline
+        await supabase.from('lead_events').insert([{
+          lead_id,
+          type:    'showroom_interest',
+          content: JSON.stringify({ slug: slug || null, item_name: item_name || null }),
+          author:  null,
+        }]);
+
+        return res.status(200).json({ ok: true });
+      }
+
       if (_b.action === 'update_all') {
         return res.status(410).json({ error: 'action_removed' }); // already executed
 

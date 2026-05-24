@@ -330,6 +330,14 @@
   let currentFilter = 'all';
   let galleryMode   = 'after'; // 'after' | 'before'
 
+  // ── Table WA par responsable ────────────────────────────────
+  const FOUNDER_WA = {
+    'adrien.helle@atom-capital.fr':    '33686475656',
+    'alexandre.kiman@atom-capital.fr': '33622057364',
+    'thierry.vignal@atom-capital.fr':  '33637124796',
+  };
+  const DEFAULT_WA = '33686475656'; // Adrien par défaut
+
   // ── Pré-remplissage modal depuis sessionStorage ─────────────
   let _storedLead = null;
   try {
@@ -535,12 +543,17 @@
     const matchCard = document.getElementById('match-card');
     const waCard    = document.getElementById('wa-card');
     const proj      = item.projet_similaire;
+    // WA du responsable de la réalisation, ou défaut Adrien
+    const waNumber  = FOUNDER_WA[item.responsible_admin] || DEFAULT_WA;
     const waMsg     = encodeURIComponent(`Bonjour, j'ai consulté la réalisation "${item.name}" sur le Showroom Atom Buyers Club et je souhaite en savoir plus.`);
-    const waHref    = `https://wa.me/33686475656?text=${waMsg}`;
+    const waHref    = `https://wa.me/${waNumber}?text=${waMsg}`;
 
-    // Mettre à jour le WA bas de page (toujours présent)
+    // Mettre à jour tous les boutons WA de la page détail
     const detailWa = document.getElementById('detail-wa-link');
     if (detailWa) detailWa.href = waHref;
+    // Sticky bar WA → idem
+    const stickyWa = document.getElementById('sticky-wa');
+    if (stickyWa) stickyWa.href = waHref;
 
     // Sidebar : match-card si projet similaire dispo, sinon masqué
     waCard.style.display = 'none'; // remplacé par le CTA bas de page
@@ -566,7 +579,31 @@
 
   // ── Modal CTA ───────────────────────────────────────────────
   function openCta() {
-    // Si le lead vient de la landing page et a déjà rempli ses infos → soumettre directement
+    // ── Cas 1 : lead_id dans l'URL (lead existant — lien email ou fiche projet)
+    // → juste enregistrer l'intérêt, pas de formulaire
+    if (leadId) {
+      document.getElementById('cta-modal').classList.add('on');
+      document.getElementById('cta-form-wrap').style.display = 'none';
+      const conf = document.getElementById('cta-confirm');
+      conf.style.display = '';
+      const titleEl = document.getElementById('cta-confirm-title');
+      const subEl   = document.getElementById('cta-confirm-sub');
+      if (titleEl) titleEl.textContent = 'Intérêt enregistré !';
+      if (subEl)   subEl.textContent   = 'L\'équipe Atom a bien noté votre intérêt et vous recontactera prochainement.';
+      // Appel léger : pas de création de lead, juste un event dans la timeline
+      fetch('/api/showroom?action=interest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead_id:   leadId,
+          slug:      currentItem?.slug || null,
+          item_name: currentItem?.name || null,
+        }),
+      }).catch(() => {});
+      return;
+    }
+
+    // ── Cas 2 : lead vient de la landing page (infos complètes en mémoire)
     const sl = _storedLead;
     if (sl && sl.prenom && sl.nom && sl.email && sl.tel) {
       // Afficher confirmation immédiate + soumettre en arrière-plan

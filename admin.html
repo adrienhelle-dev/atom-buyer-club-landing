@@ -922,11 +922,12 @@
       td, thead th { padding: 10px 10px; font-size: 12px; }
       /* Score: min width */
       td:nth-child(1), thead th:nth-child(1) { width: 36px; padding-right: 4px; }
-      /* Nom: masque badge statut, nom wrap libre, founder badge reste inline */
+      /* Nom: statut au-dessus du nom, founder badge inline */
       td:nth-child(2) { width: 100%; max-width: 0; overflow: hidden; }
-      td:nth-child(2) .status-badge { display: none; }
+      td:nth-child(2) .lead-cell-wrap { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+      td:nth-child(2) .status-badge { font-size: 9px !important; padding: 1px 6px !important; letter-spacing: .04em; width: fit-content; }
       td:nth-child(2) .lead-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
-      td:nth-child(2) .lead-name-row strong { white-space: normal; word-break: break-word; min-width: 0; flex: 1; }
+      td:nth-child(2) .lead-name-row strong { white-space: normal; word-break: break-word; min-width: 0; flex: 1; line-height: 1.3; }
       /* Horizon */
       td:nth-child(3) { white-space: nowrap; min-width: 80px; }
 
@@ -1733,6 +1734,16 @@
             <div class="np-field">
               <label for="sr-ordre">Ordre d'affichage</label>
               <input type="number" id="sr-ordre" value="0"/>
+            </div>
+            <div class="np-field">
+              <label for="sr-responsible">Responsable Atom</label>
+              <select id="sr-responsible">
+                <option value="">— Non assigné —</option>
+                <option value="adrien.helle@atom-capital.fr">Adrien Helle</option>
+                <option value="alexandre.kiman@atom-capital.fr">Alexandre Kiman</option>
+                <option value="thierry.vignal@atom-capital.fr">Thierry Vignal</option>
+              </select>
+              <span class="np-field-help">Utilisé pour le lien WhatsApp sur la page publique</span>
             </div>
             <div class="np-field span-2">
               <label for="sr-source-url">URL source (atom.living)</label>
@@ -2994,7 +3005,7 @@ function renderTable(leads) {
   tbody.innerHTML = sorted.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td style="text-align:center">${scoreBadge(l)}</td>
-      <td>${statusBadge(l.status)}<div class="lead-name-row"><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</div></td>
+      <td><div class="lead-cell-wrap">${statusBadge(l.status)}<div class="lead-name-row"><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</div></div></td>
       <td>${l.timing ? `<span class="timing-badge ${l.timing === 'asap' ? 'timing-asap' : ''}">${TIMING[l.timing] || l.timing}</span>` : '<span class="muted">—</span>'}</td>
       <td>${srcBadge(l.utm_source)}</td>
       <td style="white-space:nowrap;text-align:right">
@@ -4382,7 +4393,7 @@ function resetShowroomForm() {
    'sr-desc-courte','sr-desc-longue','sr-equipements','sr-caracteristiques',
    'sr-cover','sr-video',
    'sr-prix','sr-travaux','sr-loyer','sr-locataire','sr-statut-loc',
-   'sr-ordre','sr-source-url','sr-projet-similaire'].forEach(id => {
+   'sr-ordre','sr-source-url','sr-projet-similaire','sr-responsible'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = el.tagName === 'SELECT' ? (el.options[0]?.value || '') : '';
   });
@@ -4450,6 +4461,7 @@ function populateShowroomForm(item) {
   sv('sr-statut-loc',   item.statut_location || 'Loué');
   sv('sr-ordre',        item.ordre ?? 0);
   sv('sr-source-url',   item.source_url);
+  sv('sr-responsible',  item.responsible_admin);
   sv('sr-projet-similaire', item.projet_similaire_id || '');
   document.getElementById('sr-published').checked = !!item.is_published;
   document.getElementById('sr-featured').checked  = !!item.is_featured;
@@ -4597,6 +4609,7 @@ function getSrPayload() {
     is_featured:        document.getElementById('sr-featured').checked,
     ordre:              parseInt(document.getElementById('sr-ordre').value) || 0,
     source_url:         document.getElementById('sr-source-url').value.trim() || null,
+    responsible_admin:  document.getElementById('sr-responsible').value || null,
   };
 }
 
