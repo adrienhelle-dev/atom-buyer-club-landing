@@ -298,15 +298,32 @@
     .btn-confirm-del:hover { opacity: .85; }
     .btn-confirm-del:disabled { opacity: .4; cursor: not-allowed; }
 
-    /* Delete btn in rows */
-    .btn-del-row {
+    /* Delete + Edit btns in rows */
+    .btn-del-row, .btn-edit-row {
       background: none; border: none; color: transparent;
-      font-size: 14px; cursor: pointer; padding: 4px 6px;
+      font-size: 13px; cursor: pointer; padding: 4px 6px;
       border-radius: 5px; transition: color .15s, background .15s;
       line-height: 1;
     }
-    tbody tr:hover .btn-del-row { color: var(--dim); }
-    .btn-del-row:hover { color: var(--red) !important; background: rgba(217,94,94,.1); }
+    tbody tr:hover .btn-del-row,
+    tbody tr:hover .btn-edit-row  { color: var(--dim); }
+    .btn-del-row:hover  { color: var(--red) !important; background: rgba(217,94,94,.1); }
+    .btn-edit-row:hover { color: var(--gold) !important; background: rgba(184,151,90,.1); }
+
+    /* Lead edit modal */
+    .edit-lead-modal { max-width: 540px; padding: 28px 28px 24px; }
+    .edit-lead-modal .np-field label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+    .edit-lead-modal .np-field input,
+    .edit-lead-modal .np-field select,
+    .edit-lead-modal .np-field textarea {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 9px 11px; color: var(--cream); font-family: var(--sans); font-size: 13px;
+      width: 100%; outline: none; transition: border-color .15s;
+    }
+    .edit-lead-modal .np-field input:focus,
+    .edit-lead-modal .np-field select:focus,
+    .edit-lead-modal .np-field textarea:focus { border-color: var(--gold); }
+    .edit-lead-modal .np-field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
     /* ── Status pipeline ──────────────────────────────────── */
     .status-select-wrap {
@@ -1637,6 +1654,76 @@
 
 </div><!-- /#dashboard -->
 
+<!-- ══ EDIT LEAD MODAL ════════════════════════════════════════ -->
+<div class="modal-overlay" id="edit-lead-overlay" onclick="if(event.target===this)closeEditLead()">
+  <div class="modal edit-lead-modal">
+    <p class="modal-title" style="margin-bottom:3px">✎ Modifier le lead</p>
+    <p class="modal-sub" id="edit-lead-name" style="margin-bottom:20px"></p>
+    <div class="np-grid-2" style="gap:12px 16px">
+      <div class="np-field">
+        <label>Horizon d'achat</label>
+        <select id="edit-timing">
+          <option value="">—</option>
+          <option value="asap">Dès que possible</option>
+          <option value="3mois">Dans 3 mois</option>
+          <option value="6mois">Dans 6 mois</option>
+          <option value="reflexion">En réflexion</option>
+        </select>
+      </div>
+      <div class="np-field">
+        <label>Financement</label>
+        <select id="edit-financement">
+          <option value="">—</option>
+          <option value="comptant">Comptant</option>
+          <option value="emprunt">Emprunt bancaire</option>
+        </select>
+      </div>
+      <div class="np-field">
+        <label>Accord bancaire</label>
+        <select id="edit-accord">
+          <option value="">—</option>
+          <option value="oui">✅ Étude validée</option>
+          <option value="courtier">🤝 Courtier souhaité</option>
+          <option value="non">Pas encore démarché</option>
+        </select>
+      </div>
+      <div class="np-field">
+        <label>Budget emprunt</label>
+        <select id="edit-capacite">
+          <option value="">—</option>
+          <option value="moins-150k">&lt; 150 k€</option>
+          <option value="150-250k">150–250 k€</option>
+          <option value="250-400k">250–400 k€</option>
+          <option value="400-600k">400–600 k€</option>
+          <option value="600k-1m">600 k€–1 M€</option>
+          <option value="plus-1m">&gt; 1 M€</option>
+        </select>
+      </div>
+      <div class="np-field span-2">
+        <label>Arrondissements recherchés</label>
+        <input type="text" id="edit-arrondissements" placeholder="ex: 3e, 10e, 11e"/>
+      </div>
+      <div class="np-field span-2">
+        <label>Responsable Atom</label>
+        <select id="edit-responsible">
+          <option value="">— Non assigné —</option>
+          <option value="adrien.helle@atom-capital.fr">Adrien Helle</option>
+          <option value="alexandre.kiman@atom-capital.fr">Alexandre Kiman</option>
+          <option value="thierry.vignal@atom-capital.fr">Thierry Vignal</option>
+        </select>
+      </div>
+      <div class="np-field span-2">
+        <label>Notes internes</label>
+        <textarea id="edit-notes" rows="3" placeholder="Contexte, timing précis, infos complémentaires…"></textarea>
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:20px">
+      <button class="btn-cancel" onclick="closeEditLead()">Annuler</button>
+      <button class="btn-primary" id="btn-save-edit-lead" style="flex:1;padding:11px" onclick="saveEditLead()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DELETE MODAL ═══════════════════════════════════════════ -->
 <div class="modal-overlay" id="del-overlay" onclick="if(event.target===this)closeDelModal()">
   <div class="modal">
@@ -2755,17 +2842,24 @@ function renderTable(leads) {
       <td class="muted">${BUDGET[l.capacite] || l.capacite || '—'}</td>
       <td>${srcBadge(l.utm_source)}</td>
       <td class="muted">${esc(l.utm_campaign) || '—'}</td>
-      <td><button class="btn-del-row" title="Supprimer">✕</button></td>
+      <td style="white-space:nowrap;text-align:right">
+        <button class="btn-edit-row" title="Modifier ce lead">✎</button>
+        <button class="btn-del-row"  title="Supprimer">✕</button>
+      </td>
     </tr>
   `).join('');
 
   tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
-    const delBtn = tr.querySelector('.btn-del-row');
-    delBtn.addEventListener('click', (e) => {
+    const lead = sorted[+tr.dataset.idx];
+    tr.querySelector('.btn-del-row').addEventListener('click', (e) => {
       e.stopPropagation();
-      openDelModal(sorted[+tr.dataset.idx]);
+      openDelModal(lead);
     });
-    tr.addEventListener('click', () => openDrawer(sorted[+tr.dataset.idx]));
+    tr.querySelector('.btn-edit-row').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEditLead(lead);
+    });
+    tr.addEventListener('click', () => openDrawer(lead));
   });
 }
 
@@ -3878,12 +3972,77 @@ function statusBadge(status) {
 }
 
 function founderColor(email) {
-  // Couleur déterministe par email
-  const palette = ['#B8975A','#4285f4','#e1306c','#4caf7d','#f4a642','#a06cd5'];
+  // Couleurs fixes pour les fondateurs Atom
+  const fixed = {
+    'adrien.helle@atom-capital.fr':    '#B8975A',  // or
+    'alexandre.kiman@atom-capital.fr':  '#4285f4',  // bleu
+    'thierry.vignal@atom-capital.fr':   '#4caf7d',  // vert
+  };
   if (!email) return '#7a7874';
+  if (fixed[email]) return fixed[email];
+  // Fallback déterministe pour autres emails
+  const palette = ['#B8975A','#4285f4','#e1306c','#4caf7d','#f4a642','#a06cd5'];
   let hash = 0;
   for (let i = 0; i < email.length; i++) hash = email.charCodeAt(i) + ((hash << 5) - hash);
   return palette[Math.abs(hash) % palette.length];
+}
+
+// ── Edit Lead ────────────────────────────────────────────────
+let editingLeadId = null;
+
+function openEditLead(lead) {
+  editingLeadId = lead.id;
+  document.getElementById('edit-lead-name').textContent = `${lead.prenom} ${lead.nom} · Score ${computeScore(lead)}`;
+  document.getElementById('edit-timing').value       = lead.timing       || '';
+  document.getElementById('edit-financement').value  = lead.financement  || '';
+  document.getElementById('edit-accord').value       = lead.accord       || '';
+  document.getElementById('edit-capacite').value     = lead.capacite     || '';
+  document.getElementById('edit-arrondissements').value = lead.arrondissements || '';
+  document.getElementById('edit-responsible').value  = lead.assigned_to  || '';
+  document.getElementById('edit-notes').value        = lead.notes        || '';
+  document.getElementById('edit-lead-overlay').classList.add('on');
+}
+
+function closeEditLead() {
+  document.getElementById('edit-lead-overlay').classList.remove('on');
+  editingLeadId = null;
+}
+
+async function saveEditLead() {
+  if (!editingLeadId) return;
+  const btn = document.getElementById('btn-save-edit-lead');
+  btn.disabled = true; btn.textContent = 'Enregistrement…';
+
+  const body = {
+    timing:          document.getElementById('edit-timing').value       || null,
+    financement:     document.getElementById('edit-financement').value  || null,
+    accord:          document.getElementById('edit-accord').value       || null,
+    capacite:        document.getElementById('edit-capacite').value     || null,
+    arrondissements: document.getElementById('edit-arrondissements').value.trim() || null,
+    assigned_to:     document.getElementById('edit-responsible').value  || null,
+    notes:           document.getElementById('edit-notes').value.trim() || null,
+  };
+
+  try {
+    const res = await fetch(`/api/leads?id=${editingLeadId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Mise à jour du cache local + re-render
+    const lead = leadsCache.find(l => l.id === editingLeadId);
+    if (lead) {
+      Object.assign(lead, body);
+      renderTable(leadsCache);
+    }
+    closeEditLead();
+  } catch (e) {
+    alert('Erreur lors de la sauvegarde : ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = 'Enregistrer';
 }
 
 function founderInitials(email) {
@@ -4265,7 +4424,7 @@ async function confirmScrapeAll() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.item) {
-        // Crée la fiche en brouillon
+        // Crée la fiche en brouillon (qu'elle soit issue du scrape ou d'un stub)
         const createRes = await fetch('/api/showroom', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -4278,7 +4437,7 @@ async function confirmScrapeAll() {
             is_published: false,
           }),
         });
-        if (createRes.ok) ok++;
+        if (createRes.ok) { ok++; if (data.stub) errors++; } // stub compte dans erreurs pour info
         else errors++;
       } else {
         console.warn('Scrape failed for', url, data);
@@ -4288,7 +4447,11 @@ async function confirmScrapeAll() {
   }
 
   btn.disabled = false; btn.textContent = '⚡ Scraper atom.living';
-  alert(`Scraping terminé : ${ok} fiches créées${errors ? `, ${errors} erreurs` : ''}.\nNote : si des fiches sont vides, utilise le script local scripts/seed-showroom.js avec Puppeteer.`);
+  const stubCount = ok > 0 && errors > 0 ? errors : 0;
+  const msg = stubCount
+    ? `${ok} fiches créées (dont ${stubCount} stubs vides — à compléter manuellement dans l'admin).\n\nLes fiches vides sont dues au fait qu'atom.living est une SPA JS. Clique sur chaque card pour renseigner les infos.`
+    : `${ok} fiches créées${errors ? ` · ${errors} erreurs (slugs déjà existants ?)` : ' ✓'}.`;
+  alert(msg);
   loadShowroom();
 }
 </script>

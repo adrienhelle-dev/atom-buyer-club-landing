@@ -1,7 +1,11 @@
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
 
-const PATCH_ALLOWED = ['status', 'notes'];
+const PATCH_ALLOWED = [
+  'status', 'notes',
+  // Champs modifiables manuellement depuis l'admin (après un appel, pour corriger le profil)
+  'timing', 'accord', 'financement', 'capacite', 'arrondissements', 'assigned_to',
+];
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -31,8 +35,9 @@ module.exports = async function handler(req, res) {
       const updates = {};
       PATCH_ALLOWED.forEach(k => { if (k in b) updates[k] = b[k]; });
 
-      // Auto-assign : quand le statut change OU quand force_assign=true
-      if ('status' in updates || b.force_assign) {
+      // Auto-assign : quand le statut change OU force_assign=true
+      // Mais si assigned_to est fourni explicitement, il prend la priorité
+      if (('status' in updates || b.force_assign) && !('assigned_to' in b)) {
         updates.assigned_to = payload.email;
       }
 

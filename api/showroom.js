@@ -72,33 +72,79 @@ module.exports = async function handler(req, res) {
         const apiKey = process.env.ANTHROPIC_API_KEY;
         if (!apiKey) return res.status(500).json({ error: 'anthropic_key_missing' });
 
-        // Fetch le HTML brut
+        const BROWSER_HEADERS = {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+        };
+
         let html = '';
+        let text = '';
+        let images = [];
+
+        // Stratégie 1 : Nuxt 3 _payload.json (SPA avec SSR)
         try {
-          const r = await fetch(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AtomBot/1.0)' },
-          });
-          html = await r.text();
-        } catch (e) {
-          return res.status(500).json({ error: 'fetch_error', detail: e.message });
+          const payloadUrl = url.replace(/\/$/, '') + '/_payload.json';
+          const r = await fetch(payloadUrl, { headers: { ...BROWSER_HEADERS, 'Accept': 'application/json' } });
+          if (r.ok) {
+            const raw = await r.text();
+            if (raw && raw.length > 200) {
+              text = raw.slice(0, 15000);
+              console.log(`Nuxt payload OK (${text.length} chars)`);
+            }
+          }
+        } catch {}
+
+        // Stratégie 2 : HTML brut avec bons headers
+        if (!text || text.length < 200) {
+          try {
+            const r = await fetch(url, { headers: BROWSER_HEADERS });
+            html = await r.text();
+
+            // Essaie d'extraire window.__NUXT__ ou __NEXT_DATA__
+            const nuxtMatch = html.match(/window\.__NUXT__\s*=\s*(\{[\s\S]+?\})\s*;?\s*<\/script>/);
+            const nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>(\{[\s\S]+?\})<\/script>/);
+            if (nuxtMatch) {
+              text = nuxtMatch[1].slice(0, 15000);
+              console.log('Extracted __NUXT__ data');
+            } else if (nextMatch) {
+              text = nextMatch[1].slice(0, 15000);
+              console.log('Extracted __NEXT_DATA__');
+            } else {
+              // Fallback : strip HTML
+              text = html
+                .replace(/<script[\s\S]*?<\/script>/gi, '')
+                .replace(/<style[\s\S]*?<\/style>/gi, '')
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 15000);
+            }
+            // Images depuis le HTML
+            const imgMatches = [...html.matchAll(/(?:src|data-src|srcset)=["']([^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)/gi)];
+            images = [...new Set(imgMatches.map(m => m[1].split(' ')[0]).filter(u => u.startsWith('http')))].slice(0, 20);
+          } catch (e) {
+            console.error('Fetch HTML error:', e.message);
+          }
         }
 
-        // Extraction texte brut (strip tags)
-        const text = html
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .slice(0, 15000);
-
-        if (!text || text.length < 100) {
-          return res.status(422).json({ error: 'content_empty', hint: 'La page est probablement une SPA — utilisez le script local seed-showroom.js avec Puppeteer' });
+        // Si pas assez de contenu → stub (fiche vide à compléter manuellement)
+        if (!text || text.length < 150) {
+          const slug = url.split('/').pop();
+          const name = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          return res.status(200).json({
+            ok: true,
+            stub: true,
+            item: { name, slug, description_courte: 'À compléter manuellement' },
+            images_found: [],
+          });
         }
 
         // Extraction images depuis le HTML (srcset, src, data-src)
-        const imgMatches = [...html.matchAll(/(?:src|data-src|srcset)=["']([^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)/gi)];
-        const images = [...new Set(imgMatches.map(m => m[1].split(' ')[0]).filter(u => u.startsWith('http')))].slice(0, 20);
+        if (!images.length && html) {
+          const imgMatches = [...html.matchAll(/(?:src|data-src|srcset)=["']([^"']*(?:\.jpg|\.jpeg|\.png|\.webp)[^"']*)/gi)];
+          images = [...new Set(imgMatches.map(m => m[1].split(' ')[0]).filter(u => u.startsWith('http')))].slice(0, 20);
+        }
 
         const prompt = `Tu es un assistant spécialisé en immobilier parisien.
 Voici le contenu textuel d'une page de propriété Atom Living.
