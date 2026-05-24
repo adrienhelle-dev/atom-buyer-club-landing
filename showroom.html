@@ -585,7 +585,7 @@
       document.getElementById('cta-modal').classList.add('on');
       document.getElementById('cta-form-wrap').style.display = 'none';
       const conf = document.getElementById('cta-confirm');
-      conf.style.display = '';
+      conf.style.display = 'block';
       const titleEl = document.getElementById('cta-confirm-title');
       const subEl   = document.getElementById('cta-confirm-sub');
       if (titleEl) titleEl.textContent = 'Intérêt enregistré !';
@@ -610,7 +610,7 @@
       document.getElementById('cta-modal').classList.add('on');
       document.getElementById('cta-form-wrap').style.display = 'none';
       const conf = document.getElementById('cta-confirm');
-      conf.style.display = '';
+      conf.style.display = 'block';
       // Personnaliser le titre avec le prénom
       const titleEl = document.getElementById('cta-confirm-title');
       if (titleEl) titleEl.textContent = `Parfait, ${sl.prenom} !`;
@@ -683,7 +683,7 @@
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       document.getElementById('cta-form-wrap').style.display = 'none';
-      document.getElementById('cta-confirm').style.display   = '';
+      document.getElementById('cta-confirm').style.display   = 'block';
       // Personnaliser avec le prénom saisi
       const tEl = document.getElementById('cta-confirm-title');
       if (tEl) tEl.textContent = `Parfait, ${prenom} !`;
