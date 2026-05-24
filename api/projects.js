@@ -48,6 +48,28 @@ module.exports = async function handler(req, res) {
         }
         return res.status(200).json({ ok: true, results });
       }
+
+      // ── Action one-shot : upload images vers projets existants ──
+      if (_b0.action === 'add_images_seed' && _b0.secret === 'atom_seed_2026') {
+        const { project_id, field, images: imgs } = _b0; // field: 'images' | 'images_3d'
+        if (!project_id || !field || !Array.isArray(imgs)) return res.status(400).json({ error: 'invalid' });
+        const BUCKET2 = 'project-images';
+        async function up2(b64, idx) {
+          const buf = Buffer.from(b64, 'base64');
+          const path = `${project_id}/${Date.now()}-${idx}.jpg`;
+          const { error } = await supabase.storage.from(BUCKET2).upload(path, buf, { contentType: 'image/jpeg', upsert: false });
+          if (error) { console.error('up2 err', error.message); return null; }
+          const { data: { publicUrl } } = supabase.storage.from(BUCKET2).getPublicUrl(path);
+          return publicUrl;
+        }
+        // Get current values
+        const { data: proj } = await supabase.from('projects').select(field).eq('id', project_id).single();
+        const existing = (proj && proj[field]) || [];
+        const newUrls = (await Promise.all(imgs.map((b, i) => up2(b, i)))).filter(Boolean);
+        const merged = [...existing, ...newUrls];
+        await supabase.from('projects').update({ [field]: merged }).eq('id', project_id);
+        return res.status(200).json({ ok: true, added: newUrls.length, total: merged.length, urls: newUrls });
+      }
     }
     // ── fin seed one-shot ─────────────────────────────────────────
 
