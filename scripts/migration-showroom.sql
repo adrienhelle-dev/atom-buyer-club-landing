@@ -1,5 +1,8 @@
--- ─── Table showroom_items ─────────────────────────────────────────────────────
+-- ─── Migration showroom_items ─────────────────────────────────────────────────
+-- À exécuter dans : Supabase Dashboard → SQL Editor
+-- Idempotent : peut être relancé sans erreur
 
+-- 1. Création de la table
 CREATE TABLE IF NOT EXISTS showroom_items (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at          timestamptz DEFAULT now(),
@@ -19,7 +22,7 @@ CREATE TABLE IF NOT EXISTS showroom_items (
 
   -- Visuels
   images_before       text[],        -- URLs avant travaux
-  images_after        text[],        -- URLs après travaux (principal)
+  images_after        text[],        -- URLs après travaux
   image_cover         text,          -- photo de couverture
   video_url           text,
 
@@ -33,8 +36,8 @@ CREATE TABLE IF NOT EXISTS showroom_items (
   statut_location     text DEFAULT 'Loué',
   locataire_type      text,
 
-  -- Matching projet disponible
-  projet_similaire_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+  -- Matching projet disponible (UUID sans contrainte FK — évite les erreurs si projects n'existe pas)
+  projet_similaire_id uuid,
 
   -- Display
   ordre               integer DEFAULT 0,
@@ -46,15 +49,37 @@ CREATE TABLE IF NOT EXISTS showroom_items (
   scraped_at          timestamptz
 );
 
--- Index pour les requêtes publiques
-CREATE INDEX IF NOT EXISTS idx_showroom_published ON showroom_items(is_published, ordre);
-CREATE INDEX IF NOT EXISTS idx_showroom_slug ON showroom_items(slug);
+-- 2. FK vers projects (ajoutée séparément pour ne pas bloquer si la table n'existe pas encore)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_showroom_projet_similaire'
+      AND table_name = 'showroom_items'
+  ) THEN
+    IF EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'projects'
+    ) THEN
+      ALTER TABLE showroom_items
+        ADD CONSTRAINT fk_showroom_projet_similaire
+        FOREIGN KEY (projet_similaire_id) REFERENCES projects(id) ON DELETE SET NULL;
+    END IF;
+  END IF;
+EXCEPTION WHEN others THEN
+  NULL; -- non-fatal
+END $$;
 
--- RLS : lecture publique des items publiés, écriture admin seulement via service role
+-- 3. Index pour les requêtes publiques
+CREATE INDEX IF NOT EXISTS idx_showroom_published ON showroom_items(is_published, ordre);
+CREATE INDEX IF NOT EXISTS idx_showroom_slug      ON showroom_items(slug);
+
+-- 4. RLS : lecture publique des items publiés, écriture via service_role (bypass RLS)
 ALTER TABLE showroom_items ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public read published showroom" ON showroom_items;
 CREATE POLICY "Public read published showroom" ON showroom_items
   FOR SELECT USING (is_published = true);
 
-CREATE POLICY "Service role full access showroom" ON showroom_items
-  USING (true) WITH CHECK (true);
+-- Note : l'API utilise la clé service_role qui bypass RLS automatiquement.
+-- Aucune autre policy n'est nécessaire.
