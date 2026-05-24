@@ -15,63 +15,6 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // ── Action one-shot sans auth (protégée par secret hardcodé) ─
-    if (req.method === 'POST') {
-      let _b0 = {};
-      try { _b0 = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch {}
-      if (_b0.action === 'seed_ponceau_yvonne') {
-        if (_b0.secret !== 'atom_seed_2026') return res.status(403).json({ error: 'forbidden' });
-        const BUCKET = 'project-images';
-        async function uploadB64(b64, folder, idx) {
-          const buf  = Buffer.from(b64, 'base64');
-          const path = `${folder}/${Date.now()}-img${idx}.jpg`;
-          const { error } = await supabase.storage.from(BUCKET).upload(path, buf, { contentType: 'image/jpeg', upsert: false });
-          if (error) { console.error('upload err', error.message); return null; }
-          const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path);
-          return publicUrl;
-        }
-        const PROJECTS_DATA = [
-          { slug:'ponceau', title:'Ponceau', address:'11 rue du Ponceau 75002', arrondissement:'2e', surface_carrez:10.5, floor:4, has_elevator:false, price_fai:123000, fees_atom:8900, fees_notaire:10455, budget_travaux:5000, budget_meuble:3000, loyer_atom:770, metro_name:'Arts et Métiers', metro_distance:4, description:"Studio 10,5 m² au 4ème étage sans ascenseur, quartier Arts et Métiers (2e). Prix FAI 123 000 €. Cuisine ouverte, lit deux places, salle de bain avec douche et toilettes.", ameublement:true, ameublement_desc:"Table à manger, cuisine ouverte (évier, plaques, frigo, rangements), lit deux places, salle de bain avec douche et toilettes. Budget meubles + électroménager : 3 000 €.", status:'brouillon', public_visible:false, photo_key:'ponceau_photos', img3d_key:'ponceau_3d' },
-          { slug:'yvonne-le-tac', title:'Yvonne-le-Tac', address:'26 Rue Yvonne le Tac 75018', arrondissement:'18e', surface_carrez:11.55, floor:0, has_elevator:false, price_fai:130000, fees_atom:8900, fees_notaire:11050, budget_travaux:15000, budget_meuble:3000, loyer_atom:850, metro_name:'Abbesses', metro_distance:1, description:"Studio 11,55 m² au rez-de-chaussée, à 40 m du métro Abbesses (18e, Montmartre). Prix FAI 130 000 €. Rénovation complète prévue avec projections 3D.", ameublement:true, ameublement_desc:"Table à manger, cuisine ouverte (évier, plaques, frigo, rangements), lit deux places, salle de bain avec douche et toilettes. Budget meubles + électroménager : 3 000 €.", status:'brouillon', public_visible:false, photo_key:'yvonne_photos', img3d_key:'yvonne_3d' },
-        ];
-        const results = [];
-        for (const proj of PROJECTS_DATA) {
-          const { photo_key, img3d_key, ...data } = proj;
-          const financials = computeFinancials(data);
-          const { data: existing } = await supabase.from('projects').select('id').eq('slug', data.slug).maybeSingle();
-          if (existing) { results.push({ slug: data.slug, status: 'already_exists', id: existing.id }); continue; }
-          const imageUrls = (await Promise.all((_b0[photo_key]||[]).map((b,i) => uploadB64(b, data.slug, i)))).filter(Boolean);
-          const img3dUrls = (await Promise.all((_b0[img3d_key]||[]).map((b,i) => uploadB64(b, data.slug+'-3d', i)))).filter(Boolean);
-          const { data: created, error } = await supabase.from('projects').insert([{ ...data, ...financials, images: imageUrls, images_3d: img3dUrls }]).select('id').single();
-          if (error) results.push({ slug: data.slug, status: 'error', detail: error.message });
-          else       results.push({ slug: data.slug, status: 'created', id: created.id, photos: imageUrls.length, img3d: img3dUrls.length, ...financials });
-        }
-        return res.status(200).json({ ok: true, results });
-      }
-
-      // ── Action one-shot : upload images vers projets existants ──
-      if (_b0.action === 'add_images_seed' && _b0.secret === 'atom_seed_2026') {
-        const { project_id, field, images: imgs } = _b0; // field: 'images' | 'images_3d'
-        if (!project_id || !field || !Array.isArray(imgs)) return res.status(400).json({ error: 'invalid' });
-        const BUCKET2 = 'project-images';
-        async function up2(b64, idx) {
-          const buf = Buffer.from(b64, 'base64');
-          const path = `${project_id}/${Date.now()}-${idx}.jpg`;
-          const { error } = await supabase.storage.from(BUCKET2).upload(path, buf, { contentType: 'image/jpeg', upsert: false });
-          if (error) { console.error('up2 err', error.message); return null; }
-          const { data: { publicUrl } } = supabase.storage.from(BUCKET2).getPublicUrl(path);
-          return publicUrl;
-        }
-        // Get current values
-        const { data: proj } = await supabase.from('projects').select(field).eq('id', project_id).single();
-        const existing = (proj && proj[field]) || [];
-        const newUrls = (await Promise.all(imgs.map((b, i) => up2(b, i)))).filter(Boolean);
-        const merged = [...existing, ...newUrls];
-        await supabase.from('projects').update({ [field]: merged }).eq('id', project_id);
-        return res.status(200).json({ ok: true, added: newUrls.length, total: merged.length, urls: newUrls });
-      }
-    }
-    // ── fin seed one-shot ─────────────────────────────────────────
 
     const payload = verifyToken(tokenFromReq(req));
     if (!payload) return res.status(401).json({ error: 'Non autorisé' });
