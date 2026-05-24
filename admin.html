@@ -916,10 +916,10 @@
       td, thead th { padding: 10px 10px; font-size: 12px; }
       /* Score: min width */
       td:nth-child(1), thead th:nth-child(1) { width: 36px; padding-right: 4px; }
-      /* Nom: fills space */
-      td:nth-child(2) { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      /* Nom: fills space — width:100% force le comportement greedy */
+      td:nth-child(2) { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       /* Horizon */
-      td:nth-child(3) { white-space: nowrap; }
+      td:nth-child(3) { white-space: nowrap; min-width: 80px; }
 
       .pagination { padding: 12px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
 
