@@ -2951,7 +2951,7 @@ async function updateLeadStatus(id, status) {
   if (!res.ok) {
     const err    = data?.error  || `HTTP ${res.status}`;
     const detail = data?.detail || bodyText.slice(0, 300) || '(réponse vide)';
-    console.error('PATCH /api/patch error', { status: res.status, body: bodyText });
+    console.error('PATCH /api/leads error', { status: res.status, body: bodyText });
     alert(`Impossible d'enregistrer le statut.\n\n${err}\n${detail}`);
     // Rollback du select
     const select = document.getElementById('status-select');
