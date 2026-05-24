@@ -54,33 +54,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ items: data || [] });
     }
 
-    // ── Action seed_initial (no admin auth — protected by own token) ──────────
-    if (req.method === 'POST') {
-      let _b = {};
-      try { _b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch {}
-      if (_b.action === 'seed_initial') {
-        const SEED_TOKEN = 'atom-seed-2026-init';
-        if (_b.token !== SEED_TOKEN) return res.status(403).json({ error: 'invalid_seed_token' });
-
-        const SEED_ITEMS = [
-          { slug:'honore',                       name:'Honoré',                         quartier:'Faubourg Saint-Honoré',   arrondissement:'8e',  style:'Haussmannien', description_courte:'Élégance parisienne au cœur du 8e',        ordre:1 },
-          { slug:'panoramas',                    name:'Panoramas',                      quartier:'Grands Boulevards',       arrondissement:'2e',  style:'Design',       description_courte:"Vue panoramique, adresse d'exception",      ordre:2 },
-          { slug:'saint-claude',                 name:'Saint-Claude',                   quartier:'Marais',                  arrondissement:'3e',  style:'Contemporain', description_courte:'Calme et caractère en plein Marais',        ordre:3 },
-          { slug:'loft-republique-design',       name:'Loft République Design',         quartier:'République',              arrondissement:'11e', style:'Loft',         description_courte:'Loft design à deux pas de République',      ordre:4 },
-          { slug:'studio-saint-germain-charme',  name:'Studio Saint-Germain Charme',    quartier:'Saint-Germain-des-Prés',  arrondissement:'6e',  style:'Haussmannien', description_courte:'Charme absolu en plein Saint-Germain',       ordre:5 },
-          { slug:'appartement-bastille-lumineux',name:'Appartement Bastille Lumineux',  quartier:'Bastille',                arrondissement:'11e', style:'Contemporain', description_courte:'Luminosité et volumes autour de Bastille',   ordre:6 },
-          { slug:'studio-marais-temple',         name:'Studio Marais Temple',           quartier:'Marais',                  arrondissement:'3e',  style:'Design',       description_courte:'Studio repensé de A à Z dans le Marais',     ordre:7 },
-        ].map(item => ({ ...item, statut_location:'Loué', is_published:false, is_featured:false, equipements:[], caracteristiques:[], source_url:`https://atom.living/fr/properties/${item.slug}`, scraped_at:new Date().toISOString() }));
-
-        const results = [];
-        for (const item of SEED_ITEMS) {
-          const { data, error } = await supabase.from('showroom_items').upsert([item], { onConflict:'slug' }).select('id,slug,name').single();
-          results.push(error ? { slug:item.slug, error:error.message } : { slug:data.slug, id:data.id, ok:true });
-        }
-        return res.status(200).json({ ok:true, results });
-      }
-    }
-
     // Les méthodes suivantes requièrent l'auth admin
     const payload = verifyToken(tokenFromReq(req));
     if (!payload) return res.status(401).json({ error: 'Non autorisé' });
