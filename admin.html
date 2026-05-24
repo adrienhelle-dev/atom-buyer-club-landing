@@ -1467,6 +1467,10 @@
           <input type="text" id="sr-search" placeholder="Rechercher une réalisation…" oninput="renderShowroomGrid()"/>
         </div>
         <div class="toolbar-right">
+          <a href="/showroom.html" target="_blank" class="btn-new-project" style="background:var(--bg3);color:var(--cream);border:1px solid var(--border);text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Page publique
+          </a>
           <button class="btn-new-project" onclick="openShowroomEdit(null)">+ Nouvelle réalisation</button>
         </div>
       </div>
@@ -1604,9 +1608,13 @@
         <div class="np-section sr-section" data-sr-section="2">
           <h3 class="np-section-title">Visuels</h3>
           <div class="np-grid-2">
-            <div class="np-field span-2">
-              <label for="sr-cover">Photo de couverture (URL)</label>
-              <input type="text" id="sr-cover" placeholder="https://..."/>
+            <div class="np-field span-2" id="sr-cover-field-wrap">
+              <label for="sr-cover" style="display:flex;align-items:center;justify-content:space-between">
+                <span>Photo de couverture</span>
+                <span id="sr-cover-toggle" onclick="toggleSrCoverField()" style="font-size:11px;color:var(--dim);cursor:pointer;user-select:none">URL manuelle ▾</span>
+              </label>
+              <p id="sr-cover-auto-msg" style="font-size:11px;color:var(--dim);margin-top:4px">Première photo « Après » utilisée automatiquement.</p>
+              <input type="text" id="sr-cover" placeholder="https://..." style="display:none;margin-top:6px"/>
               <div id="sr-cover-preview"></div>
             </div>
             <div class="np-field span-2">
@@ -2521,7 +2529,7 @@ async function handleImageFiles(files) {
   const CHUNK = 3;
   for (let i = 0; i < arr.length; i += CHUNK) {
     const batch = arr.slice(i, i + CHUNK);
-    const results = await Promise.all(batch.map(f => uploadImageFile(f)));
+    const results = await Promise.all(batch.map(async f => uploadImageFile(await compressImage(f))));
     results.forEach(r => { if (r) npImages.push(r); });
     done += batch.length;
     bar.style.width = Math.round((done / arr.length) * 100) + '%';
@@ -2532,6 +2540,36 @@ async function handleImageFiles(files) {
   zone.style.pointerEvents = '';
   setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 700);
   renderImagePreviews();
+}
+
+/**
+ * Compresse un File image via Canvas.
+ * Réduit la dimension max à maxWidth et la qualité JPEG jusqu'à ce que
+ * le blob fasse ≤ maxBytes (défaut 500 Ko).
+ */
+async function compressImage(file, maxWidth = 1200, maxBytes = 512 * 1024) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const blobUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(blobUrl);
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > maxWidth) { height = Math.round(height * maxWidth / width); width = maxWidth; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const tryQuality = (q) => {
+        canvas.toBlob(blob => {
+          if (!blob) { resolve(file); return; }
+          if (blob.size <= maxBytes || q <= 0.5) { resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })); }
+          else tryQuality(q - 0.1);
+        }, 'image/jpeg', q);
+      };
+      tryQuality(0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(file); };
+    img.src = blobUrl;
+  });
 }
 
 async function uploadImageFile(file) {
@@ -4326,6 +4364,10 @@ function resetShowroomForm() {
   });
   srAfterImages = []; srBeforeImages = [];
   renderSrImageGrid('after'); renderSrImageGrid('before');
+  // Réinitialiser le champ cover en mode "auto"
+  { const inp = document.getElementById('sr-cover'); if (inp) inp.style.display = 'none'; }
+  { const msg = document.getElementById('sr-cover-auto-msg'); if (msg) msg.style.display = 'block'; }
+  { const lbl = document.getElementById('sr-cover-toggle'); if (lbl) lbl.textContent = 'URL manuelle ▾'; }
   document.getElementById('sr-published').checked = false;
   document.getElementById('sr-featured').checked  = false;
   document.getElementById('sr-ordre').value = '0';
@@ -4357,6 +4399,25 @@ function populateShowroomForm(item) {
   srBeforeImages = (item.images_before || []).map(url => ({ url, path: null }));
   renderSrImageGrid('after');
   renderSrImageGrid('before');
+  // Gestion visibilité champ cover manuel
+  {
+    const inp = document.getElementById('sr-cover');
+    const msg = document.getElementById('sr-cover-auto-msg');
+    const lbl = document.getElementById('sr-cover-toggle');
+    const hasAfter = srAfterImages.length > 0;
+    const coverMatchesFirst = hasAfter && item.image_cover === srAfterImages[0].url;
+    if (hasAfter && (!item.image_cover || coverMatchesFirst)) {
+      // Masquer le champ manuel — cover géré automatiquement
+      if (inp) inp.style.display = 'none';
+      if (msg) msg.style.display = 'block';
+      if (lbl) lbl.textContent = 'URL manuelle ▾';
+    } else {
+      // Afficher le champ manuel (cover personnalisé ou pas d'images after)
+      if (inp) inp.style.display = 'block';
+      if (msg) msg.style.display = 'none';
+      if (lbl) lbl.textContent = 'Masquer ▴';
+    }
+  }
   sv('sr-video',        item.video_url);
   sv('sr-prix',         item.prix_acquisition);
   sv('sr-travaux',      item.budget_travaux);
@@ -4398,6 +4459,16 @@ function showSrSection(n) {
     const active = +s.dataset.srSection === n;
     s.classList.toggle('active', active);
   });
+}
+
+function toggleSrCoverField() {
+  const inp  = document.getElementById('sr-cover');
+  const msg  = document.getElementById('sr-cover-auto-msg');
+  const lbl  = document.getElementById('sr-cover-toggle');
+  const shown = inp.style.display !== 'none';
+  inp.style.display = shown ? 'none' : 'block';
+  msg.style.display = shown ? 'block' : 'none';
+  lbl.textContent   = shown ? 'URL manuelle ▾' : 'Masquer ▴';
 }
 
 // Cover preview live dans la sidebar
@@ -4586,7 +4657,7 @@ async function handleSrImageFiles(files, type) {
   const CHUNK = 3;
   for (let i = 0; i < arr.length; i += CHUNK) {
     const batch = arr.slice(i, i + CHUNK);
-    const results = await Promise.all(batch.map(f => uploadImageFile(f)));
+    const results = await Promise.all(batch.map(async f => uploadImageFile(await compressImage(f))));
     results.forEach(r => { if (r) images.push(r); });
     done += batch.length;
     bar.style.width = Math.round((done / arr.length) * 100) + '%';
@@ -4631,9 +4702,13 @@ function renderSrImageGrid(type) {
       ondragend="this.style.opacity='1'"
       ondragover="event.preventDefault()"
       ondrop="event.preventDefault();moveSrImage('${type}',srDragSrc,${i});srDragSrc=null">
-      <img src="${esc(img.url)}" alt="Photo ${i+1}" style="width:100%;height:100%;object-fit:cover"/>
-      ${i === 0 && type === 'after' ? '<span style="position:absolute;bottom:4px;left:4px;background:rgba(184,151,90,.85);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600">COVER</span>' : ''}
-      <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removeSrImage('${type}',${i})" style="background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;position:absolute;top:4px;right:4px;opacity:0;transition:opacity .15s">✕</button>
+      <img src="${esc(img.url)}" alt="Photo ${i+1}" style="width:100%;height:100%;object-fit:cover;pointer-events:none"/>
+      ${i === 0 && type === 'after'
+        ? `<span style="position:absolute;bottom:4px;left:4px;background:rgba(184,151,90,.9);color:#fff;font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.04em">★ COVER</span>`
+        : type === 'after'
+          ? `<button onclick="setSrCover(${i})" title="Définir comme cover" style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.55);border:none;border-radius:3px;padding:2px 6px;color:#ccc;font-size:9px;cursor:pointer;letter-spacing:.04em">☆ cover</button>`
+          : ''}
+      <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removeSrImage('${type}',${i})" style="background:rgba(0,0,0,.6);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;position:absolute;top:4px;right:4px;opacity:.7;transition:opacity .15s">✕</button>
     </div>`).join('');
 }
 
@@ -4648,6 +4723,15 @@ function moveSrImage(type, from, to) {
     document.getElementById('sr-cover').value = srAfterImages[0].url;
     updateSrCoverPreview();
   }
+}
+
+function setSrCover(index) {
+  if (index <= 0 || index >= srAfterImages.length) return;
+  const [item] = srAfterImages.splice(index, 1);
+  srAfterImages.unshift(item);
+  renderSrImageGrid('after');
+  document.getElementById('sr-cover').value = srAfterImages[0].url;
+  updateSrCoverPreview();
 }
 
 </script>
