@@ -1657,7 +1657,13 @@
 <!-- ══ EDIT LEAD MODAL ════════════════════════════════════════ -->
 <div class="modal-overlay" id="edit-lead-overlay" onclick="if(event.target===this)closeEditLead()">
   <div class="modal edit-lead-modal">
-    <p class="modal-title" style="margin-bottom:3px">✎ Modifier le lead</p>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:3px;gap:12px">
+      <p class="modal-title">✎ Modifier le lead</p>
+      <div id="edit-score-preview" style="display:flex;align-items:center;gap:7px;flex-shrink:0;padding-top:2px">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:.05em">SCORE</span>
+        <span id="edit-score-badge" class="score-badge score-mid" style="width:32px;height:32px;font-size:13px">—</span>
+      </div>
+    </div>
     <p class="modal-sub" id="edit-lead-name" style="margin-bottom:20px"></p>
     <div class="np-grid-2" style="gap:12px 16px">
       <div class="np-field">
@@ -1678,7 +1684,7 @@
           <option value="emprunt">Emprunt bancaire</option>
         </select>
       </div>
-      <div class="np-field">
+      <div class="np-field" id="edit-accord-wrap">
         <label>Accord bancaire</label>
         <select id="edit-accord">
           <option value="">—</option>
@@ -1687,7 +1693,7 @@
           <option value="non">Pas encore démarché</option>
         </select>
       </div>
-      <div class="np-field">
+      <div class="np-field" id="edit-capacite-wrap">
         <label>Budget emprunt</label>
         <select id="edit-capacite">
           <option value="">—</option>
@@ -3990,9 +3996,29 @@ function founderColor(email) {
 // ── Edit Lead ────────────────────────────────────────────────
 let editingLeadId = null;
 
+function updateEditScorePreview() {
+  const financement = document.getElementById('edit-financement').value;
+  const isComptant  = financement === 'comptant';
+  // Grise les champs bancaires si comptant (non pertinents pour le score)
+  ['edit-accord-wrap','edit-capacite-wrap'].forEach(id => {
+    document.getElementById(id).style.opacity = isComptant ? '0.35' : '1';
+    document.getElementById(id).style.pointerEvents = isComptant ? 'none' : '';
+  });
+  const fake = {
+    timing:      document.getElementById('edit-timing').value,
+    financement,
+    accord:      document.getElementById('edit-accord').value,
+    capacite:    document.getElementById('edit-capacite').value,
+  };
+  const s = computeScore(fake);
+  const badge = document.getElementById('edit-score-badge');
+  badge.textContent = s;
+  badge.className = 'score-badge ' + (s >= 8 ? 'score-high' : s >= 5 ? 'score-mid' : 'score-low');
+}
+
 function openEditLead(lead) {
   editingLeadId = lead.id;
-  document.getElementById('edit-lead-name').textContent = `${lead.prenom} ${lead.nom} · Score ${computeScore(lead)}`;
+  document.getElementById('edit-lead-name').textContent = `${lead.prenom} ${lead.nom}`;
   document.getElementById('edit-timing').value       = lead.timing       || '';
   document.getElementById('edit-financement').value  = lead.financement  || '';
   document.getElementById('edit-accord').value       = lead.accord       || '';
@@ -4000,6 +4026,11 @@ function openEditLead(lead) {
   document.getElementById('edit-arrondissements').value = lead.arrondissements || '';
   document.getElementById('edit-responsible').value  = lead.assigned_to  || '';
   document.getElementById('edit-notes').value        = lead.notes        || '';
+  // Initialise le badge et branche les listeners
+  updateEditScorePreview();
+  ['edit-timing','edit-financement','edit-accord','edit-capacite'].forEach(id => {
+    document.getElementById(id).onchange = updateEditScorePreview;
+  });
   document.getElementById('edit-lead-overlay').classList.add('on');
 }
 
