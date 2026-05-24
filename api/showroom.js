@@ -7,7 +7,8 @@ const WRITE_FIELDS = [
   'images_before', 'images_after', 'image_cover', 'video_url',
   'prix_acquisition', 'budget_travaux', 'loyer_mensuel', 'statut_location', 'locataire_type',
   'projet_similaire_id', 'ordre', 'is_published', 'is_featured',
-  'source_url', 'scraped_at', 'responsible_admin',
+  'source_url', 'scraped_at',
+  'responsible_admin',
 ];
 
 module.exports = async function handler(req, res) {
