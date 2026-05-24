@@ -575,10 +575,11 @@
       if (titleEl) titleEl.textContent = 'Intérêt enregistré !';
       if (subEl)   subEl.textContent   = 'L\'équipe Atom a bien noté votre intérêt et vous recontactera prochainement.';
       // Appel léger : pas de création de lead, juste un event dans la timeline
-      fetch('/api/showroom?action=interest', {
+      fetch('/api/showroom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action:    'interest',   // doit être dans le body — showroom.js lit _b.action
           lead_id:   leadId,
           slug:      currentItem?.slug || null,
           item_name: currentItem?.name || null,

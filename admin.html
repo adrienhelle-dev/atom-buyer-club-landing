@@ -1069,8 +1069,9 @@
     .sr-card-meta { font-size: 12px; color: var(--dim); margin: 0 0 10px; }
     .sr-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .sr-badge-featured { background: rgba(184,151,90,.15); color: var(--gold); border: 1px solid rgba(184,151,90,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
-    .sr-badge-draft { background: rgba(122,120,116,.12); color: var(--dim); border: 1px solid var(--border); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
-    .sr-badge-pub   { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-badge-draft    { background: rgba(122,120,116,.12); color: var(--dim); border: 1px solid var(--border); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-badge-pub      { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-badge-interest { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.35); border-radius: 20px; font-size: 10px; padding: 2px 8px; font-weight:500; }
     .sr-pub-toggle {
       width: 32px; height: 32px; border-radius: 50%;
       border: none; cursor: pointer; flex-shrink: 0;
@@ -3103,6 +3104,8 @@ async function loadNotifs() {
     _notifLoaded = true;
     _updateNotifBadge();
     if (_notifPanelOpen) _renderNotifList();
+    // Rafraîchir les cards showroom si l'onglet est actif (met à jour les badges d'intérêts)
+    if (document.getElementById('view-showroom')?.classList.contains('active')) renderShowroomGrid();
   } catch (e) {
     console.warn('loadNotifs error:', e);
   }
@@ -4411,6 +4414,15 @@ function renderShowroomGrid() {
     return;
   }
 
+  // Comptage des intérêts showroom depuis les events de notif (30 derniers jours)
+  const srInterests = {};
+  (_notifEvents || []).filter(e => e.type === 'showroom_interest').forEach(e => {
+    try {
+      const c = typeof e.content === 'string' ? JSON.parse(e.content) : (e.content || {});
+      if (c.slug) srInterests[c.slug] = (srInterests[c.slug] || 0) + 1;
+    } catch {}
+  });
+
   grid.innerHTML = filtered.map(item => `
     <div class="sr-card" onclick="openShowroomEdit('${item.id}')">
       ${item.image_cover
@@ -4423,6 +4435,7 @@ function renderShowroomGrid() {
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
             ${item.is_featured ? '<span class="sr-badge-featured">⭐ Vedette</span>' : ''}
             ${item.style ? `<span style="font-size:10px;color:var(--dim)">${esc(item.style)}</span>` : ''}
+            ${srInterests[item.slug] ? `<span class="sr-badge-interest">★ ${srInterests[item.slug]} intérêt${srInterests[item.slug] > 1 ? 's' : ''}</span>` : ''}
           </div>
           <button class="sr-pub-toggle ${item.is_published ? 'is-pub' : 'is-draft'}"
             onclick="event.stopPropagation();toggleShowroomPublish('${item.id}',${!item.is_published})"
