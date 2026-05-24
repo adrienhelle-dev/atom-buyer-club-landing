@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>Projets disponibles — Atom Buyers Club</title>
+  <meta name="description" content="Découvrez les projets d'investissement immobilier disponibles chez Atom Buyers Club. Studios rénovés, clé en main, à Paris."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:    #0f0e0c; --bg2: #161512; --bg3: #1e1d1a;
+      --cream: #F5F2ED; --cream-dim: #C7C2BB;
+      --border:#2c2b27; --dim: #7a7874;
+      --gold:  #B8975A; --green: #4caf7d; --red: #d95e5e;
+      --violet:#5B5BD6;
+      --sans:  'DM Sans', system-ui, sans-serif;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --r: 8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--cream); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    a { color: var(--gold); text-decoration: none; }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .header {
+      padding: 20px 32px; border-bottom: 1px solid var(--border);
+      background: var(--bg2); display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header svg { width: 56px; height: auto; }
+    .header-nav { display: flex; gap: 20px; align-items: center; }
+    .header-nav a { font-size: 12px; color: var(--dim); letter-spacing: .06em; }
+    .header-nav a:hover { color: var(--cream); }
+    @media(max-width:600px){ .header { padding: 14px 16px; } .header-nav { display: none; } }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      max-width: 860px; margin: 0 auto; padding: 56px 32px 40px;
+      text-align: center;
+    }
+    .hero-eyebrow { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+    .hero-title   { font-family: var(--serif); font-size: 48px; font-weight: 300; line-height: 1.08; margin-bottom: 18px; }
+    .hero-sub     { font-size: 15px; color: var(--cream-dim); max-width: 560px; margin: 0 auto; line-height: 1.7; }
+    @media(max-width:600px){ .hero { padding: 36px 16px 28px; } .hero-title { font-size: 32px; } }
+
+    /* ── Stats bar ───────────────────────────────────────────── */
+    .stats-bar {
+      max-width: 860px; margin: 32px auto 40px;
+      display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;
+      padding: 0 32px;
+    }
+    .stat-item { text-align: center; }
+    .stat-value { font-family: var(--serif); font-size: 32px; font-weight: 300; color: var(--cream); }
+    .stat-value.gold { color: var(--gold); }
+    .stat-label { font-size: 11px; color: var(--dim); margin-top: 2px; }
+    @media(max-width:600px){ .stats-bar { gap: 24px; margin: 20px auto 28px; } .stat-value { font-size: 24px; } }
+
+    /* ── Filters ─────────────────────────────────────────────── */
+    .filters {
+      max-width: 1100px; margin: 0 auto 28px;
+      padding: 0 32px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-pill {
+      padding: 7px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;
+      border: 1px solid var(--border); background: none; color: var(--dim);
+      transition: all .15s; font-family: var(--sans);
+    }
+    .filter-pill:hover  { border-color: var(--gold); color: var(--gold); }
+    .filter-pill.active { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 500; }
+    @media(max-width:600px){ .filters { padding: 0 16px; gap: 6px; } .filter-pill { font-size: 11px; padding: 6px 12px; } }
+
+    /* ── Grid ─────────────────────────────────────────────────── */
+    .grid {
+      max-width: 1100px; margin: 0 auto; padding: 0 32px 80px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
+    }
+    @media(max-width:600px){ .grid { padding: 0 16px 60px; grid-template-columns: 1fr; gap: 14px; } }
+    .grid-empty { grid-column: 1/-1; text-align: center; padding: 64px 20px; color: var(--dim); }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .proj-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; cursor: pointer; transition: border-color .18s, transform .18s;
+    }
+    .proj-card:hover { border-color: rgba(184,151,90,.5); transform: translateY(-2px); }
+    .proj-card-img {
+      width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
+      background: var(--bg3);
+    }
+    .proj-card-img-ph {
+      width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center;
+      background: var(--bg3); font-size: 32px; opacity: .4;
+    }
+    .proj-card-body { padding: 16px 18px; }
+    .proj-card-arr  { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+    .proj-card-title { font-family: var(--serif); font-size: 22px; font-weight: 300; color: var(--cream); margin-bottom: 4px; line-height: 1.15; }
+    .proj-card-meta  { font-size: 12px; color: var(--dim); margin-bottom: 16px; }
+    .proj-card-fins  {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .proj-fin-cell { padding: 10px 12px; border-right: 1px solid var(--border); }
+    .proj-fin-cell:last-child { border-right: none; }
+    .proj-fin-val { font-size: 14px; font-weight: 500; color: var(--cream); white-space: nowrap; }
+    .proj-fin-val.gold { color: var(--gold); }
+    .proj-fin-label { font-size: 10px; color: var(--dim); margin-top: 2px; }
+    .btn-card-voir {
+      display: block; width: 100%; padding: 11px; text-align: center;
+      background: rgba(91,91,214,.1); border: 1px solid rgba(91,91,214,.25);
+      border-radius: 7px; color: var(--violet); font-size: 13px; font-weight: 500;
+      font-family: var(--sans); cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-card-voir:hover { background: rgba(91,91,214,.18); border-color: rgba(91,91,214,.4); }
+
+    /* ── Detail page ──────────────────────────────────────────── */
+    #page-detail { display: none; }
+    .detail-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 32px 80px; }
+    @media(max-width:720px){ .detail-wrap { padding: 20px 16px 60px; } }
+
+    .detail-back { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13px; cursor: pointer; margin-bottom: 28px; background: none; border: none; font-family: var(--sans); padding: 0; }
+    .detail-back:hover { color: var(--cream); }
+
+    .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: start; }
+    @media(max-width:960px){ .detail-layout { grid-template-columns: 1fr; } }
+
+    /* Gallery */
+    .gallery-toggle { display: flex; gap: 0; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; width: fit-content; }
+    .gallery-btn { padding: 7px 16px; font-size: 12px; background: none; border: none; color: var(--dim); cursor: pointer; font-family: var(--sans); }
+    .gallery-btn.active { background: var(--gold); color: var(--bg); font-weight: 500; }
+    .gallery-main { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; margin-bottom: 10px; display: block; background: var(--bg3); }
+    .gallery-thumbs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .gallery-thumbs img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: .55; flex-shrink: 0; transition: opacity .15s; }
+    .gallery-thumbs img.active { opacity: 1; outline: 2px solid var(--gold); }
+    .gallery-empty { width: 100%; aspect-ratio: 4/3; background: var(--bg3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 56px; opacity: .25; }
+
+    /* Detail text */
+    .detail-eyebrow { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .detail-title   { font-family: var(--serif); font-size: 44px; font-weight: 300; line-height: 1.08; margin-bottom: 12px; }
+    @media(max-width:600px){ .detail-title { font-size: 30px; } }
+    .detail-meta    { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--cream-dim); margin-bottom: 28px; }
+    .detail-meta span { display: inline-flex; align-items: center; gap: 5px; }
+    .section-title  { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .detail-desc    { font-size: 14px; color: var(--cream-dim); line-height: 1.75; margin-bottom: 28px; }
+    .ameublement-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .ameublement-tag { font-size: 12px; color: var(--cream-dim); background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; }
+
+    /* Bottom CTAs */
+    .detail-ctas { display: flex; gap: 12px; margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border); }
+    .btn-wa {
+      flex: 1; padding: 15px; background: #25D366; color: #fff; border-radius: 10px;
+      text-align: center; font-size: 14px; font-weight: 500; text-decoration: none;
+      display: flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer;
+    }
+    .btn-interest {
+      flex: 1; padding: 15px; background: var(--violet); color: #fff; border: none;
+      border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer;
+      font-family: var(--sans); transition: background .15s;
+    }
+    .btn-interest:hover { background: #4848b0; }
+    @media(max-width:500px){ .detail-ctas { flex-direction: column; } }
+
+    /* Sidebar */
+    .sidebar-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .sidebar-title { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+    .fin-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .fin-row:last-child { border-bottom: none; }
+    .fin-label { font-size: 12px; color: var(--dim); }
+    .fin-val   { font-size: 14px; font-weight: 500; color: var(--cream); }
+    .fin-val.gold  { color: var(--gold); }
+    .fin-val.green { color: var(--green); }
+    .sidebar-cta { display: block; width: 100%; padding: 13px; background: var(--violet); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--sans); text-align: center; margin-top: 14px; }
+    .sidebar-cta:hover { background: #4848b0; }
+    .dpe-badges { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    .dpe-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .dpe-A { background:#00c853;color:#fff; }
+    .dpe-B { background:#64dd17;color:#fff; }
+    .dpe-C { background:#aeea00;color:#1a1a1a; }
+    .dpe-D { background:#ffd600;color:#1a1a1a; }
+    .dpe-E { background:#ff9100;color:#fff; }
+    .dpe-F { background:#ff3d00;color:#fff; }
+    .dpe-G { background:#b71c1c;color:#fff; }
+
+    /* ── Sticky bottom CTA ──────────────────────────────────────── */
+    #sticky-cta {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, var(--bg) 60%, transparent);
+      padding: 24px 20px 20px; z-index: 50; pointer-events: none; display: none;
+    }
+    #sticky-cta > div { max-width: 500px; margin: 0 auto; display: flex; gap: 10px; pointer-events: auto; }
+
+    /* ── Modal CTA ──────────────────────────────────────────────── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
+    .modal-overlay.on { display: flex; }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 32px; max-width: 440px; width: 100%; }
+    .modal-title { font-family: var(--serif); font-size: 24px; font-weight: 300; margin-bottom: 8px; }
+    .modal-sub  { font-size: 13px; color: var(--dim); margin-bottom: 24px; line-height: 1.6; }
+    .modal-field { margin-bottom: 14px; }
+    .modal-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; display: block; }
+    .modal-input { width: 100%; padding: 11px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--cream); font-family: var(--sans); font-size: 14px; }
+    .modal-input:focus { outline: none; border-color: var(--gold); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-submit { flex: 1; padding: 13px; background: var(--violet); color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--sans); }
+    .btn-cancel { padding: 13px 18px; background: none; border: 1px solid var(--border); color: var(--dim); border-radius: 7px; font-size: 13px; cursor: pointer; font-family: var(--sans); }
+    .modal-confirm { display: none; text-align: center; padding: 20px 0; }
+    .modal-confirm-icon { margin-bottom: 16px; }
+    .modal-confirm-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 8px; }
+    .modal-confirm-sub { font-size: 13px; color: var(--dim); line-height: 1.6; }
+    .modal-confirm-close { margin-top: 22px; padding: 11px 28px; background: var(--violet); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--sans); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────── -->
+<header class="header">
+  <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none">
+    <svg viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none" style="height:22px;width:auto">
+      <path d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144ZM20.4549 19.7444C17.5149 19.7444 16.1349 17.5544 16.1349 14.7344L16.1349 5.43444 14.2449 5.43444 14.2449 5.01444C16.6449 4.77444 18.5049 3.24444 18.9849 0.514443L19.4049 0.514443 19.4049 4.23444 23.8749 4.23444 23.3649 5.43444 19.4049 5.43444 19.4049 14.4044C19.4049 16.4144 20.3049 17.8544 21.8049 17.8544 23.0949 17.8544 23.8449 16.8044 24.0849 15.6944L24.4449 15.7544C24.1749 17.9144 22.6149 19.7444 20.4549 19.7444ZM31.8887 19.7444C27.6287 19.7444 24.2687 16.2644 24.2687 11.7644 24.2687 7.02444 27.7487 3.93444 31.8287 3.93444 35.9687 3.93444 39.3887 7.23445 39.3887 11.8244 39.3887 16.5044 36.0587 19.7444 31.8887 19.7444ZM27.7787 12.4244C28.3187 16.5944 30.3287 19.4744 32.8187 19.1444 35.3387 18.8144 36.4187 15.3344 35.8487 11.1044 35.3087 6.93444 33.2987 4.17444 30.8687 4.53444 28.3487 4.89444 27.2687 8.34445 27.7787 12.4244ZM58.6606 19.4444L58.6606 19.0544C60.1306 19.0544 61.1806 18.4844 60.9106 16.4444L59.9506 9.57444C59.5906 7.05444 58.5406 5.73444 56.8306 5.73444 55.0604 5.73444 54.0704 7.14444 53.8604 8.73444 53.8904 9.03444 53.9204 9.36445 53.9204 9.69445L53.9204 16.4144C53.9204 18.4844 54.8204 19.0544 56.0206 19.0544L56.0206 19.4444 48.7004 19.4444 48.7004 19.0544C49.8704 19.0544 50.7104 18.4844 50.7104 16.4144L50.7104 10.2044C50.7104 7.29445 49.5404 5.70444 47.5604 5.70444 45.9104 5.70444 44.6504 7.08444 44.4704 8.52444L44.4704 16.4144C44.4704 18.4844 45.3104 19.0544 46.4804 19.0544L46.4804 19.4444 39.1304 19.4444 39.1304 19.0544C40.3304 19.0544 41.2304 18.4844 41.2304 16.4144L41.2304 7.50445C41.2304 6.03444 40.6304 5.55444 39.2504 5.52445L39.2504 5.13444C40.8404 5.01444 42.6404 4.68444 44.2004 3.96444L44.4704 4.11444 44.4704 7.32444C45.0704 5.58444 46.7804 3.93444 49.0004 3.93444 51.2204 3.93444 53.0804 5.28444 53.7104 7.77445 54.1904 5.76444 55.8706 3.93444 58.3006 3.93444 60.8806 3.93444 62.6506 5.55444 63.2206 9.48445L64.2406 16.4444C64.5406 18.4844 65.4106 19.0544 66.6406 19.0544L66.6406 19.4444Z" fill="#F5F2ED"/>
+    </svg>
+    <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#7a7874">Buyers Club</span>
+  </a>
+  <nav class="header-nav">
+    <a href="/showroom">Réalisations</a>
+  </nav>
+</header>
+
+<!-- ══ PAGE LISTE ════════════════════════════════════════════════ -->
+<div id="page-list">
+  <section class="hero">
+    <p class="hero-eyebrow">Atom Buyers Club</p>
+    <h1 class="hero-title">Projets disponibles</h1>
+    <p class="hero-sub">Sélection de micro-logements à Paris, clé en main. Rénovation, ameublement et gestion locative inclus.</p>
+  </section>
+
+  <div class="stats-bar" id="stats-bar" style="display:none">
+    <div class="stat-item">
+      <div class="stat-value" id="stat-nb">—</div>
+      <div class="stat-label">projets disponibles</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value gold" id="stat-rdt">—</div>
+      <div class="stat-label">rendement moyen</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="stat-prix">—</div>
+      <div class="stat-label">ticket moyen all-in</div>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter-pill active" data-filter="all" onclick="applyFilter(this)">Tous</button>
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="grid-empty" style="padding:80px 20px">
+      <p style="font-size:32px;opacity:.3;margin-bottom:12px">🏠</p>
+      <p>Chargement des projets…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STICKY CTA BAR ════════════════════════════════════════════ -->
+<div id="sticky-cta">
+  <div>
+    <a id="sticky-wa" href="#" target="_blank"
+      style="flex:0 0 auto;padding:14px 16px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:10px;color:var(--cream);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp
+    </a>
+    <button onclick="openCta()" style="flex:1;padding:14px;background:var(--violet);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--sans)">
+      Je suis intéressé(e) →
+    </button>
+  </div>
+</div>
+
+<!-- ══ PAGE DÉTAIL ════════════════════════════════════════════════ -->
+<div id="page-detail">
+  <div class="detail-wrap">
+    <button class="detail-back" onclick="showList()">← Retour aux projets</button>
+
+    <div class="detail-layout">
+      <!-- ── Colonne gauche ── -->
+      <div>
+        <!-- Gallery toggle -->
+        <div id="gallery-toggle-wrap" style="display:none">
+          <div class="gallery-toggle">
+            <button class="gallery-btn active" id="btn-photos" onclick="switchGallery('photos')">Photos actuelles</button>
+            <button class="gallery-btn" id="btn-3d"     onclick="switchGallery('3d')">Visuels 3D</button>
+          </div>
+        </div>
+        <img id="gallery-main" class="gallery-main" src="" alt="" style="display:none"/>
+        <div id="gallery-empty" class="gallery-empty">🏠</div>
+        <div class="gallery-thumbs" id="gallery-thumbs"></div>
+
+        <div style="margin-top:24px">
+          <p class="detail-eyebrow" id="detail-eyebrow"></p>
+          <h1 class="detail-title" id="detail-title"></h1>
+          <div class="detail-meta" id="detail-meta"></div>
+        </div>
+
+        <p class="section-title" id="desc-title" style="display:none">Description</p>
+        <p class="detail-desc" id="detail-desc"></p>
+
+        <p class="section-title" id="ameub-title" style="display:none">Ameublement inclus</p>
+        <div class="ameublement-grid" id="ameub-grid"></div>
+
+        <!-- Bottom CTAs -->
+        <div class="detail-ctas">
+          <a id="detail-wa" href="#" target="_blank" class="btn-wa">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Contacter l'équipe
+          </a>
+          <button onclick="openCta()" class="btn-interest">Je suis intéressé(e) →</button>
+        </div>
+      </div>
+
+      <!-- ── Colonne droite (sidebar) ── -->
+      <div style="position:sticky;top:88px">
+        <div class="sidebar-card" id="sidebar-fin" style="display:none">
+          <p class="sidebar-title">Détail financier</p>
+          <div id="fin-rows"></div>
+        </div>
+        <div id="sidebar-dpe" style="display:none">
+          <div class="sidebar-card">
+            <p class="sidebar-title">Diagnostic énergétique</p>
+            <div class="dpe-badges" id="dpe-badges"></div>
+          </div>
+        </div>
+        <button onclick="openCta()" class="sidebar-cta">Je déclare mon intérêt →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CTA ═════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="cta-modal" onclick="if(event.target===this)closeCta()">
+  <div class="modal-box">
+    <div id="cta-form-wrap">
+      <h2 class="modal-title" id="cta-modal-title">Je suis intéressé(e)</h2>
+      <p class="modal-sub" id="cta-modal-sub">L'équipe Atom vous recontacte sous 24h pour ce projet.</p>
+      <div class="modal-field">
+        <label class="modal-label">Prénom *</label>
+        <input class="modal-input" id="cta-prenom" type="text" placeholder="Votre prénom"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Nom *</label>
+        <input class="modal-input" id="cta-nom" type="text" placeholder="Votre nom"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Email *</label>
+        <input class="modal-input" id="cta-email" type="email" placeholder="vous@email.com"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Téléphone *</label>
+        <input class="modal-input" id="cta-tel" type="tel" placeholder="+33 6 ..."/>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeCta()">Annuler</button>
+        <button class="btn-submit" id="btn-submit-cta" onclick="submitCta()">Envoyer →</button>
+      </div>
+      <p id="cta-err" style="color:var(--red);font-size:12px;margin-top:10px;display:none"></p>
+    </div>
+    <div class="modal-confirm" id="cta-confirm">
+      <div class="modal-confirm-icon">
+        <div style="width:56px;height:56px;background:rgba(91,91,214,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5B5BD6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+      <h3 class="modal-confirm-title" id="cta-confirm-title">Intérêt enregistré !</h3>
+      <p class="modal-confirm-sub" id="cta-confirm-sub">L'équipe Atom vous recontacte sous 24h.</p>
+      <button class="modal-confirm-close" onclick="closeCta()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const _sp    = new URLSearchParams(location.search);
+  const leadId = _sp.get('lead_id') || null;
+
+  const DEFAULT_WA = '33686475656'; // Adrien par défaut
+
+  let allProjects   = [];
+  let currentFilter = 'all';
+  let currentProj   = null;
+  let galleryMode   = 'photos'; // 'photos' | '3d'
+
+  // ── Pré-remplissage modal depuis sessionStorage ──────────────
+  let _storedLead = null;
+  try {
+    const raw = sessionStorage.getItem('atom_lead');
+    if (raw) {
+      _storedLead = JSON.parse(raw);
+      sessionStorage.removeItem('atom_lead');
+    }
+  } catch {}
+
+  function esc(s) {
+    const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML;
+  }
+  function fmt(n) {
+    return Number(n).toLocaleString('fr-FR');
+  }
+
+  // ── Chargement initial ────────────────────────────────────────
+  async function init() {
+    try {
+      const res  = await fetch('/api/public-project?list=1');
+      const data = await res.json().catch(() => ({ projects: [] }));
+      allProjects = data.projects || [];
+    } catch (e) {
+      allProjects = [];
+    }
+
+    renderStats();
+    buildFilters();
+    renderGrid(allProjects);
+
+    // Sticky CTA après 1.5s
+    setTimeout(() => { document.getElementById('sticky-cta').style.display = ''; }, 1500);
+
+    // Détail depuis hash
+    if (location.hash.startsWith('#/')) {
+      const slug = location.hash.slice(2);
+      const proj = allProjects.find(p => p.slug === slug);
+      if (proj) showDetail(proj);
+    }
+  }
+
+  function renderStats() {
+    if (!allProjects.length) return;
+    const withRdt  = allProjects.filter(p => p.rendement_brut > 0);
+    const withTot  = allProjects.filter(p => p.total_all_in  > 0);
+    const avgRdt   = withRdt.length ? (withRdt.reduce((a, p) => a + p.rendement_brut, 0) / withRdt.length).toFixed(1) : null;
+    const avgTot   = withTot.length ? Math.round(withTot.reduce((a, p) => a + p.total_all_in, 0) / withTot.length) : null;
+
+    document.getElementById('stat-nb').textContent   = allProjects.length;
+    document.getElementById('stat-rdt').textContent  = avgRdt  ? avgRdt  + ' %' : '—';
+    document.getElementById('stat-prix').textContent = avgTot  ? fmt(avgTot) + ' €' : '—';
+    document.getElementById('stats-bar').style.display = '';
+  }
+
+  function buildFilters() {
+    const arrs = [...new Set(allProjects.map(p => p.arrondissement).filter(Boolean))].sort();
+    const wrap = document.getElementById('filters');
+    const pills = ['<button class="filter-pill active" data-filter="all" onclick="applyFilter(this)">Tous</button>'];
+    arrs.forEach(a => pills.push(`<button class="filter-pill" data-filter="arr:${esc(a)}" onclick="applyFilter(this)">${esc(a)}</button>`));
+    wrap.innerHTML = pills.join('');
+  }
+
+  function applyFilter(el) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    const f = el.dataset.filter;
+    currentFilter = f;
+    const filtered = f === 'all' ? allProjects
+      : f.startsWith('arr:') ? allProjects.filter(p => p.arrondissement === f.slice(4))
+      : allProjects;
+    renderGrid(filtered);
+  }
+
+  function renderGrid(projects) {
+    const grid = document.getElementById('grid');
+    if (!projects.length) {
+      grid.innerHTML = '<div class="grid-empty"><p>Aucun projet disponible pour le moment.</p></div>';
+      return;
+    }
+    grid.innerHTML = projects.map(p => {
+      const img   = (p.images || [])[0] || null;
+      const surf  = p.surface_carrez ? p.surface_carrez + ' m²' : null;
+      const etage = floorLabel(p.floor);
+      const metro = p.metro_name ? `${p.metro_name}${p.metro_distance ? ' · ' + p.metro_distance + ' min' : ''}` : null;
+      const meta  = [surf, etage, metro].filter(Boolean).join(' · ');
+
+      const total = p.total_all_in ? fmt(p.total_all_in) + ' €' : '—';
+      const loyer = p.loyer_atom   ? fmt(p.loyer_atom)   + ' €/mois' : '—';
+      const rdt   = p.rendement_brut ? p.rendement_brut + ' %' : '—';
+
+      return `
+        <div class="proj-card" onclick="openDetail('${esc(p.id)}')">
+          ${img
+            ? `<img class="proj-card-img" src="${esc(img)}" alt="${esc(p.title)}" loading="lazy"/>`
+            : `<div class="proj-card-img-ph">🏠</div>`}
+          <div class="proj-card-body">
+            ${p.arrondissement ? `<p class="proj-card-arr">${esc(p.arrondissement)} · Paris</p>` : ''}
+            <p class="proj-card-title">${esc(p.title || 'Projet')}</p>
+            ${meta ? `<p class="proj-card-meta">${esc(meta)}</p>` : ''}
+            <div class="proj-card-fins">
+              <div class="proj-fin-cell">
+                <div class="proj-fin-val">${total}</div>
+                <div class="proj-fin-label">Total all-in</div>
+              </div>
+              <div class="proj-fin-cell">
+                <div class="proj-fin-val gold">${loyer}</div>
+                <div class="proj-fin-label">Loyer mensuel</div>
+              </div>
+              <div class="proj-fin-cell">
+                <div class="proj-fin-val gold">${rdt}</div>
+                <div class="proj-fin-label">Rendement</div>
+              </div>
+            </div>
+            <button class="btn-card-voir">Voir le projet →</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function floorLabel(floor) {
+    if (floor == null || floor === '') return null;
+    const n = Number(floor);
+    if (n === 0) return 'RDC';
+    if (n === 1) return '1er étage';
+    return n + 'e étage';
+  }
+
+  function openDetail(id) {
+    const proj = allProjects.find(p => p.id === id);
+    if (proj) showDetail(proj);
+  }
+
+  // ── Détail ────────────────────────────────────────────────────
+  function showDetail(proj) {
+    currentProj = proj;
+    history.pushState(null, '', '#/' + (proj.slug || proj.id));
+    document.getElementById('page-list').style.display   = 'none';
+    document.getElementById('page-detail').style.display = '';
+    document.getElementById('sticky-cta').style.display  = 'none';
+    window.scrollTo(0, 0);
+    document.title = (proj.title || 'Projet') + ' — Atom Buyers Club';
+
+    // Eyebrow + titre
+    document.getElementById('detail-eyebrow').textContent = proj.arrondissement ? proj.arrondissement + ' · Paris' : 'Paris';
+    document.getElementById('detail-title').textContent   = proj.title || '';
+
+    // Meta
+    const metaParts = [];
+    if (proj.surface_carrez) metaParts.push(`${proj.surface_carrez} m²`);
+    const etage = floorLabel(proj.floor);
+    if (etage) metaParts.push(etage);
+    if (proj.has_elevator === false || proj.has_elevator === 'false') metaParts.push('Sans ascenseur');
+    if (proj.has_elevator === true  || proj.has_elevator === 'true')  metaParts.push('Avec ascenseur');
+    if (proj.metro_name) metaParts.push(`Métro ${proj.metro_name}${proj.metro_distance ? ' – ' + proj.metro_distance + ' min' : ''}`);
+    if (proj.address) metaParts.push(proj.address);
+    document.getElementById('detail-meta').innerHTML = metaParts.map(m => `<span>${esc(m)}</span>`).join('<span style="color:var(--border)"> · </span>');
+
+    // Description
+    const descEl = document.getElementById('detail-desc');
+    const descTitle = document.getElementById('desc-title');
+    if (proj.description) {
+      descTitle.style.display = '';
+      descEl.textContent = proj.description;
+    } else {
+      descTitle.style.display = 'none';
+      descEl.textContent = '';
+    }
+
+    // Ameublement
+    const ameubTitle = document.getElementById('ameub-title');
+    const ameubGrid  = document.getElementById('ameub-grid');
+    if (proj.ameublement && proj.ameublement_desc) {
+      ameubTitle.style.display = '';
+      // Parse la description en items
+      const items = proj.ameublement_desc.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+      ameubGrid.innerHTML = items.map(it => `<span class="ameublement-tag">${esc(it)}</span>`).join('');
+    } else {
+      ameubTitle.style.display = 'none';
+      ameubGrid.innerHTML = '';
+    }
+
+    // Galerie
+    buildGallery(proj);
+
+    // Financials sidebar
+    buildFinancials(proj);
+
+    // WA link
+    const waPhone  = proj.wa_contact?.phone || DEFAULT_WA;
+    const waName   = proj.wa_contact?.name  || 'Atom Buyers Club';
+    const waMsg    = encodeURIComponent(`Bonjour ${waName}, je suis intéressé(e) par le projet "${proj.title || ''}" sur le site Atom Buyers Club.`);
+    const waHref   = `https://wa.me/${waPhone}?text=${waMsg}`;
+    document.getElementById('detail-wa').href = waHref;
+    document.getElementById('sticky-wa').href  = waHref;
+
+    // Mettre à jour modal
+    document.getElementById('cta-modal-title').textContent = `Je suis intéressé(e) — ${proj.title || 'ce projet'}`;
+    document.getElementById('cta-modal-sub').textContent   = `L'équipe Atom vous recontactera sous 24h pour discuter de ce projet.`;
+  }
+
+  function buildGallery(proj) {
+    const photos = proj.images    || [];
+    const imgs3d = proj.images_3d || [];
+    const hasPhotos = photos.length > 0;
+    const has3d     = imgs3d.length  > 0;
+
+    const toggleWrap = document.getElementById('gallery-toggle-wrap');
+    toggleWrap.style.display = (hasPhotos && has3d) ? '' : 'none';
+
+    galleryMode = 'photos';
+    document.getElementById('btn-photos')?.classList.add('active');
+    document.getElementById('btn-3d')?.classList.remove('active');
+
+    const imgs = hasPhotos ? photos : (has3d ? imgs3d : []);
+    setGalleryImages(imgs);
+  }
+
+  function setGalleryImages(imgs) {
+    const mainEl   = document.getElementById('gallery-main');
+    const emptyEl  = document.getElementById('gallery-empty');
+    const thumbsEl = document.getElementById('gallery-thumbs');
+    if (!imgs.length) {
+      mainEl.style.display  = 'none';
+      emptyEl.style.display = '';
+      thumbsEl.innerHTML    = '';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    mainEl.style.display  = 'block';
+    mainEl.src = imgs[0];
+    mainEl.alt = currentProj?.title || '';
+    thumbsEl.innerHTML = imgs.map((u, i) =>
+      `<img src="${esc(u)}" class="${i === 0 ? 'active' : ''}" onclick="setMainImg(this,'${esc(u)}')" loading="lazy"/>`
+    ).join('');
+  }
+
+  function switchGallery(mode) {
+    galleryMode = mode;
+    document.getElementById('btn-photos').classList.toggle('active', mode === 'photos');
+    document.getElementById('btn-3d').classList.toggle('active',     mode === '3d');
+    const imgs = mode === 'photos' ? (currentProj.images || []) : (currentProj.images_3d || []);
+    setGalleryImages(imgs);
+  }
+
+  function setMainImg(el, url) {
+    document.getElementById('gallery-main').src = url;
+    document.querySelectorAll('.gallery-thumbs img').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function buildFinancials(proj) {
+    const card = document.getElementById('sidebar-fin');
+    const rows = [];
+    if (proj.price_fai)      rows.push({ l: 'Prix FAI',           v: fmt(proj.price_fai) + ' €' });
+    if (proj.fees_atom)      rows.push({ l: 'Honoraires Atom',    v: fmt(proj.fees_atom) + ' €' });
+    if (proj.fees_notaire)   rows.push({ l: 'Frais de notaire',   v: fmt(proj.fees_notaire) + ' €' });
+    if (proj.budget_travaux) rows.push({ l: 'Travaux',            v: fmt(proj.budget_travaux) + ' €' });
+    if (proj.budget_meuble)  rows.push({ l: 'Ameublement',        v: fmt(proj.budget_meuble) + ' €' });
+    if (proj.total_all_in)   rows.push({ l: 'Total all-in',       v: fmt(proj.total_all_in) + ' €', gold: true });
+    if (proj.loyer_atom)     rows.push({ l: 'Loyer mensuel',      v: fmt(proj.loyer_atom) + ' €/mois', green: true });
+    if (proj.mensualite)     rows.push({ l: 'Mensualité (25 ans, 10% apport)', v: fmt(proj.mensualite) + ' €/mois' });
+    if (proj.rendement_brut) rows.push({ l: 'Rendement',          v: proj.rendement_brut + ' %', gold: true });
+
+    if (!rows.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    document.getElementById('fin-rows').innerHTML = rows.map(r =>
+      `<div class="fin-row"><span class="fin-label">${esc(r.l)}</span><span class="fin-val${r.gold ? ' gold' : r.green ? ' green' : ''}">${esc(r.v)}</span></div>`
+    ).join('');
+
+    // DPE
+    const dpeWrap = document.getElementById('sidebar-dpe');
+    if (proj.dpe_avant || proj.dpe_apres) {
+      dpeWrap.style.display = '';
+      const badges = [];
+      if (proj.dpe_avant) badges.push(`<span class="dpe-badge dpe-${esc(proj.dpe_avant.toUpperCase())}">${esc(proj.dpe_avant.toUpperCase())}</span> <span style="font-size:11px;color:var(--dim)">avant</span>`);
+      if (proj.dpe_avant && proj.dpe_apres) badges.push('<span style="color:var(--dim);font-size:14px">→</span>');
+      if (proj.dpe_apres) badges.push(`<span class="dpe-badge dpe-${esc(proj.dpe_apres.toUpperCase())}">${esc(proj.dpe_apres.toUpperCase())}</span> <span style="font-size:11px;color:var(--green)">après</span>`);
+      document.getElementById('dpe-badges').innerHTML = badges.join(' ');
+    } else {
+      dpeWrap.style.display = 'none';
+    }
+  }
+
+  function showList() {
+    document.getElementById('page-detail').style.display = 'none';
+    document.getElementById('page-list').style.display   = '';
+    document.getElementById('sticky-cta').style.display  = '';
+    document.title = 'Projets disponibles — Atom Buyers Club';
+    history.pushState(null, '', location.pathname + (leadId ? '?lead_id=' + leadId : ''));
+    window.scrollTo(0, 0);
+    currentProj = null;
+  }
+
+  // ── Modal CTA ────────────────────────────────────────────────
+  function openCta() {
+    // Cas 1 : lead connu (lien email) → intérêt direct sans formulaire
+    if (leadId && currentProj) {
+      document.getElementById('cta-modal').classList.add('on');
+      document.getElementById('cta-form-wrap').style.display = 'none';
+      const conf = document.getElementById('cta-confirm');
+      conf.style.display = 'block';
+      document.getElementById('cta-confirm-title').textContent = 'Intérêt enregistré !';
+      document.getElementById('cta-confirm-sub').textContent   = 'L\'équipe Atom a bien noté votre intérêt et vous recontactera prochainement.';
+      // Enregistrer l'événement
+      fetch('/api/public-project?action=interest', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead_id:       leadId,
+          project_id:    currentProj.id,
+          project_title: currentProj.title,
+        }),
+      }).catch(() => {});
+      return;
+    }
+
+    // Cas 2 : lead en mémoire (vient de la landing) → confirmation immédiate
+    const sl = _storedLead;
+    if (sl && sl.prenom && sl.nom && sl.email && sl.tel) {
+      document.getElementById('cta-modal').classList.add('on');
+      document.getElementById('cta-form-wrap').style.display = 'none';
+      const conf = document.getElementById('cta-confirm');
+      conf.style.display = 'block';
+      document.getElementById('cta-confirm-title').textContent = `Parfait, ${sl.prenom} !`;
+      document.getElementById('cta-confirm-sub').textContent   = 'L\'équipe Atom vous recontacte sous 24h pour ce projet.';
+      fetch('/api/submit', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prenom: sl.prenom, nom: sl.nom, email: sl.email, tel: sl.tel,
+          utm_source: 'projets',
+          utm_content: currentProj?.slug || null,
+          project_id:  currentProj?.id   || null,
+          referrer: location.href,
+        }),
+      }).catch(() => {});
+      return;
+    }
+
+    // Cas 3 : nouveau visiteur → formulaire
+    document.getElementById('cta-modal').classList.add('on');
+    document.getElementById('cta-form-wrap').style.display = '';
+    document.getElementById('cta-confirm').style.display   = 'none';
+    document.getElementById('cta-err').style.display       = 'none';
+    document.getElementById('btn-submit-cta').disabled     = false;
+    document.getElementById('btn-submit-cta').textContent  = 'Envoyer →';
+  }
+
+  function closeCta() {
+    document.getElementById('cta-modal').classList.remove('on');
+  }
+
+  async function submitCta() {
+    const prenom = document.getElementById('cta-prenom').value.trim();
+    const nom    = document.getElementById('cta-nom').value.trim();
+    const email  = document.getElementById('cta-email').value.trim();
+    const tel    = document.getElementById('cta-tel').value.trim();
+    const errEl  = document.getElementById('cta-err');
+    const btn    = document.getElementById('btn-submit-cta');
+
+    if (!prenom || !nom || !email || !tel) {
+      errEl.textContent = 'Merci de remplir tous les champs.';
+      errEl.style.display = '';
+      return;
+    }
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Envoi…';
+
+    try {
+      const res = await fetch('/api/submit', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prenom, nom, email, tel,
+          utm_source:  'projets',
+          utm_content: currentProj?.slug || null,
+          project_id:  currentProj?.id   || null,
+          referrer: location.href,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errEl.textContent = data.error || 'Une erreur est survenue.';
+        errEl.style.display = '';
+        btn.disabled = false;
+        btn.textContent = 'Envoyer →';
+        return;
+      }
+      // Succès
+      document.getElementById('cta-form-wrap').style.display = 'none';
+      const conf = document.getElementById('cta-confirm');
+      conf.style.display = 'block';
+      document.getElementById('cta-confirm-title').textContent = `Parfait, ${prenom} !`;
+      document.getElementById('cta-confirm-sub').textContent   = 'L\'équipe Atom vous recontacte sous 24h pour ce projet.';
+    } catch (e) {
+      errEl.textContent = 'Erreur réseau. Réessayez.';
+      errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Envoyer →';
+    }
+  }
+
+  // Gestion du bouton retour navigateur
+  window.addEventListener('popstate', () => {
+    if (location.hash.startsWith('#/')) {
+      const slug = location.hash.slice(2);
+      const proj = allProjects.find(p => p.slug === slug || p.id === slug);
+      if (proj) { showDetail(proj); return; }
+    }
+    showList();
+  });
+
+  init();
+</script>
+</body>
+</html>

@@ -117,26 +117,35 @@ module.exports = async function handler(req, res) {
       .eq('id', projectId)
       .single();
 
-    // Email de notification aux 3 admins
-    const notifyList = ADMIN_EMAILS.length
-      ? ADMIN_EMAILS
-      : (process.env.NOTIFY_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-
-    if (notifyList.length && process.env.RESEND_API_KEY) {
-      const resend   = new Resend(process.env.RESEND_API_KEY);
-      const fromAddr = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+    if (process.env.RESEND_API_KEY) {
+      const resend    = new Resend(process.env.RESEND_API_KEY);
+      const fromAddr  = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
       const projTitle = proj?.title || 'Projet';
       const responsible = proj?.responsible_admin ? getFounder(proj.responsible_admin).name : null;
-      try {
-        await resend.emails.send({
-          from: fromAddr,
-          to:   notifyList,
-          subject: `Intérêt projet — ${leadData.prenom} ${leadData.nom} · ${projTitle}`,
-          html: buildInterestEmail(leadData, projTitle, responsible),
-        });
-        console.log('Notif intérêt envoyée → ', notifyList.join(', '));
-      } catch (e) {
-        console.error('Email intérêt erreur:', e?.message || e);
+
+      // ── Routing : email vers le responsable du projet uniquement.
+      // Fallback sur tous les admins si aucun responsable défini.
+      let notifyList = [];
+      if (proj?.responsible_admin) {
+        notifyList = [proj.responsible_admin];
+      } else {
+        notifyList = ADMIN_EMAILS.length
+          ? ADMIN_EMAILS
+          : (process.env.NOTIFY_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+      }
+
+      if (notifyList.length) {
+        try {
+          await resend.emails.send({
+            from: fromAddr,
+            to:   notifyList,
+            subject: `Intérêt projet — ${leadData.prenom} ${leadData.nom} · ${projTitle}`,
+            html: buildInterestEmail(leadData, projTitle, responsible),
+          });
+          console.log('Notif intérêt envoyée → ', notifyList.join(', '));
+        } catch (e) {
+          console.error('Email intérêt erreur:', e?.message || e);
+        }
       }
     }
   }

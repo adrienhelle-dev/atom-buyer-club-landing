@@ -6,9 +6,29 @@ module.exports = async function handler(req, res) {
   const payload = verifyToken(tokenFromReq(req));
   if (!payload) return res.status(401).json({ error: 'Non autorisé' });
 
-  // GET — liste des événements d'un lead
+  // GET — liste des événements d'un lead  OU  récents toutes sources confondues
   if (req.method === 'GET') {
-    const { lead_id } = req.query;
+    const { lead_id, recent } = req.query;
+
+    // ── Mode "recent" : centre de notifications admin ────────────
+    if (recent === '1') {
+      // Événements importants des 30 derniers jours, avec infos du lead
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const NOTIF_TYPES = ['inscription', 'resoumission', 'interet_projet', 'showroom_interest', 'showroom_cta'];
+      const { data, error } = await supabase
+        .from('lead_events')
+        .select(`
+          id, type, content, created_at, lead_id,
+          lead:lead_id ( prenom, nom, email )
+        `)
+        .in('type', NOTIF_TYPES)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) { console.error('Events recent GET:', error); return res.status(500).json({ error: 'db_error' }); }
+      return res.status(200).json({ events: data || [] });
+    }
+
     if (!lead_id) return res.status(400).json({ error: 'lead_id requis' });
     const { data, error } = await supabase
       .from('lead_events')

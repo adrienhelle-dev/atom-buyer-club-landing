@@ -1,5 +1,7 @@
 const { supabase } = require('../lib/supabase');
-const { verifyToken, tokenFromReq } = require('../lib/auth');
+const { verifyToken, tokenFromReq, ADMIN_EMAILS } = require('../lib/auth');
+const { getFounder } = require('../lib/founders');
+const { Resend } = require('resend');
 
 const WRITE_FIELDS = [
   'slug', 'name', 'quartier', 'arrondissement', 'surface', 'style',
@@ -66,8 +68,12 @@ module.exports = async function handler(req, res) {
         const { lead_id, slug, item_name } = _b;
         if (!lead_id) return res.status(400).json({ error: 'lead_id requis' });
 
-        // Vérifier que le lead existe
-        const { data: lead } = await supabase.from('leads').select('id').eq('id', lead_id).maybeSingle();
+        // Vérifier que le lead existe et récupérer ses infos
+        const { data: lead } = await supabase
+          .from('leads')
+          .select('id, prenom, nom, email, tel')
+          .eq('id', lead_id)
+          .maybeSingle();
         if (!lead) return res.status(404).json({ error: 'lead_not_found' });
 
         // Insérer l'événement dans la timeline
@@ -77,6 +83,39 @@ module.exports = async function handler(req, res) {
           content: JSON.stringify({ slug: slug || null, item_name: item_name || null }),
           author:  null,
         }]);
+
+        // ── Email vers le responsable de la réalisation ──────────
+        if (process.env.RESEND_API_KEY) {
+          // Charger le responsable de la réalisation
+          let responsibleEmail = null;
+          if (slug) {
+            const { data: item } = await supabase
+              .from('showroom_items')
+              .select('responsible_admin')
+              .eq('slug', slug)
+              .maybeSingle();
+            responsibleEmail = item?.responsible_admin || null;
+          }
+          const notifyList = responsibleEmail
+            ? [responsibleEmail]
+            : (ADMIN_EMAILS.length ? ADMIN_EMAILS : (process.env.NOTIFY_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean));
+
+          if (notifyList.length) {
+            const resend    = new Resend(process.env.RESEND_API_KEY);
+            const fromAddr  = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+            const respName  = responsibleEmail ? getFounder(responsibleEmail).name : null;
+            try {
+              await resend.emails.send({
+                from: fromAddr,
+                to:   notifyList,
+                subject: `Intérêt showroom — ${lead.prenom || ''} ${lead.nom || ''} · ${item_name || slug || 'Réalisation'}`,
+                html: buildShowroomInterestEmail(lead, item_name || slug || 'Réalisation', respName),
+              });
+            } catch (e) {
+              console.error('Email showroom interest erreur:', e?.message || e);
+            }
+          }
+        }
 
         return res.status(200).json({ ok: true });
       }
@@ -434,3 +473,29 @@ function computeShowroomFinancials(p) {
 }
 
 function numS(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+
+// ── Email template pour intérêt showroom ──────────────────────────
+function buildShowroomInterestEmail(lead, itemName, responsible) {
+  const respLine = responsible
+    ? `<p style="margin:0 0 6px;font-size:13px;color:#888">Responsable réalisation : <strong style="color:#111">${responsible}</strong></p>`
+    : '';
+  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f4;font-family:system-ui,sans-serif">
+  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e5e5e5">
+    <div style="background:#0f0e0c;padding:22px 28px">
+      <p style="margin:0 0 8px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#B8975A">Atom Buyers Club</p>
+      <h1 style="margin:0;font-size:19px;font-weight:400;color:#F5F2ED">${lead.prenom || ''} ${lead.nom || ''}</h1>
+      <p style="margin:6px 0 0;font-size:13px;color:#B8975A">Intérêt déclaré — ${itemName}</p>
+    </div>
+    <div style="padding:24px 28px">
+      ${respLine}
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:9px 20px 9px 0;color:#888;font-size:13px;white-space:nowrap">Email</td><td style="padding:9px 0;font-size:14px;color:#111"><a href="mailto:${lead.email}" style="color:#B8975A">${lead.email || '—'}</a></td></tr>
+        <tr><td style="padding:9px 20px 9px 0;color:#888;font-size:13px;white-space:nowrap">Téléphone</td><td style="padding:9px 0;font-size:14px;color:#111">${lead.tel || '—'}</td></tr>
+        <tr><td style="padding:9px 20px 9px 0;color:#888;font-size:13px;white-space:nowrap">Réalisation</td><td style="padding:9px 0;font-size:14px;color:#111">${itemName}</td></tr>
+      </table>
+    </div>
+    <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0">
+      <a href="${process.env.SITE_URL || 'https://join.atombuyerclub.fr'}/admin" style="display:inline-block;padding:10px 18px;background:#0f0e0c;color:#F5F2ED;text-decoration:none;border-radius:6px;font-size:13px">Voir dans le panel admin →</a>
+    </div>
+  </div></body></html>`;
+}
