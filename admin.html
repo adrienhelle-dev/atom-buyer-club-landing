@@ -2639,15 +2639,11 @@ function leadArrSet(lead) {
 function leadMatchesProject(lead, project) {
   if (!lead || !project) return false;
   if (lead.status === 'perdu' || lead.status === 'signe') return false;
-  // 1. Arrondissement
+  // Seul critère : arrondissement (le budget n'est pas pris en compte car
+  // le lead peut avoir des apports personnels en plus de sa capacité d'emprunt)
   if (project.arrondissement) {
     const arrs = leadArrSet(lead);
     if (arrs.size > 0 && !arrs.has(project.arrondissement)) return false;
-  }
-  // 2. Budget
-  if (project.total_all_in != null && project.total_all_in > 0) {
-    const maxBudget = leadMaxBudget(lead);
-    if (project.total_all_in > maxBudget) return false;
   }
   return true;
 }
