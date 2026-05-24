@@ -12,21 +12,30 @@ module.exports = async function handler(req, res) {
 
     // ── Mode "recent" : centre de notifications admin ────────────
     if (recent === '1') {
-      // Événements importants des 30 derniers jours, avec infos du lead
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const NOTIF_TYPES = ['inscription', 'resoumission', 'interet_projet', 'showroom_interest', 'showroom_cta'];
-      const { data, error } = await supabase
+
+      // Étape 1 : récupérer les événements
+      const { data: events, error } = await supabase
         .from('lead_events')
-        .select(`
-          id, type, content, created_at, lead_id,
-          lead:lead_id ( prenom, nom, email )
-        `)
+        .select('id, type, content, created_at, lead_id')
         .in('type', NOTIF_TYPES)
         .gte('created_at', since)
         .order('created_at', { ascending: false })
         .limit(50);
-      if (error) { console.error('Events recent GET:', error); return res.status(500).json({ error: 'db_error' }); }
-      return res.status(200).json({ events: data || [] });
+      if (error) { console.error('Events recent GET:', error); return res.status(500).json({ error: 'db_error', detail: error.message }); }
+      if (!events || !events.length) return res.status(200).json({ events: [] });
+
+      // Étape 2 : enrichir avec les noms des leads (requête séparée, plus fiable)
+      const leadIds = [...new Set(events.map(e => e.lead_id).filter(Boolean))];
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('id, prenom, nom, email')
+        .in('id', leadIds);
+      const leadMap = Object.fromEntries((leads || []).map(l => [l.id, l]));
+      const enriched = events.map(e => ({ ...e, lead: leadMap[e.lead_id] || null }));
+
+      return res.status(200).json({ events: enriched });
     }
 
     if (!lead_id) return res.status(400).json({ error: 'lead_id requis' });
