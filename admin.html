@@ -114,6 +114,7 @@
       position: fixed; bottom: 24px; right: 24px; z-index: 500;
       display: none; /* visible seulement quand dashboard est actif */
       flex-direction: column; align-items: flex-end; gap: 10px;
+      pointer-events: none; /* le conteneur ne capte pas les clics : le panneau fermé est transparent */
     }
     .notif-widget.visible { display: flex; }
 
@@ -128,7 +129,8 @@
       opacity: 0; transform: scale(.92) translateY(10px); pointer-events: none;
     }
     .notif-panel.open {
-      opacity: 1; transform: scale(1) translateY(0); pointer-events: auto;
+      opacity: 1; transform: scale(1) translateY(0);
+      pointer-events: auto; /* réactive les interactions quand le panneau est ouvert */
     }
     @media(max-width:480px){
       .notif-widget { bottom: 16px; right: 16px; }
@@ -202,6 +204,7 @@
       box-shadow: 0 4px 16px rgba(0,0,0,.4);
       transition: color .15s, border-color .15s, background .15s, transform .15s;
       flex-shrink: 0;
+      pointer-events: auto; /* réactive les clics sur le FAB malgré le parent pointer-events:none */
     }
     .notif-fab:hover { color: var(--cream); border-color: var(--dim); transform: scale(1.06); }
     .notif-fab.has-new { border-color: rgba(184,151,90,.5); color: var(--gold); background: rgba(184,151,90,.06); }
