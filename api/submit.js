@@ -86,7 +86,7 @@ module.exports = async function handler(req, res) {
 
   // ── Log showroom CTA dans la timeline du lead ──────────────────
   if (isShowroomCta && leadId) {
-    supabase.from('lead_events').insert([{
+    await supabase.from('lead_events').insert([{
       lead_id: leadId,
       type:    'showroom_cta',
       content: b.utm_content ? JSON.stringify({ showroom_slug: b.utm_content }) : null,
@@ -102,20 +102,20 @@ module.exports = async function handler(req, res) {
       { onConflict: 'lead_id,project_id', ignoreDuplicates: true }
     );
 
-    // Log dans la timeline du lead (fire & forget)
-    supabase.from('lead_events').insert([{
-      lead_id: leadId,
-      type:    'interet_projet',
-      content: JSON.stringify({ project_id: projectId }),
-      author:  null,
-    }]);
-
-    // Charge le projet pour l'email de notif
+    // Charge le projet en premier pour avoir le titre dans l'event + l'email
     const { data: proj } = await supabase
       .from('projects')
       .select('title, responsible_admin')
       .eq('id', projectId)
       .single();
+
+    // Log dans la timeline — awaited (fire & forget n'est pas fiable en serverless)
+    await supabase.from('lead_events').insert([{
+      lead_id: leadId,
+      type:    'interet_projet',
+      content: JSON.stringify({ project_id: projectId, project_title: proj?.title || null }),
+      author:  null,
+    }]);
 
     if (process.env.RESEND_API_KEY) {
       const resend    = new Resend(process.env.RESEND_API_KEY);

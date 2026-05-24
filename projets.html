@@ -434,13 +434,7 @@
     buildFilters();
     renderGrid(allProjects);
 
-    // Sticky list CTA après 1.5s (uniquement si on n'est pas en vue détail)
-    setTimeout(() => {
-      if (currentProj) return; // en vue détail → ne pas afficher la barre de liste
-      const wa = document.getElementById('sticky-wa');
-      if (wa) wa.href = `https://wa.me/${DEFAULT_WA}?text=${encodeURIComponent('Bonjour, je souhaite en savoir plus sur les projets Atom Buyers Club.')}`;
-      document.getElementById('sticky-cta').style.display = 'block';
-    }, 1500);
+    // Pas de sticky CTA sur la vue liste — affiché uniquement sur la page projet (detail-sticky-bar)
 
     // Détail depuis hash
     if (location.hash.startsWith('#/')) {
@@ -546,7 +540,7 @@
     currentProj = proj;
     history.pushState(null, '', '#/' + (proj.slug || proj.id));
     document.getElementById('page-list').style.display       = 'none';
-    document.getElementById('page-detail').style.display     = '';
+    document.getElementById('page-detail').style.display     = 'block'; // '' reviendrait au CSS display:none
     document.getElementById('sticky-cta').style.display      = 'none';
     document.getElementById('detail-sticky-bar').style.display = 'block';
     window.scrollTo(0, 0);
@@ -696,7 +690,7 @@
   function showList() {
     document.getElementById('page-detail').style.display       = 'none';
     document.getElementById('page-list').style.display         = '';
-    document.getElementById('sticky-cta').style.display        = 'block';
+    document.getElementById('sticky-cta').style.display        = 'none'; // pas de CTA sticky sur la liste
     document.getElementById('detail-sticky-bar').style.display = 'none';
     document.title = 'Projets disponibles — Atom Buyers Club';
     history.pushState(null, '', location.pathname + (leadId ? '?lead_id=' + leadId : ''));
