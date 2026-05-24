@@ -430,7 +430,7 @@
           ${(item.loyer_mensuel || item.rendement_brut) ? `
           <div class="card-stats">
             ${item.loyer_mensuel ? `<div><div class="card-stat-val">${item.loyer_mensuel.toLocaleString('fr-FR')} €</div><div class="card-stat-label">loyer/mois</div></div>` : ''}
-            ${item.rendement_brut ? `<div><div class="card-stat-val" style="color:var(--gold)">${item.rendement_brut} %</div><div class="card-stat-label">rendement brut</div></div>` : ''}
+            ${item.rendement_brut ? `<div><div class="card-stat-val" style="color:var(--gold)">${item.rendement_brut} %</div><div class="card-stat-label">rendement</div></div>` : ''}
           </div>` : ''}
           <div class="card-cta"><span class="btn-voir">Voir la réalisation →</span></div>
         </div>
@@ -526,7 +526,7 @@
     const rows = [];
     if (item.total_all_in)    rows.push({ l: 'Total investi',      v: fmt(item.total_all_in) + ' €' });
     if (item.loyer_mensuel)   rows.push({ l: 'Loyer actuel',       v: fmt(item.loyer_mensuel) + ' €/mois', gold: true });
-    if (item.rendement_brut)  rows.push({ l: 'Rendement brut',     v: item.rendement_brut + ' %', gold: true });
+    if (item.rendement_brut)  rows.push({ l: 'Rendement',          v: item.rendement_brut + ' %', gold: true });
     if (item.mensualite_type) rows.push({ l: 'Mensualité type',    v: fmt(item.mensualite_type) + ' €' });
     if (!rows.length) { card.style.display = 'none'; return; }
     card.style.display = '';

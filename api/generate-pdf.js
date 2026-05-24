@@ -329,7 +329,7 @@ ${p.images_3d?.length > 1 ? `
     <tr class="fin-loyer-line"><td>Loyer Atom</td><td>${p.loyer_atom ? fmtEuro(p.loyer_atom) + '/mois' : '—'}</td></tr>
     <tr><td>Mensualité*</td><td>${p.mensualite ? fmtEuro(p.mensualite) + '/mois' : '—'}</td></tr>
     ${p.loyer_atom && p.mensualite ? `<tr><td>Cash-flow estimé</td><td style="color:${cashflow >= 0 ? '#4caf7d' : '#d95e5e'}">${cashflow >= 0 ? '+' : ''}${fmtEuro(cashflow)}/mois</td></tr>` : ''}
-    ${p.rendement_brut ? `<tr><td>Rendement brut</td><td>${p.rendement_brut} %</td></tr>` : ''}
+    ${p.rendement_brut ? `<tr><td>Rendement</td><td>${p.rendement_brut} %</td></tr>` : ''}
   </table>
 
   <p class="fin-disclaimer">* Hypothèse de simulation : apport 10 %, durée 25 ans, taux fixe 3,60 %.</p>
