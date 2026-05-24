@@ -20,7 +20,8 @@
       --r: 8px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--sans); background: var(--bg); color: var(--cream); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    html { overflow-x: hidden; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--cream); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; overflow-x: hidden; }
     a { color: var(--gold); text-decoration: none; }
 
     /* ── Header ──────────────────────────────────────────────── */
@@ -119,13 +120,15 @@
     /* ── Detail page ──────────────────────────────────────────── */
     #page-detail { display: none; }
     .detail-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 32px 100px; }
-    @media(max-width:720px){ .detail-wrap { padding: 20px 16px 90px; } }
+    @media(max-width:600px){ .detail-wrap { padding: 20px 16px 90px; } }
 
     .detail-back { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13px; cursor: pointer; margin-bottom: 28px; background: none; border: none; font-family: var(--sans); padding: 0; }
     .detail-back:hover { color: var(--cream); }
 
     .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: start; }
-    @media(max-width:960px){ .detail-layout { grid-template-columns: 1fr; } }
+    @media(max-width:960px){ .detail-layout { grid-template-columns: 1fr; gap: 24px; } }
+    /* Désactive sticky sidebar en colonne unique */
+    @media(max-width:960px){ .detail-layout > div:last-child { position: static !important; } }
 
     /* Gallery */
     .gallery-toggle { display: flex; gap: 0; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; width: fit-content; }
@@ -140,7 +143,7 @@
     /* Detail text */
     .detail-eyebrow { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
     .detail-title   { font-family: var(--serif); font-size: 44px; font-weight: 300; line-height: 1.08; margin-bottom: 12px; }
-    @media(max-width:600px){ .detail-title { font-size: 30px; } }
+    @media(max-width:600px){ .detail-title { font-size: 28px; } }
     .detail-meta    { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--cream-dim); margin-bottom: 28px; }
     .detail-meta span { display: inline-flex; align-items: center; gap: 5px; }
     .section-title  { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -184,27 +187,51 @@
     .dpe-F { background:#ff3d00;color:#fff; }
     .dpe-G { background:#b71c1c;color:#fff; }
 
-    /* ── Sticky bottom CTA ──────────────────────────────────────── */
-    #sticky-cta {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, var(--bg) 60%, transparent);
-      padding: 24px 20px 20px; z-index: 50; pointer-events: none;
-    }
-    #sticky-cta > div { max-width: 500px; margin: 0 auto; display: flex; gap: 10px; pointer-events: auto; }
-
-    /* ── Sticky detail CTA bar ───────────────────────────────────── */
-    #detail-sticky-bar {
+    /* ── Sticky bars ────────────────────────────────────────────────── */
+    #sticky-cta, #detail-sticky-bar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-      background: linear-gradient(to top, var(--bg) 55%, transparent);
-      padding: 20px 20px 16px; pointer-events: none;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -8px 32px rgba(0,0,0,.6);
+      padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
     }
-    #detail-sticky-bar > div { max-width: 640px; margin: 0 auto; display: flex; gap: 10px; pointer-events: auto; }
-    @media(max-width:500px){ #detail-sticky-bar > div { flex-direction: column; } }
+    /* Grille intérieure — miroir de .detail-layout */
+    .sticky-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 360px; gap: 40px;
+    }
+    .sticky-btns { display: flex; gap: 10px; align-items: center; }
+    /* Bouton principal : fond crème = contraste maximal sur fond sombre */
+    .sticky-btn-primary {
+      flex: 1; padding: 15px 20px;
+      background: var(--cream); color: var(--bg);
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 500;
+      cursor: pointer; font-family: var(--sans);
+      transition: background .15s, transform .1s;
+      white-space: nowrap; text-align: center;
+    }
+    .sticky-btn-primary:hover  { background: #dedad4; }
+    .sticky-btn-primary:active { transform: scale(.98); }
+    /* Bouton WA secondaire */
+    .sticky-btn-wa {
+      flex: 0 0 auto; padding: 14px 16px;
+      background: rgba(37,211,102,.08);
+      border: 1px solid rgba(37,211,102,.28);
+      border-radius: 10px; color: #25D366;
+      text-decoration: none; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      white-space: nowrap; transition: background .15s;
+    }
+    .sticky-btn-wa:hover { background: rgba(37,211,102,.15); }
+    @media(max-width:960px){ .sticky-inner { grid-template-columns: 1fr; gap: 0; } }
+    @media(max-width:500px){ .sticky-btns { flex-direction: column; } .sticky-btn-primary { width: 100%; } }
 
     /* ── Modal CTA ──────────────────────────────────────────────── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
     .modal-overlay.on { display: flex; }
     .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 32px; max-width: 440px; width: 100%; }
+    @media(max-width:600px){ .modal-box { padding: 24px 18px; border-radius: 12px; } }
     .modal-title { font-family: var(--serif); font-size: 24px; font-weight: 300; margin-bottom: 8px; }
     .modal-sub  { font-size: 13px; color: var(--dim); margin-bottom: 24px; line-height: 1.6; }
     .modal-field { margin-bottom: 14px; }
@@ -271,31 +298,20 @@
   </div>
 </div>
 
-<!-- ══ STICKY LIST CTA BAR ════════════════════════════════════════ -->
-<div id="sticky-cta" style="display:none">
-  <div>
-    <a id="sticky-wa" href="#" target="_blank"
-      style="flex:0 0 auto;padding:14px 16px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:10px;color:var(--cream);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:8px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      WhatsApp
-    </a>
-    <button onclick="openCta()" style="flex:1;padding:14px;background:var(--violet);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--sans)">
-      Je suis intéressé(e) →
-    </button>
-  </div>
-</div>
+<!-- ══ STICKY LIST CTA BAR (jamais visible — liste n'a pas de sticky) ════ -->
+<div id="sticky-cta" style="display:none"></div>
 
 <!-- ══ STICKY DETAIL CTA BAR ════════════════════════════════════════ -->
 <div id="detail-sticky-bar" style="display:none">
-  <div>
-    <a id="detail-sticky-wa" href="#" target="_blank"
-      style="flex:0 0 auto;padding:13px 16px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:10px;color:#25D366;text-decoration:none;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;white-space:nowrap">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      Contacter l'équipe
-    </a>
-    <button onclick="openCta()" style="flex:1;padding:13px;background:var(--violet);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:background .15s" onmousedown="this.style.background='#4848b0'" onmouseup="this.style.background='var(--violet)'" ontouchstart="this.style.background='#4848b0'" ontouchend="this.style.background='var(--violet)'">
-      Je suis intéressé(e) →
-    </button>
+  <div class="sticky-inner">
+    <div class="sticky-btns">
+      <a id="detail-sticky-wa" class="sticky-btn-wa" href="#" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Contacter l'équipe
+      </a>
+      <button class="sticky-btn-primary" onclick="openCta()">Je suis intéressé(e) →</button>
+    </div>
+    <!-- cellule droite vide — miroir de la sidebar pour aligner les boutons avec la description -->
   </div>
 </div>
 

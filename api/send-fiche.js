@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
 
   // ─── Chargement lead + projet en parallèle ─────────────────────
   const [{ data: lead, error: le }, { data: project, error: pe }] = await Promise.all([
-    supabase.from('leads').select('prenom, nom, email, status').eq('id', lead_id).single(),
+    supabase.from('leads').select('id, prenom, nom, email, status').eq('id', lead_id).single(),
     supabase.from('projects').select('*').eq('id', project_id).single(),
   ]);
   if (le || !lead)    return res.status(404).json({ error: 'Lead non trouvé' });
@@ -182,7 +182,7 @@ function buildFicheEmail(lead, project, message, founder = {}, senderEmail = '')
   const address = project.address || project.adresse || '';
   const price   = project.price_fai ? fmtPrice(project.price_fai) + ' FAI' : '';
   const slug    = project.slug;
-  const ficheUrl = slug ? `https://join.atombuyerclub.fr/projet/${slug}?lead_id=${lead_id}` : '';
+  const ficheUrl = slug ? `https://join.atombuyerclub.fr/projet/${slug}?lead_id=${lead.id}` : '';
 
   const surface   = project.surface_carrez ? `${project.surface_carrez} m²` : '';
   const arr       = project.arrondissement || '';
