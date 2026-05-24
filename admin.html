@@ -402,13 +402,21 @@
 
     /* ── Score ─────────────────────────────────────────────── */
     .score-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 26px; height: 26px; border-radius: 50%;
-      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      display: inline-flex; flex-direction: column; align-items: center;
+      gap: 2px; flex-shrink: 0;
     }
-    .score-high { background: rgba(76,175,125,.18);  color: #4caf7d; }
-    .score-mid  { background: rgba(184,151,90,.18);  color: #B8975A; }
-    .score-low  { background: rgba(122,120,116,.12); color: #7a7874; }
+    .score-badge .sn {
+      font-size: 13px; font-weight: 700; line-height: 1;
+    }
+    .score-badge .sb {
+      width: 22px; height: 3px; border-radius: 2px;
+    }
+    .score-high .sn { color: #4caf7d; }
+    .score-high .sb { background: #4caf7d; }
+    .score-mid  .sn { color: #B8975A; }
+    .score-mid  .sb { background: #B8975A; }
+    .score-low  .sn { color: #7a7874; }
+    .score-low  .sb { background: var(--border); }
     th.sortable { cursor: pointer; user-select: none; }
     th.sortable:hover { color: var(--cream); }
     th.sortable .sort-arrow { margin-left: 4px; opacity: .5; }
@@ -842,14 +850,21 @@
     .send-modal-cancel:hover { color:var(--cream); }
     .project-empty { text-align:center; padding:24px; color:var(--dim); font-size:13px; }
 
+    /* ── Sticky Score col on mobile ────────────────────────── */
+    @media (max-width:768px) {
+      td:nth-child(1), thead th:nth-child(1) {
+        position: sticky; left: 0; background: var(--bg); z-index: 1;
+      }
+    }
+
     /* ── iPad (≤ 1024px) ── */
     @media (max-width: 1024px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
-      /* Hide less critical columns: Budget, Campagne */
-      thead th:nth-child(9),
+      /* Hide less critical columns: Budget(11), Campagne(12) */
       thead th:nth-child(11),
-      td:nth-child(9),
-      td:nth-child(11) { display: none; }
+      thead th:nth-child(12),
+      td:nth-child(11),
+      td:nth-child(12) { display: none; }
     }
 
     /* ── Mobile (≤ 640px) ── */
@@ -877,22 +892,34 @@
       .btn-export { font-size: 12px; padding: 8px 12px; }
       .btn-refresh { padding: 8px 10px; }
 
-      /* Mobile table: show Date, Score, Nom, Horizon, Source */
+      /* Score → col 1 */
+      thead th:nth-child(1) { text-align:center; }
+      /* Masquer sur mobile : Source(4), Date(6), Email(7), Tel(8), Arrond(9), Fin(10), Budget(11), Campagne(12) */
       thead th:nth-child(4),
-      thead th:nth-child(5),
       thead th:nth-child(6),
+      thead th:nth-child(7),
       thead th:nth-child(8),
       thead th:nth-child(9),
+      thead th:nth-child(10),
       thead th:nth-child(11),
+      thead th:nth-child(12),
       td:nth-child(4),
-      td:nth-child(5),
       td:nth-child(6),
+      td:nth-child(7),
       td:nth-child(8),
       td:nth-child(9),
-      td:nth-child(11) { display: none; }
+      td:nth-child(10),
+      td:nth-child(11),
+      td:nth-child(12) { display: none; }
 
       table { min-width: unset; width: 100%; }
       td, thead th { padding: 10px 10px; font-size: 12px; }
+      /* Score: min width */
+      td:nth-child(1), thead th:nth-child(1) { width: 36px; padding-right: 4px; }
+      /* Nom: fills space */
+      td:nth-child(2) { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      /* Horizon */
+      td:nth-child(3) { white-space: nowrap; }
 
       .pagination { padding: 12px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
 
@@ -924,10 +951,25 @@
     .sr-card-meta { font-size: 12px; color: var(--dim); margin: 0 0 10px; }
     .sr-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .sr-badge-featured { background: rgba(184,151,90,.15); color: var(--gold); border: 1px solid rgba(184,151,90,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
-    .sr-badge-draft    { background: rgba(122,120,116,.12); color: var(--dim); border: 1px solid var(--border); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
-    .sr-badge-pub      { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
-    .sr-toggle-pub { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--dim); cursor: pointer; transition: all .15s; }
-    .sr-toggle-pub:hover { border-color: var(--gold); color: var(--gold); }
+    .sr-badge-draft { background: rgba(122,120,116,.12); color: var(--dim); border: 1px solid var(--border); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-badge-pub   { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-pub-toggle {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: none; cursor: pointer; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .sr-pub-toggle:hover { transform: scale(1.12); }
+    .sr-pub-toggle.is-pub {
+      background: rgba(76,175,125,.15);
+      color: #4caf7d;
+      box-shadow: 0 0 0 1.5px #4caf7d;
+    }
+    .sr-pub-toggle.is-draft {
+      background: rgba(245,158,11,.12);
+      color: #f59e0b;
+      box-shadow: 0 0 0 1.5px rgba(245,158,11,.5);
+    }
     /* sr-tab : hérite du style np-tab, active géré par np-tab.active */
     .sr-section { display: none; }
     .sr-section.active { display: block; }
@@ -1043,18 +1085,18 @@
     <table id="leads-table">
       <thead>
         <tr>
-          <th>Date</th>
           <th class="sortable" id="th-score" onclick="toggleScoreSort()">Score <span class="sort-arrow">↕</span></th>
           <th>Nom</th>
+          <th>Horizon</th>
+          <th>Source</th>
+          <th style="width:40px"></th>
+          <th>Date</th>
           <th>Email</th>
           <th>Téléphone</th>
           <th>Arrond.</th>
-          <th>Horizon</th>
           <th>Financement</th>
           <th>Budget</th>
-          <th>Source</th>
           <th>Campagne</th>
-          <th style="width:40px"></th>
         </tr>
       </thead>
       <tbody id="leads-body">
@@ -1066,7 +1108,7 @@
   <!-- Pagination -->
   <div class="pagination">
     <span id="page-info">—</span>
-    <div class="page-btns" id="page-btns"></div>
+    <div class="page-btns" id="page-btns" style="display:none"></div>
   </div>
   </div><!-- /view-leads -->
 
@@ -1568,12 +1610,34 @@
               <div id="sr-cover-preview"></div>
             </div>
             <div class="np-field span-2">
-              <label for="sr-images-after">Photos après travaux (une URL par ligne)</label>
-              <textarea id="sr-images-after" rows="6" placeholder="https://image1.jpg&#10;https://image2.jpg&#10;https://image3.jpg"></textarea>
+              <label>Photos après travaux</label>
+              <div class="upload-zone" id="sr-after-zone"
+                onclick="document.getElementById('sr-after-file-input').click()"
+                ondragover="event.preventDefault();this.classList.add('drag-over')"
+                ondragleave="this.classList.remove('drag-over')"
+                ondrop="handleSrImageDrop(event,'after')">
+                <div class="upload-zone-icon">📷</div>
+                <div class="upload-zone-label">Glisser-déposer ou <span>parcourir</span></div>
+                <div class="upload-zone-hint">JPG, PNG, WebP — max 10 Mo</div>
+                <input type="file" id="sr-after-file-input" multiple accept="image/*" onchange="handleSrImageFiles(this.files,'after')"/>
+              </div>
+              <div class="upload-progress" id="sr-after-progress"><div class="upload-progress-bar" id="sr-after-bar"></div></div>
+              <div class="img-grid" id="sr-after-grid"></div>
             </div>
             <div class="np-field span-2">
-              <label for="sr-images-before">Photos avant travaux (une URL par ligne)</label>
-              <textarea id="sr-images-before" rows="4" placeholder="https://avant1.jpg&#10;https://avant2.jpg"></textarea>
+              <label>Photos avant travaux</label>
+              <div class="upload-zone" id="sr-before-zone"
+                onclick="document.getElementById('sr-before-file-input').click()"
+                ondragover="event.preventDefault();this.classList.add('drag-over')"
+                ondragleave="this.classList.remove('drag-over')"
+                ondrop="handleSrImageDrop(event,'before')">
+                <div class="upload-zone-icon">📷</div>
+                <div class="upload-zone-label">Glisser-déposer ou <span>parcourir</span></div>
+                <div class="upload-zone-hint">JPG, PNG, WebP — max 10 Mo</div>
+                <input type="file" id="sr-before-file-input" multiple accept="image/*" onchange="handleSrImageFiles(this.files,'before')"/>
+              </div>
+              <div class="upload-progress" id="sr-before-progress"><div class="upload-progress-bar" id="sr-before-bar"></div></div>
+              <div class="img-grid" id="sr-before-grid"></div>
             </div>
             <div class="np-field span-2">
               <label for="sr-video">URL vidéo (YouTube / Vimeo)</label>
@@ -2820,7 +2884,7 @@ async function loadLeads(page) {
   const source = document.getElementById('src-filter').value;
   const status = document.getElementById('status-filter').value;
 
-  const params = new URLSearchParams({ page, pageSize: 50 });
+  const params = new URLSearchParams({ page, pageSize: 500 });
   if (search) params.set('search', search);
   if (source) params.set('source', source);
   if (status) params.set('status', status);
@@ -2835,7 +2899,7 @@ async function loadLeads(page) {
   totalLeads = total;
   renderStats(leads, total);
   renderTable(leads);
-  renderPagination(page, total, 50);
+  renderPagination(page, total, 500);
 }
 
 function renderStats(leads, total) {
@@ -2878,21 +2942,21 @@ function renderTable(leads) {
   }
   tbody.innerHTML = sorted.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
-      <td class="muted">${fmtDate(l.created_at)}</td>
       <td style="text-align:center">${scoreBadge(l)}</td>
       <td>${statusBadge(l.status)}<strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</td>
-      <td class="muted">${esc(l.email)}</td>
-      <td class="muted">${esc(l.tel)}</td>
-      <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
       <td>${l.timing ? `<span class="timing-badge ${l.timing === 'asap' ? 'timing-asap' : ''}">${TIMING[l.timing] || l.timing}</span>` : '<span class="muted">—</span>'}</td>
-      <td class="muted">${FIN[l.financement] || l.financement || '—'}</td>
-      <td class="muted">${BUDGET[l.capacite] || l.capacite || '—'}</td>
       <td>${srcBadge(l.utm_source)}</td>
-      <td class="muted">${esc(l.utm_campaign) || '—'}</td>
       <td style="white-space:nowrap;text-align:right">
         <button class="btn-edit-row" title="Modifier ce lead">✎</button>
         <button class="btn-del-row"  title="Supprimer">✕</button>
       </td>
+      <td class="muted">${fmtDate(l.created_at)}</td>
+      <td class="muted">${esc(l.email)}</td>
+      <td class="muted">${esc(l.tel)}</td>
+      <td class="muted wrap">${esc(l.arrondissements) || '—'}</td>
+      <td class="muted">${FIN[l.financement] || l.financement || '—'}</td>
+      <td class="muted">${BUDGET[l.capacite] || l.capacite || '—'}</td>
+      <td class="muted">${esc(l.utm_campaign) || '—'}</td>
     </tr>
   `).join('');
 
@@ -2911,28 +2975,9 @@ function renderTable(leads) {
 }
 
 function renderPagination(page, total, pageSize) {
-  const pages = Math.ceil(total / pageSize);
-  document.getElementById('page-info').textContent = `${total} lead${total > 1 ? 's' : ''} · Page ${page}/${pages}`;
-
-  const btns = document.getElementById('page-btns');
-  btns.innerHTML = '';
-
-  const prev = document.createElement('button');
-  prev.className = 'page-btn'; prev.textContent = '←'; prev.disabled = page <= 1;
-  prev.onclick = () => loadLeads(page - 1);
-  btns.appendChild(prev);
-
-  for (let p = Math.max(1, page-1); p <= Math.min(pages, page+1); p++) {
-    const b = document.createElement('button');
-    b.className = `page-btn ${p === page ? 'active' : ''}`;
-    b.textContent = p; b.onclick = () => loadLeads(p);
-    btns.appendChild(b);
-  }
-
-  const next = document.createElement('button');
-  next.className = 'page-btn'; next.textContent = '→'; next.disabled = page >= pages;
-  next.onclick = () => loadLeads(page + 1);
-  btns.appendChild(next);
+  // Affiche juste le total, pas de boutons de pagination
+  document.getElementById('page-info').textContent = `${total} lead${total > 1 ? 's' : ''}`;
+  document.getElementById('page-btns').innerHTML = '';
 }
 
 /* ── Delete ─────────────────────────────────────────────────── */
@@ -3310,9 +3355,9 @@ function computeScore(lead) {
   return Math.min(7, raw);                               // plafond 7
 }
 function scoreBadge(lead) {
-  const s = computeScore(lead);
+  const s   = computeScore(lead);
   const cls = s >= 8 ? 'score-high' : s >= 5 ? 'score-mid' : 'score-low';
-  return `<span class="score-badge ${cls}">${s}</span>`;
+  return `<span class="score-badge ${cls}"><span class="sn">${s}</span><span class="sb"></span></span>`;
 }
 let sortByScore = false;
 let sortScoreDir = 'desc';
@@ -4160,6 +4205,8 @@ init();
 /* ══ SHOWROOM ═══════════════════════════════════════════════════ */
 let showroomCache    = [];
 let editingShowroomId = null;
+let srAfterImages  = [];  // [{url:..., path:...}]
+let srBeforeImages = [];  // [{url:..., path:...}]
 
 async function loadShowroom() {
   const grid = document.getElementById('showroom-grid');
@@ -4232,12 +4279,14 @@ function renderShowroomGrid() {
         <div class="sr-card-footer">
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
             ${item.is_featured ? '<span class="sr-badge-featured">⭐ Vedette</span>' : ''}
-            <span class="${item.is_published ? 'sr-badge-pub' : 'sr-badge-draft'}">${item.is_published ? 'Publié' : 'Brouillon'}</span>
             ${item.style ? `<span style="font-size:10px;color:var(--dim)">${esc(item.style)}</span>` : ''}
           </div>
-          <button class="sr-toggle-pub" onclick="event.stopPropagation();toggleShowroomPublish('${item.id}',${!item.is_published})"
-            title="${item.is_published ? 'Dépublier' : 'Publier'}">
-            ${item.is_published ? '⬇ Dépublier' : '⬆ Publier'}
+          <button class="sr-pub-toggle ${item.is_published ? 'is-pub' : 'is-draft'}"
+            onclick="event.stopPropagation();toggleShowroomPublish('${item.id}',${!item.is_published})"
+            title="${item.is_published ? 'Publié — clic pour dépublier' : 'Brouillon — clic pour publier'}">
+            ${item.is_published
+              ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+              : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`}
           </button>
         </div>
       </div>
@@ -4269,12 +4318,14 @@ function openShowroomEdit(id) {
 function resetShowroomForm() {
   ['sr-name','sr-slug','sr-quartier','sr-arr','sr-surface','sr-style','sr-dpe',
    'sr-desc-courte','sr-desc-longue','sr-equipements','sr-caracteristiques',
-   'sr-cover','sr-images-after','sr-images-before','sr-video',
+   'sr-cover','sr-video',
    'sr-prix','sr-travaux','sr-loyer','sr-locataire','sr-statut-loc',
    'sr-ordre','sr-source-url','sr-projet-similaire'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = el.tagName === 'SELECT' ? (el.options[0]?.value || '') : '';
   });
+  srAfterImages = []; srBeforeImages = [];
+  renderSrImageGrid('after'); renderSrImageGrid('before');
   document.getElementById('sr-published').checked = false;
   document.getElementById('sr-featured').checked  = false;
   document.getElementById('sr-ordre').value = '0';
@@ -4302,8 +4353,10 @@ function populateShowroomForm(item) {
   sv('sr-equipements',  (item.equipements || []).join('\n'));
   sv('sr-caracteristiques', (item.caracteristiques || []).join('\n'));
   sv('sr-cover',        item.image_cover);
-  sv('sr-images-after', (item.images_after || []).join('\n'));
-  sv('sr-images-before',(item.images_before || []).join('\n'));
+  srAfterImages  = (item.images_after  || []).map(url => ({ url, path: null }));
+  srBeforeImages = (item.images_before || []).map(url => ({ url, path: null }));
+  renderSrImageGrid('after');
+  renderSrImageGrid('before');
   sv('sr-video',        item.video_url);
   sv('sr-prix',         item.prix_acquisition);
   sv('sr-travaux',      item.budget_travaux);
@@ -4436,8 +4489,8 @@ function getSrPayload() {
     equipements:        lines('sr-equipements'),
     caracteristiques:   lines('sr-caracteristiques'),
     image_cover:        document.getElementById('sr-cover').value.trim() || null,
-    images_after:       lines('sr-images-after'),
-    images_before:      lines('sr-images-before'),
+    images_after:       srAfterImages.map(i => i.url),
+    images_before:      srBeforeImages.map(i => i.url),
     video_url:          document.getElementById('sr-video').value.trim() || null,
     prix_acquisition:   parseFloat(document.getElementById('sr-prix').value) || null,
     budget_travaux:     parseFloat(document.getElementById('sr-travaux').value) || null,
@@ -4508,6 +4561,94 @@ document.getElementById('sr-name')?.addEventListener('input', function() {
   const slugEl = document.getElementById('sr-slug');
   if (slugEl && !editingShowroomId) slugEl.value = slugifySr(this.value);
 });
+
+/* ── Showroom image drag & drop ─────────────────────────────── */
+async function handleSrImageDrop(event, type) {
+  event.preventDefault();
+  document.getElementById(`sr-${type}-zone`).classList.remove('drag-over');
+  await handleSrImageFiles(event.dataTransfer.files, type);
+}
+
+async function handleSrImageFiles(files, type) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!arr.length) return;
+  const images = type === 'after' ? srAfterImages : srBeforeImages;
+  const zoneId = `sr-${type}-zone`;
+  const barId  = `sr-${type}-bar`;
+  const progId = `sr-${type}-progress`;
+  const zone   = document.getElementById(zoneId);
+  const bar    = document.getElementById(barId);
+  const prog   = document.getElementById(progId);
+  prog.style.display = 'block';
+  let done = 0;
+  bar.style.width = '0%';
+  zone.style.pointerEvents = 'none';
+  const CHUNK = 3;
+  for (let i = 0; i < arr.length; i += CHUNK) {
+    const batch = arr.slice(i, i + CHUNK);
+    const results = await Promise.all(batch.map(f => uploadImageFile(f)));
+    results.forEach(r => { if (r) images.push(r); });
+    done += batch.length;
+    bar.style.width = Math.round((done / arr.length) * 100) + '%';
+  }
+  const fi = document.getElementById(`sr-${type}-file-input`);
+  if (fi) fi.value = '';
+  zone.style.pointerEvents = '';
+  setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 700);
+  renderSrImageGrid(type);
+  // La première image "after" devient la cover si pas encore de cover
+  if (type === 'after' && srAfterImages.length === 1 && !document.getElementById('sr-cover').value.trim()) {
+    document.getElementById('sr-cover').value = srAfterImages[0].url;
+    updateSrCoverPreview();
+  }
+}
+
+function removeSrImage(type, index) {
+  const images = type === 'after' ? srAfterImages : srBeforeImages;
+  const img = images[index];
+  if (img?.path) {
+    fetch('/api/upload-image', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ path: img.path }),
+    }).catch(() => {});
+  }
+  images.splice(index, 1);
+  renderSrImageGrid(type);
+}
+
+// Drag reorder within grid
+let srDragSrc = null;
+let srDragType = null;
+
+function renderSrImageGrid(type) {
+  const images = type === 'after' ? srAfterImages : srBeforeImages;
+  const grid = document.getElementById(`sr-${type}-grid`);
+  if (!grid) return;
+  grid.innerHTML = images.map((img, i) => `
+    <div class="img-grid-item" draggable="true"
+      ondragstart="srDragSrc=${i};srDragType='${type}';this.style.opacity='.4'"
+      ondragend="this.style.opacity='1'"
+      ondragover="event.preventDefault()"
+      ondrop="event.preventDefault();moveSrImage('${type}',srDragSrc,${i});srDragSrc=null">
+      <img src="${esc(img.url)}" alt="Photo ${i+1}" style="width:100%;height:100%;object-fit:cover"/>
+      ${i === 0 && type === 'after' ? '<span style="position:absolute;bottom:4px;left:4px;background:rgba(184,151,90,.85);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600">COVER</span>' : ''}
+      <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removeSrImage('${type}',${i})" style="background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;position:absolute;top:4px;right:4px;opacity:0;transition:opacity .15s">✕</button>
+    </div>`).join('');
+}
+
+function moveSrImage(type, from, to) {
+  if (from === null || from === to) return;
+  const images = type === 'after' ? srAfterImages : srBeforeImages;
+  const [item] = images.splice(from, 1);
+  images.splice(to, 0, item);
+  renderSrImageGrid(type);
+  // Update cover si "after" array change
+  if (type === 'after' && srAfterImages.length > 0) {
+    document.getElementById('sr-cover').value = srAfterImages[0].url;
+    updateSrCoverPreview();
+  }
+}
 
 </script>
 </body>
