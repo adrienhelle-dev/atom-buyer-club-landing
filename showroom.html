@@ -310,9 +310,12 @@
       <p id="cta-err" style="color:#d95e5e;font-size:12px;margin-top:10px;display:none"></p>
     </div>
     <div class="modal-confirm" id="cta-confirm">
-      <div class="modal-confirm-icon">✅</div>
-      <h3 class="modal-confirm-title">Parfait !</h3>
-      <p class="modal-confirm-sub">L'équipe Atom vous recontacte sous 24h pour vous présenter les opportunités en cours.</p>
+      <div style="width:56px;height:56px;background:rgba(91,91,214,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5B5BD6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="modal-confirm-title" id="cta-confirm-title">Demande envoyée !</h3>
+      <p class="modal-confirm-sub" id="cta-confirm-sub">L'équipe Atom vous recontacte sous 24h pour vous présenter les opportunités en cours.</p>
+      <button onclick="closeCta()" style="margin-top:22px;padding:11px 28px;background:var(--violet);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">Fermer</button>
     </div>
   </div>
 </div>
@@ -571,11 +574,10 @@
       document.getElementById('cta-form-wrap').style.display = 'none';
       const conf = document.getElementById('cta-confirm');
       conf.style.display = '';
-      conf.innerHTML = `
-        <div style="font-size:36px;margin-bottom:12px">✅</div>
-        <p style="font-family:var(--serif);font-size:22px;font-weight:300;margin-bottom:8px">Parfait, ${esc(sl.prenom)} !</p>
-        <p style="font-size:13px;color:var(--dim)">L'équipe Atom vous recontacte sous 24h pour vous présenter les opportunités en cours.</p>`;
-      setTimeout(closeCta, 3500);
+      // Personnaliser le titre avec le prénom
+      const titleEl = document.getElementById('cta-confirm-title');
+      if (titleEl) titleEl.textContent = `Parfait, ${sl.prenom} !`;
+      // Pas de fermeture automatique — le bouton Fermer est dispo
       // Soumettre en arrière-plan
       fetch('/api/submit', {
         method: 'POST',
@@ -645,7 +647,10 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       document.getElementById('cta-form-wrap').style.display = 'none';
       document.getElementById('cta-confirm').style.display   = '';
-      setTimeout(closeCta, 3000);
+      // Personnaliser avec le prénom saisi
+      const tEl = document.getElementById('cta-confirm-title');
+      if (tEl) tEl.textContent = `Parfait, ${prenom} !`;
+      // Pas de fermeture auto — bouton Fermer visible
     } catch (e) {
       errEl.textContent = 'Erreur d\'envoi. Réessaie ou contacte-nous directement.';
       errEl.style.display = '';
