@@ -3943,22 +3943,17 @@ function _renderNotifList() {
 
 function openLeadFromNotif(leadId) {
   closeNotifPanel();
-  setRoute('leads');
-  setTimeout(async () => {
-    // Chercher en cache d'abord
-    const cached = leadsCache.find(l => l.id === leadId);
-    if (cached) { openDrawer(cached); return; }
-    // Sinon charger depuis l'API
-    try {
-      const res = await fetch(`/api/leads?id=${encodeURIComponent(leadId)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const d = await res.json().catch(() => ({}));
-        if (d.lead) openDrawer(d.lead);
-      }
-    } catch {}
-  }, 250);
+  // Chercher en cache d'abord (leads + intérêts)
+  const fromLeads     = leadsCache.find(l => l.id === leadId);
+  const fromInterests = (interestsCache || []).map(e => e.lead).find(l => l?.id === leadId);
+  const cached = fromLeads || fromInterests;
+  if (cached) { openDrawer(cached); return; }
+  // Sinon charger depuis l'API (GET lead unique)
+  fetch(`/api/leads?id=${encodeURIComponent(leadId)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(r => r.ok ? r.json() : null)
+    .then(d => { if (d?.lead) openDrawer(d.lead); })
+    .catch(() => {});
 }
 
 // Rendre le widget visible quand le dashboard est actif

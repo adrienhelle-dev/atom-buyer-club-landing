@@ -19,11 +19,23 @@ module.exports = async function handler(req, res) {
 
     // ─── GET public — liste ou item unique (pas d'auth requise) ────
     if (req.method === 'GET') {
-      const { slug, id, admin } = req.query;
+      const { slug, id, admin, projet_id } = req.query;
 
       // Auth optionnelle : si token valide → tous les items, sinon publiés seulement
       const payload = verifyToken(tokenFromReq(req));
       const isAdmin = !!payload;
+
+      // ── Reverse-lookup : showroom item lié à un projet ──────────
+      if (projet_id) {
+        const { data, error } = await supabase
+          .from('showroom_items')
+          .select('id, name, slug, image_cover, images_after, quartier, arrondissement')
+          .eq('projet_similaire_id', projet_id)
+          .eq('is_published', true)
+          .maybeSingle();
+        if (error) return res.status(500).json({ error: 'db_error' });
+        return res.status(200).json({ item: data || null });
+      }
 
       if (slug || id) {
         // Item unique

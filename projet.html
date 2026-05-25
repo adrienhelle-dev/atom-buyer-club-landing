@@ -165,6 +165,23 @@
     }
     .btn-pdf:hover { background: rgba(184,151,90,.1); }
 
+    /* Réalisation similaire */
+    .real-card {
+      background: rgba(184,151,90,.05); border: 1px solid rgba(184,151,90,.2);
+      border-radius: 10px; padding: 18px; margin-top: 20px;
+    }
+    .real-card-tag { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .real-card-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 7px; margin-bottom: 12px; display: block; }
+    .real-card-name { font-size: 14px; font-weight: 500; color: var(--cream); margin-bottom: 4px; }
+    .real-card-meta { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+    .real-card-btn {
+      display: block; text-align: center; padding: 9px 16px;
+      background: rgba(184,151,90,.1); border: 1px solid rgba(184,151,90,.3);
+      border-radius: 7px; color: var(--gold); font-size: 13px; font-weight: 500;
+      text-decoration: none; transition: background .15s;
+    }
+    .real-card-btn:hover { background: rgba(184,151,90,.18); }
+
     /* Footer */
     footer {
       text-align: center; padding: 36px 24px;
@@ -254,6 +271,15 @@
       </div>
       <p class="fin-disclaimer">* Hypothèse : 10 % apport, durée 25 ans, taux fixe 3,60 %.</p>
       <a id="btn-pdf" class="btn-pdf" style="display:none" target="_blank">📄 Voir la fiche complète</a>
+
+      <!-- Réalisation similaire (injectée par JS si disponible) -->
+      <div id="real-card" class="real-card" style="display:none">
+        <div class="real-card-tag">🖼 Réalisation similaire</div>
+        <img id="real-card-img" class="real-card-img" src="" alt="" style="display:none"/>
+        <div class="real-card-name" id="real-card-name"></div>
+        <div class="real-card-meta" id="real-card-meta"></div>
+        <a id="real-card-btn" class="real-card-btn" href="#">Voir cette réalisation →</a>
+      </div>
     </aside>
   </div>
 
@@ -565,6 +591,42 @@ function render() {
     btn.href = project.pdf_url; btn.style.display = 'inline-flex';
   }
 
+  // Réalisation similaire (reverse-lookup showroom)
+  loadRealisationSimilaire();
+}
+
+async function loadRealisationSimilaire() {
+  if (!project?.id) return;
+  try {
+    const res = await fetch(`/api/showroom?projet_id=${encodeURIComponent(project.id)}`);
+    if (!res.ok) return;
+    const d = await res.json();
+    const item = d?.item;
+    if (!item) return;
+
+    const card    = document.getElementById('real-card');
+    const nameEl  = document.getElementById('real-card-name');
+    const metaEl  = document.getElementById('real-card-meta');
+    const btnEl   = document.getElementById('real-card-btn');
+    const imgEl   = document.getElementById('real-card-img');
+
+    nameEl.textContent = item.name || '';
+    const meta = [item.quartier, item.arrondissement ? `Paris ${item.arrondissement}` : null].filter(Boolean).join(' · ');
+    metaEl.textContent = meta;
+    btnEl.href = item.slug ? `/showroom#/${item.slug}` : '/showroom';
+
+    // Image : cover ou première photo après
+    let imgUrl = item.image_cover || null;
+    if (!imgUrl && item.images_after?.length) {
+      try {
+        const arr = typeof item.images_after === 'string' ? JSON.parse(item.images_after) : item.images_after;
+        imgUrl = Array.isArray(arr) ? arr[0] : null;
+      } catch {}
+    }
+    if (imgUrl) { imgEl.src = imgUrl; imgEl.style.display = 'block'; }
+
+    card.style.display = 'block';
+  } catch {}
 }
 
 function buildDpe() {

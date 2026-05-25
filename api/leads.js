@@ -67,8 +67,15 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // ─── GET — liste paginée avec filtres ──────────────────────────
+  // ─── GET — liste paginée avec filtres  OU  lead unique par id ──
   if (req.method === 'GET') {
+    // ── Lead unique ──────────────────────────────────────────────
+    if (req.query.id && !req.query.page) {
+      const { data, error } = await supabase.from('leads').select('*').eq('id', req.query.id).maybeSingle();
+      if (error) return res.status(500).json({ error: 'db_error' });
+      if (!data)  return res.status(404).json({ error: 'not_found' });
+      return res.status(200).json({ lead: data });
+    }
     const page     = Math.max(1, parseInt(req.query.page)     || 1);
     const pageSize = Math.min(100, parseInt(req.query.pageSize) || 50);
     const source   = req.query.source   || null;
