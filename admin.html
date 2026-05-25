@@ -119,8 +119,8 @@
 
     /* ── Widget notifications flottant (style chat) ─────────────── */
     .notif-widget {
+      display: none !important;
       position: fixed; bottom: 24px; right: 24px; z-index: 500;
-      display: none; /* visible seulement quand dashboard est actif */
       flex-direction: column; align-items: flex-end; gap: 10px;
       pointer-events: none; /* le conteneur ne capte pas les clics : le panneau fermé est transparent */
     }
@@ -1306,7 +1306,9 @@
       .int-stats  { grid-template-columns: repeat(2, 1fr); }
       .int-toolbar { padding: 10px 14px; gap: 7px; flex-wrap: wrap; }
       .int-filter-sel { font-size: 11px; padding: 6px 22px 6px 9px; }
-      .int-table-wrap { border-radius: 0; }
+      /* Réinitialiser le display table pour permettre le grid sur les lignes */
+      .int-table-wrap { border-radius: 0; overflow-x: visible; }
+      .int-table, .int-table tbody { display: block; width: 100%; }
       .int-table thead { display: none; }
       .int-table tbody tr {
         display: grid;
@@ -1315,13 +1317,15 @@
         padding: 12px 16px;
         gap: 2px 10px;
         align-items: start;
+        border-bottom: 1px solid var(--border);
       }
       .int-table tbody tr.is-treated { opacity: .55; }
-      .int-table td { padding: 0; }
+      /* Tous les td en block pour participer au grid */
+      .int-table td { display: block; padding: 0; }
       .int-table td.td-traite  { grid-column:1; grid-row:1/3; display:flex; align-items:center; justify-content:center; }
       .int-table td.td-lead    { grid-column:2; grid-row:1; padding-top:1px; }
       .int-table td.td-source  { grid-column:2; grid-row:2; padding-top:3px; }
-      .int-table td.td-meta    { display:none; }
+      .int-table td.td-meta    { display:none !important; }
       .int-table td.td-actions { grid-column:3; grid-row:1/3; display:flex; align-items:center; }
       .int-lead-row            { flex-wrap:wrap; }
     }
@@ -2251,11 +2255,39 @@
 <div class="modal-overlay" id="del-overlay" onclick="if(event.target===this)closeDelModal()">
   <div class="modal">
     <div class="modal-icon">🗑</div>
-    <p class="modal-title">Supprimer ce lead ?</p>
-    <p class="modal-sub" id="del-desc">Cette action est irréversible.</p>
+    <!-- Étape 1 -->
+    <div id="del-step1">
+      <p class="modal-title">Supprimer ce lead ?</p>
+      <p class="modal-sub" id="del-desc">Cette action est irréversible.</p>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeDelModal()">Annuler</button>
+        <button class="btn-confirm-del" onclick="delStep2()">Continuer →</button>
+      </div>
+    </div>
+    <!-- Étape 2 -->
+    <div id="del-step2" style="display:none">
+      <p class="modal-title" style="color:var(--red)">Confirmer la suppression</p>
+      <p class="modal-sub">Tapez <strong id="del-confirm-hint" style="color:var(--cream)"></strong> pour confirmer</p>
+      <input id="del-confirm-input" type="text" placeholder="Prénom Nom"
+        style="width:100%;margin:12px 0 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--cream);font-family:var(--sans);font-size:14px;outline:none;box-sizing:border-box"
+        oninput="checkDelConfirm()" autocomplete="off"/>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="delBackStep1()">← Retour</button>
+        <button class="btn-confirm-del" id="btn-confirm-del" onclick="confirmDelete()" disabled>Supprimer définitivement</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL DELETE INTÉRÊT ══════════════════════════════════ -->
+<div class="modal-overlay" id="del-int-overlay" onclick="if(event.target===this)closeDelIntModal()">
+  <div class="modal">
+    <div class="modal-icon">🗑</div>
+    <p class="modal-title">Supprimer cet intérêt ?</p>
+    <p class="modal-sub" id="del-int-desc">Cette action est irréversible.</p>
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeDelModal()">Annuler</button>
-      <button class="btn-confirm-del" id="btn-confirm-del" onclick="confirmDelete()">Supprimer</button>
+      <button class="btn-cancel" onclick="closeDelIntModal()">Annuler</button>
+      <button class="btn-confirm-del" id="btn-del-int" onclick="confirmDeleteInterest()">Supprimer</button>
     </div>
   </div>
 </div>
@@ -2594,10 +2626,17 @@ function showDashboard(email, isViewer, role = 'admin') {
 
   // Mode viewer (Thierry & Alexandre) : filtre "leads chauds" actif par défaut
   isViewerMode = !!isViewer;
-  if (isViewerMode) {
-    scoreMinFilter = 8;
+  {
     const sel = document.getElementById('score-view-filter');
-    if (sel) { sel.style.display = ''; sel.value = 'hot'; }
+    if (sel) {
+      sel.style.display = ''; // toujours visible pour tous les admins
+      if (isViewerMode) {
+        scoreMinFilter = 8;
+        sel.value = 'hot';
+      } else {
+        sel.value = 'all';
+      }
+    }
   }
 
   // ── Rôle "projects" : accès restreint à l'onglet Projets uniquement ──
@@ -2616,8 +2655,8 @@ function showDashboard(email, isViewer, role = 'admin') {
   // Rôle admin complet
   loadLeads(1);
   handleRoute(); // applique la vue selon le hash actuel (ou #leads par défaut)
-  showNotifWidget();   // rend le FAB visible
-  startNotifPolling(); // charge les notifs + polling 60s
+  // showNotifWidget() supprimé — bulle FAB désactivée
+  startNotifPolling(); // polling maintenu pour le badge onglet Intérêts
 }
 
 function applyScoreViewFilter() {
@@ -3935,18 +3974,41 @@ function renderPagination(page, total, pageSize) {
 /* ── Delete ─────────────────────────────────────────────────── */
 let pendingDeleteId = null;
 
+let _delLeadName = '';
+
 function openDelModal(lead) {
   pendingDeleteId = lead.id;
+  _delLeadName = `${lead.prenom} ${lead.nom}`;
   document.getElementById('del-desc').textContent =
     `${lead.prenom} ${lead.nom} (${lead.email}) — cette action est irréversible.`;
-  const btn = document.getElementById('btn-confirm-del');
-  btn.disabled = false;
-  btn.textContent = 'Supprimer';
+  document.getElementById('del-step1').style.display = '';
+  document.getElementById('del-step2').style.display = 'none';
+  document.getElementById('del-confirm-input').value = '';
   document.getElementById('del-overlay').classList.add('on');
+}
+
+function delStep2() {
+  document.getElementById('del-step1').style.display = 'none';
+  document.getElementById('del-step2').style.display = '';
+  document.getElementById('del-confirm-hint').textContent = _delLeadName;
+  document.getElementById('btn-confirm-del').disabled = true;
+  setTimeout(() => document.getElementById('del-confirm-input')?.focus(), 50);
+}
+
+function delBackStep1() {
+  document.getElementById('del-step1').style.display = '';
+  document.getElementById('del-step2').style.display = 'none';
+}
+
+function checkDelConfirm() {
+  const val = document.getElementById('del-confirm-input').value.trim();
+  document.getElementById('btn-confirm-del').disabled =
+    val.toLowerCase() !== _delLeadName.toLowerCase();
 }
 
 function closeDelModal() {
   pendingDeleteId = null;
+  _delLeadName = '';
   document.getElementById('del-overlay').classList.remove('on');
 }
 
@@ -5087,9 +5149,48 @@ function _buildInterestRow(ev) {
         <button class="int-action-btn" title="Fiche lead" onclick="openLeadFromNotif('${esc(lead.id)}')">${SVG_PERSON}</button>
         ${lead.email ? `<button class="int-action-btn mail" title="Envoyer un email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom||'')}','${esc(lead.email)}')">${SVG_MAIL}</button>` : ''}
         ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="WhatsApp">${SVG_WA}</a>` : ''}
+        <button class="int-action-btn" style="color:var(--red);border-color:rgba(217,94,94,.3)" title="Supprimer cet intérêt" onclick="openDelIntModal('${esc(ev.id)}','${esc(leadName)} — ${esc(source.name)}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
       </div>
     </td>
   </tr>`;
+}
+
+/* ── Delete intérêt ─────────────────────────────────────────── */
+let _pendingDelIntId = null;
+
+function openDelIntModal(eventId, desc) {
+  _pendingDelIntId = eventId;
+  document.getElementById('del-int-desc').textContent = desc || 'Cette action est irréversible.';
+  const btn = document.getElementById('btn-del-int');
+  btn.disabled = false; btn.textContent = 'Supprimer';
+  document.getElementById('del-int-overlay').classList.add('on');
+}
+
+function closeDelIntModal() {
+  _pendingDelIntId = null;
+  document.getElementById('del-int-overlay').classList.remove('on');
+}
+
+async function confirmDeleteInterest() {
+  if (!_pendingDelIntId) return;
+  const btn = document.getElementById('btn-del-int');
+  btn.disabled = true; btn.textContent = 'Suppression…';
+  try {
+    const res = await fetch(`/api/events?id=${_pendingDelIntId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) { logout(); return; }
+    // Retirer du cache local
+    interestsCache = interestsCache.filter(e => e.id !== _pendingDelIntId);
+    closeDelIntModal();
+    renderInterestsTable();
+  } catch (e) {
+    console.warn('deleteInterest error:', e);
+    btn.disabled = false; btn.textContent = 'Supprimer';
+  }
 }
 
 function _buildWaText(lead, source) {

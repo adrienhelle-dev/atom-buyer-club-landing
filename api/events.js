@@ -123,5 +123,37 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
+  // DELETE — supprimer un événement intérêt
+  if (req.method === 'DELETE') {
+    const { id } = req.query;
+    if (!id) return res.status(400).json({ error: 'id requis' });
+
+    // Récupérer l'event d'abord pour nettoyer project_interests si nécessaire
+    const { data: ev } = await supabase
+      .from('lead_events')
+      .select('lead_id, type, content')
+      .eq('id', id)
+      .maybeSingle();
+
+    const { error } = await supabase.from('lead_events').delete().eq('id', id);
+    if (error) { console.error('Event DELETE:', error); return res.status(500).json({ error: 'db_error' }); }
+
+    // Nettoyer project_interests si c'était un interet_projet
+    if (ev?.type === 'interet_projet' && ev.lead_id) {
+      try {
+        let projectId = null;
+        const c = ev.content ? (typeof ev.content === 'string' ? JSON.parse(ev.content) : ev.content) : {};
+        projectId = c.project_id || null;
+        if (projectId) {
+          await supabase.from('project_interests').delete()
+            .eq('lead_id', ev.lead_id)
+            .eq('project_id', projectId);
+        }
+      } catch {}
+    }
+
+    return res.status(200).json({ ok: true });
+  }
+
   return res.status(405).end();
 };
