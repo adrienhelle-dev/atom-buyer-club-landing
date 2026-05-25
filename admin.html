@@ -1702,9 +1702,29 @@
 
         <!-- Section 3 — Visuels -->
         <div class="np-section" data-section="3">
-          <h3 class="np-section-title">Photos du bien</h3>
+          <h3 class="np-section-title">Visuels</h3>
 
-          <!-- Zone upload principale -->
+          <!-- ── 1. Projections 3D ── -->
+          <label style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:8px">
+            1. Projections 3D
+            <span style="font-size:10px;font-weight:400;margin-left:6px;opacity:.7">· La 1ère image sera affichée en vedette</span>
+          </label>
+          <div class="upload-zone" id="np-3d-zone" style="padding:16px 20px"
+            onclick="document.getElementById('np-3d-input').click()"
+            ondragover="event.preventDefault(); this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleDrop3d(event)">
+            <div class="upload-zone-icon" style="font-size:26px;margin-bottom:6px">🎨</div>
+            <div class="upload-zone-label">Glisser-déposer les projections ici<br>ou <span onclick="event.stopPropagation(); document.getElementById('np-3d-input').click()">parcourir</span></div>
+            <div class="upload-zone-hint">JPG, PNG, WebP — max 10 Mo par image</div>
+            <input type="file" id="np-3d-input" multiple accept="image/jpeg,image/png,image/webp,image/jpg"
+              onchange="handleFiles3d(this.files)"/>
+          </div>
+          <div class="upload-progress" id="np-3d-progress"><div class="upload-progress-bar" id="np-3d-bar"></div></div>
+          <div class="img-grid" id="np-3d-grid"></div>
+
+          <!-- ── 2. Photos du bien ── -->
+          <label style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:block;margin-top:24px;margin-bottom:8px">2. Photos du bien</label>
           <div class="upload-zone" id="np-upload-zone"
             onclick="document.getElementById('np-file-input').click()"
             ondragover="event.preventDefault(); this.classList.add('drag-over')"
@@ -1719,57 +1739,28 @@
             <input type="file" id="np-file-input" multiple accept="image/jpeg,image/png,image/webp,image/jpg"
               onchange="handleImageFiles(this.files)"/>
           </div>
-
-          <!-- Barre de progression -->
           <div class="upload-progress" id="np-upload-progress">
             <div class="upload-progress-bar" id="np-upload-bar"></div>
           </div>
-
-          <!-- Grille de prévisualisation -->
           <div class="img-grid" id="np-img-grid"></div>
-
-          <!-- Champ caché pour rétrocompatibilité (saveProject lit npImages) -->
           <input type="hidden" id="np-images" value=""/>
 
-          <div class="np-grid-2" style="margin-top:8px">
-
-            <!-- ── Projections 3D ── -->
-            <div class="np-field span-2">
-              <label>Projections 3D</label>
-              <div class="upload-zone" id="np-3d-zone" style="padding:16px 20px"
-                onclick="document.getElementById('np-3d-input').click()"
-                ondragover="event.preventDefault(); this.classList.add('drag-over')"
-                ondragleave="this.classList.remove('drag-over')"
-                ondrop="handleDrop3d(event)">
-                <div class="upload-zone-icon" style="font-size:26px;margin-bottom:6px">🎨</div>
-                <div class="upload-zone-label">Glisser-déposer les projections ici<br>ou <span onclick="event.stopPropagation(); document.getElementById('np-3d-input').click()">parcourir</span></div>
-                <div class="upload-zone-hint">JPG, PNG, WebP — max 10 Mo par image</div>
-                <input type="file" id="np-3d-input" multiple accept="image/jpeg,image/png,image/webp,image/jpg"
-                  onchange="handleFiles3d(this.files)"/>
-              </div>
-              <div class="upload-progress" id="np-3d-progress"><div class="upload-progress-bar" id="np-3d-bar"></div></div>
-              <div class="img-grid" id="np-3d-grid"></div>
-            </div>
-
-            <!-- ── Plan 2D ── -->
-            <div class="np-field span-2">
-              <label>Plan 2D</label>
-              <div class="upload-zone" id="np-plan-zone" style="padding:16px 20px"
-                onclick="document.getElementById('np-plan-input').click()"
-                ondragover="event.preventDefault(); this.classList.add('drag-over')"
-                ondragleave="this.classList.remove('drag-over')"
-                ondrop="handleDropPlan2d(event)">
-                <div class="upload-zone-icon" style="font-size:26px;margin-bottom:6px">📐</div>
-                <div class="upload-zone-label">Glisser-déposer le plan ici<br>ou <span onclick="event.stopPropagation(); document.getElementById('np-plan-input').click()">parcourir</span></div>
-                <div class="upload-zone-hint">JPG, PNG, WebP, PDF — 1 fichier max 10 Mo</div>
-                <input type="file" id="np-plan-input" accept="image/jpeg,image/png,image/webp,image/jpg,application/pdf"
-                  onchange="handleFilePlan2d(this.files)"/>
-              </div>
-              <div class="upload-progress" id="np-plan-progress"><div class="upload-progress-bar" id="np-plan-bar"></div></div>
-              <div id="np-plan-preview"></div>
-            </div>
-
+          <!-- ── 3. Plan 2D ── -->
+          <label style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:block;margin-top:24px;margin-bottom:8px">3. Plan 2D</label>
+          <div class="upload-zone" id="np-plan-zone" style="padding:16px 20px"
+            onclick="document.getElementById('np-plan-input').click()"
+            ondragover="event.preventDefault(); this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleDropPlan2d(event)">
+            <div class="upload-zone-icon" style="font-size:26px;margin-bottom:6px">📐</div>
+            <div class="upload-zone-label">Glisser-déposer les plans ici<br>ou <span onclick="event.stopPropagation(); document.getElementById('np-plan-input').click()">parcourir</span></div>
+            <div class="upload-zone-hint">JPG, PNG, WebP, PDF — plusieurs fichiers possibles</div>
+            <input type="file" id="np-plan-input" multiple accept="image/jpeg,image/png,image/webp,image/jpg,application/pdf"
+              onchange="handleFilePlan2d(this.files)"/>
           </div>
+          <div class="upload-progress" id="np-plan-progress"><div class="upload-progress-bar" id="np-plan-bar"></div></div>
+          <div id="np-plan-preview"></div>
+
         </div>
 
         <!-- Section 4 — Ameublement -->
@@ -3043,9 +3034,9 @@ function leadMatchesProject(lead, project) {
 let notaireTouched = false;
 
 // ── Gestion photos upload Supabase Storage ───────────────────
-let npImages   = []; // [{ url, path }]  — photos principales
-let np3dImages = []; // [{ url, path }]  — projections 3D
-let npPlan2d   = null; // { url, path, name } | null
+let npImages      = []; // [{ url, path }]  — photos principales
+let np3dImages    = []; // [{ url, path }]  — projections 3D
+let npPlan2dFiles = []; // [{ url, path, name }]  — plans 2D (multi)
 
 async function handleImageDrop(event) {
   event.preventDefault();
@@ -3203,10 +3194,22 @@ function render3dPreviews() {
     <div class="img-grid-item">
       <img src="${esc(img.url)}" alt="3D ${i+1}" style="width:100%;height:100%;object-fit:cover"/>
       <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removeImage3d(${i})" style="background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
+      ${i === 0
+        ? `<div style="position:absolute;bottom:4px;left:4px;background:rgba(184,151,90,.9);color:#0f0e0c;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;pointer-events:none;letter-spacing:.04em">⭐ Vedette</div>`
+        : `<button title="Mettre en vedette" onclick="setFeatured3d(${i})" style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;color:rgba(255,255,255,.7);font-size:10px;transition:color .15s" onmouseenter="this.style.color='#B8975A'" onmouseleave="this.style.color='rgba(255,255,255,.7)'">⭐</button>`
+      }
     </div>`).join('');
 }
 
-/* ── Plan 2D ─────────────────────────────────────────────────── */
+function setFeatured3d(index) {
+  if (!np3dImages[index]) return;
+  const [img] = np3dImages.splice(index, 1);
+  np3dImages.unshift(img);
+  render3dPreviews();
+  setSaveBtnDirty(true);
+}
+
+/* ── Plan 2D (multi) ─────────────────────────────────────────── */
 async function handleDropPlan2d(event) {
   event.preventDefault();
   document.getElementById('np-plan-zone').classList.remove('drag-over');
@@ -3214,28 +3217,34 @@ async function handleDropPlan2d(event) {
 }
 
 async function handleFilePlan2d(files) {
-  const file = Array.from(files)[0];
-  if (!file) return;
+  const arr = Array.from(files);
+  if (!arr.length) return;
   const zone = document.getElementById('np-plan-zone');
   const bar  = document.getElementById('np-plan-bar');
   const prog = document.getElementById('np-plan-progress');
-  prog.style.display = 'block'; bar.style.width = '20%';
+  prog.style.display = 'block'; bar.style.width = '0%';
   zone.style.pointerEvents = 'none';
-  const toUpload = file.type.startsWith('image/') ? await compressImage(file, 1800) : file;
-  bar.style.width = '50%';
-  const result = await uploadImageFile(toUpload);
-  bar.style.width = '100%';
+  let done = 0;
+  for (const file of arr) {
+    bar.style.width = Math.round(((done + 0.3) / arr.length) * 100) + '%';
+    const toUpload = file.type.startsWith('image/') ? await compressImage(file, 1800) : file;
+    const result = await uploadImageFile(toUpload);
+    if (result) npPlan2dFiles.push({ ...result, name: file.name });
+    done++;
+    bar.style.width = Math.round((done / arr.length) * 100) + '%';
+  }
   zone.style.pointerEvents = '';
   setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 700);
-  if (result) npPlan2d = { ...result, name: file.name };
   const fi = document.getElementById('np-plan-input'); if (fi) fi.value = '';
   renderPlan2dPreview();
   setSaveBtnDirty(true);
 }
 
-function removePlan2d() {
-  if (npPlan2d?.path) fetch('/api/upload-image', { method:'DELETE', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({path:npPlan2d.path}) }).catch(()=>{});
-  npPlan2d = null;
+function removePlan2d(index) {
+  const f = npPlan2dFiles[index];
+  if (!f) return;
+  if (f.path) fetch('/api/upload-image', { method:'DELETE', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({path:f.path}) }).catch(()=>{});
+  npPlan2dFiles.splice(index, 1);
   renderPlan2dPreview();
   setSaveBtnDirty(true);
 }
@@ -3243,25 +3252,16 @@ function removePlan2d() {
 function renderPlan2dPreview() {
   const el = document.getElementById('np-plan-preview');
   if (!el) return;
-  if (!npPlan2d) { el.innerHTML = ''; return; }
-  const isPdf   = /\.pdf$/i.test(npPlan2d.name || npPlan2d.url);
-  const isImage = !isPdf && /\.(jpg|jpeg|png|webp)$/i.test(npPlan2d.name || npPlan2d.url);
-  if (isImage) {
-    el.innerHTML = `
-      <div class="img-grid" style="margin-top:8px;grid-template-columns:repeat(2,1fr)">
-        <div class="img-grid-item" style="aspect-ratio:4/3">
-          <img src="${esc(npPlan2d.url)}" alt="Plan 2D" style="width:100%;height:100%;object-fit:cover"/>
-          <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removePlan2d()" style="background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
-        </div>
+  if (!npPlan2dFiles.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">` +
+    npPlan2dFiles.map((f, i) => {
+      const isPdf = /\.pdf$/i.test(f.name || f.url);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+        <span style="font-size:20px">${isPdf ? '📄' : '🗺️'}</span>
+        <a href="${esc(f.url)}" target="_blank" style="color:var(--gold);font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none">${esc(f.name || 'plan')}</a>
+        <button onclick="removePlan2d(${i})" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0;flex-shrink:0" title="Supprimer">✕</button>
       </div>`;
-  } else {
-    el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
-        <span style="font-size:22px">📄</span>
-        <a href="${esc(npPlan2d.url)}" target="_blank" style="color:var(--gold);font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none">${esc(npPlan2d.name || 'plan.pdf')}</a>
-        <button onclick="removePlan2d()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0;flex-shrink:0" title="Supprimer">✕</button>
-      </div>`;
-  }
+    }).join('') + `</div>`;
 }
 
 function renderImagePreviews() {
@@ -3296,7 +3296,7 @@ function resetNewProjectForm() {
   document.querySelectorAll('#np-eq-grid input[type=checkbox]').forEach(cb => { cb.checked = false; cb.parentElement.classList.remove('checked'); });
   notaireTouched = false;
   // Reset photos / visuels
-  npImages   = [];  np3dImages = [];  npPlan2d   = null;
+  npImages = []; np3dImages = []; npPlan2dFiles = [];
   renderImagePreviews();
   render3dPreviews();
   renderPlan2dPreview();
@@ -3367,7 +3367,15 @@ function populateProjectForm(p) {
   // Photos upload — URLs existantes sans path connu (pas de suppression possible sur les anciennes)
   npImages   = (p.images    || []).map(url => ({ url: String(url), path: null }));
   np3dImages = (p.images_3d || []).map(url => ({ url: String(url), path: null }));
-  npPlan2d   = p.plan_2d_url ? { url: p.plan_2d_url, path: null, name: p.plan_2d_url.split('/').pop() } : null;
+  // plan_2d_url peut être un JSON-array (multi) ou une URL simple (legacy)
+  if (p.plan_2d_url) {
+    let urls = [];
+    try { urls = JSON.parse(p.plan_2d_url); if (!Array.isArray(urls)) urls = [p.plan_2d_url]; }
+    catch { urls = [p.plan_2d_url]; }
+    npPlan2dFiles = urls.filter(Boolean).map(url => ({ url: String(url), path: null, name: String(url).split('/').pop() }));
+  } else {
+    npPlan2dFiles = [];
+  }
   renderImagePreviews();
   render3dPreviews();
   renderPlan2dPreview();
@@ -3498,9 +3506,11 @@ async function saveProject(forceStatus) {
     budget_travaux:   num('np-budget-travaux') || 0,
     budget_meuble:    num('np-budget-meuble') || 0,
     loyer_atom:       num('np-loyer') || null,
-    images:           npImages.map(i => i.url),
-    images_3d:        np3dImages.map(i => i.url),
-    plan_2d_url:      npPlan2d?.url || null,
+    images:      npImages.map(i => i.url),
+    images_3d:   np3dImages.map(i => i.url),
+    plan_2d_url: npPlan2dFiles.length > 1
+      ? JSON.stringify(npPlan2dFiles.map(f => f.url))
+      : (npPlan2dFiles[0]?.url || null),
     ameublement_desc: document.getElementById('np-ameublement-desc').value.trim() || null,
     ameublement:       collectEquipement(),
     status:            forceStatus || document.getElementById('np-status').value,

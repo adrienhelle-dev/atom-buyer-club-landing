@@ -177,6 +177,9 @@
     .detail-desc    { font-size: 14px; color: var(--cream-dim); line-height: 1.75; margin-bottom: 28px; }
     .ameublement-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
     .ameublement-tag { font-size: 12px; color: var(--cream-dim); background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; }
+    .plan-item-link { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--cream); text-decoration: none; transition: border-color .15s; }
+    .plan-item-link:hover { border-color: var(--gold); }
+    .plan-item-name { font-size: 13px; color: var(--gold); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* Bottom CTAs */
     .detail-ctas { display: flex; gap: 12px; margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border); }
@@ -381,6 +384,9 @@
         <p class="section-title" id="desc-title" style="display:none">Description</p>
         <p class="detail-desc" id="detail-desc"></p>
 
+        <p class="section-title" id="plans-title" style="display:none">Plan 2D</p>
+        <div id="plans-grid" style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px"></div>
+
         <p class="section-title" id="ameub-title" style="display:none">Ameublement inclus</p>
         <div class="ameublement-grid" id="ameub-grid"></div>
 
@@ -408,7 +414,6 @@
           <a id="real-link" href="#" class="btn-voir-realisation">Voir la réalisation →</a>
         </div>
 
-        <button onclick="openCta()" class="sidebar-cta">Je déclare mon intérêt →</button>
       </div>
     </div>
   </div>
@@ -649,6 +654,33 @@
       descEl.textContent = '';
     }
 
+    // Plans 2D
+    const plansTitle = document.getElementById('plans-title');
+    const plansGrid  = document.getElementById('plans-grid');
+    if (plansTitle && plansGrid) {
+      let planUrls = [];
+      if (proj.plan_2d_url) {
+        try { planUrls = JSON.parse(proj.plan_2d_url); if (!Array.isArray(planUrls)) planUrls = [proj.plan_2d_url]; }
+        catch { planUrls = [proj.plan_2d_url]; }
+      }
+      planUrls = planUrls.filter(Boolean);
+      if (planUrls.length) {
+        plansTitle.style.display = '';
+        plansGrid.innerHTML = planUrls.map((url, i) => {
+          const isPdf = /\.pdf$/i.test(url);
+          const name = decodeURIComponent(url.split('/').pop().replace(/[?#].*/, '') || ('Plan ' + (i + 1)));
+          return `<a class="plan-item-link" href="${esc(url)}" target="_blank" rel="noopener">
+            <span style="font-size:20px">${isPdf ? '📄' : '🗺️'}</span>
+            <span class="plan-item-name">${esc(name)}</span>
+            <span style="font-size:12px;color:var(--dim);flex-shrink:0">↗</span>
+          </a>`;
+        }).join('');
+      } else {
+        plansTitle.style.display = 'none';
+        plansGrid.innerHTML = '';
+      }
+    }
+
     // Ameublement
     const ameubTitle = document.getElementById('ameub-title');
     const ameubGrid  = document.getElementById('ameub-grid');
@@ -718,12 +750,18 @@
     const toggleWrap = document.getElementById('gallery-toggle-wrap');
     toggleWrap.style.display = (hasPhotos && has3d) ? '' : 'none';
 
-    galleryMode = 'photos';
-    document.getElementById('btn-photos')?.classList.add('active');
-    document.getElementById('btn-3d')?.classList.remove('active');
-
-    const imgs = hasPhotos ? photos : (has3d ? imgs3d : []);
-    setGalleryImages(imgs);
+    // Projections 3D en premier, photos actuelles en second
+    if (has3d) {
+      galleryMode = '3d';
+      document.getElementById('btn-3d')?.classList.add('active');
+      document.getElementById('btn-photos')?.classList.remove('active');
+      setGalleryImages(imgs3d);
+    } else {
+      galleryMode = 'photos';
+      document.getElementById('btn-photos')?.classList.add('active');
+      document.getElementById('btn-3d')?.classList.remove('active');
+      setGalleryImages(photos);
+    }
   }
 
   function setGalleryImages(imgs) {

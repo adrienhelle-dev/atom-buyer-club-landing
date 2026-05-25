@@ -145,6 +145,14 @@
     /* Icône WA inline */
     .wa-icon { flex-shrink: 0; }
 
+    /* Plan 2D */
+    .plans-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .plan-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--cream); transition: border-color .15s; }
+    .plan-item:hover { border-color: var(--gold); }
+    .plan-item-icon { font-size: 20px; flex-shrink: 0; }
+    .plan-item-name { font-size: 13px; color: var(--gold); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .plan-item-arrow { font-size: 12px; color: var(--dim); flex-shrink: 0; }
+
     /* PDF link */
     .btn-pdf {
       display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
@@ -209,6 +217,11 @@
       <section class="section" id="section-description" style="display:none">
         <h2 class="section-title">Le bien</h2>
         <p id="description-text"></p>
+      </section>
+
+      <section class="section" id="section-plans" style="display:none">
+        <h2 class="section-title">Plan 2D</h2>
+        <div class="plans-grid" id="plans-grid"></div>
       </section>
 
       <section class="section">
@@ -485,6 +498,26 @@ function render() {
   if (project.description) {
     document.getElementById('description-text').textContent = project.description;
     document.getElementById('section-description').style.display = 'block';
+  }
+
+  // Plans 2D
+  if (project.plan_2d_url) {
+    let planUrls = [];
+    try { planUrls = JSON.parse(project.plan_2d_url); if (!Array.isArray(planUrls)) planUrls = [project.plan_2d_url]; }
+    catch { planUrls = [project.plan_2d_url]; }
+    planUrls = planUrls.filter(Boolean);
+    if (planUrls.length) {
+      document.getElementById('plans-grid').innerHTML = planUrls.map((url, i) => {
+        const isPdf = /\.pdf$/i.test(url);
+        const name = url.split('/').pop().replace(/[?#].*/, '') || `Plan ${i + 1}`;
+        return `<a class="plan-item" href="${escapeHtml(url)}" target="_blank" rel="noopener">
+          <span class="plan-item-icon">${isPdf ? '📄' : '🗺️'}</span>
+          <span class="plan-item-name">${escapeHtml(decodeURIComponent(name))}</span>
+          <span class="plan-item-arrow">↗</span>
+        </a>`;
+      }).join('');
+      document.getElementById('section-plans').style.display = 'block';
+    }
   }
 
   // Specs
