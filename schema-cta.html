@@ -133,14 +133,120 @@
     .inline-code{font-family:var(--mono);font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--gold);}
     .sep{height:1px;background:var(--border);margin:6px 0;}
 
-    @media(max-width:900px){
-      .hd{padding:18px 20px;}
+    /* ── Tablette (≤ 960px) ──────────────────────────────── */
+    @media(max-width:960px){
+      .wrap{padding:36px 32px 80px;gap:36px;}
+      .toc{width:160px;}
+      .toc a{font-size:11px;padding:4px 8px;}
+      .g3{grid-template-columns:1fr 1fr;}
+      .g4{grid-template-columns:1fr 1fr;}
+      .sg{grid-template-columns:1fr 1fr;}
+      .flow{flex-wrap:wrap;}
+      .fstep{min-width:calc(50% - 20px);flex:unset;}
+      .farrow{display:none;}
+      .sec-title{font-size:26px;}
+      .purl{min-width:200px;}
+    }
+    /* ── Mobile (≤ 720px) — TOC caché, layout single-col ─ */
+    @media(max-width:720px){
+      .hd{padding:16px 20px;}
+      .hd-sub{display:none;}
       .wrap{padding:28px 20px 60px;flex-direction:column;}
       .toc{display:none;}
+      .content{gap:44px;}
+      .sec{scroll-margin-top:76px;}
+      .sec-title{font-size:26px;}
       .g2,.g3,.g4,.sg,.utm-grid{grid-template-columns:1fr;}
-      .flow{flex-direction:column;}
-      .farrow{transform:rotate(90deg);align-self:center;}
+      .flow{flex-direction:column;padding:16px;}
+      .fstep{min-width:unset;flex:unset;}
+      .farrow{display:flex;transform:rotate(90deg);align-self:center;padding:2px 0;}
       .purl{min-width:auto;}
+      .rtable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -8px;}
+      .rtable{min-width:500px;}
+    }
+    /* ── iPhone (≤ 480px) — compact, tout en colonne ──── */
+    @media(max-width:480px){
+      .hd{padding:12px 16px;}
+      .logo{font-size:18px;}
+      .chip{font-size:9px;padding:3px 9px;}
+      .back{font-size:11px;padding:5px 10px;}
+      .wrap{padding:20px 16px 60px;}
+      .content{gap:36px;}
+      .sec{scroll-margin-top:72px;}
+      .sec-tag{font-size:9px;}
+      .sec-title{font-size:22px;}
+      .sec-desc{font-size:13px;margin-bottom:18px;}
+
+      /* Cards */
+      .card{padding:14px;}
+      .card-title{font-size:9px;margin-bottom:12px;}
+
+      /* Flow: vertical, compact */
+      .flow{padding:14px;gap:6px;}
+      .fstep{padding:12px 10px;}
+      .fi{font-size:18px;}
+      .ft{font-size:11px;}
+      .fs{font-size:10px;}
+      .farrow{font-size:16px;padding:0;}
+
+      /* Scoring */
+      .sblock{padding:12px;}
+      .sbt{font-size:9px;}
+      .slabel,.pts{font-size:12px;}
+      .srow{padding:6px 0;}
+
+      /* Events */
+      .ev{flex-wrap:wrap;padding:12px;}
+      .ev-badge{margin-left:0;margin-top:8px;order:3;}
+      .ev-name{font-size:12px;}
+      .ev-desc{font-size:11px;}
+
+      /* UTM */
+      .url-box{font-size:10px;padding:10px 12px;line-height:1.7;}
+      .uitem{padding:12px;}
+      .upname{font-size:11px;}
+      .updesc,.upex{font-size:11px;}
+
+      /* Matching */
+      .mitem{padding:12px;}
+      .micon{font-size:18px;margin-bottom:6px;}
+      .mtitle{font-size:12px;}
+      .mdesc,.mpts{font-size:11px;}
+
+      /* Roles */
+      .rtable-wrap{margin:0 -6px;}
+      .rtable{min-width:480px;font-size:11px;}
+      .rtable th{padding:8px 10px;font-size:9px;}
+      .rtable td{padding:8px 10px;}
+      .inline-code{font-size:10px;padding:1px 5px;}
+
+      /* Pages */
+      .pitem{flex-wrap:wrap;gap:6px;padding:10px 12px;}
+      .purl{font-size:11px;}
+      .pdesc{font-size:12px;flex-basis:100%;}
+      .ptag{font-size:9px;}
+
+      /* Notes */
+      .note{font-size:11px;padding:10px 12px;}
+    }
+
+    /* ── Nav mobile horizontale (affiché ≤ 720px) ────── */
+    .mobile-nav{
+      display:none;
+      background:var(--bg2);border-bottom:1px solid var(--border);
+      overflow-x:auto;-webkit-overflow-scrolling:touch;
+      scrollbar-width:none;padding:0 16px;
+    }
+    .mobile-nav::-webkit-scrollbar{display:none;}
+    .mobile-nav-inner{display:flex;gap:0;white-space:nowrap;}
+    .mobile-nav a{
+      display:inline-block;font-size:11px;color:var(--dim);text-decoration:none;
+      padding:10px 12px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
+      flex-shrink:0;
+    }
+    .mobile-nav a:hover,.mobile-nav a.on{color:var(--gold);border-bottom-color:var(--gold);}
+    @media(max-width:720px){
+      .mobile-nav{display:block;}
     }
   </style>
 </head>
@@ -155,6 +261,20 @@
     <a href="/admin" class="back">← Dashboard admin</a>
   </div>
 </header>
+
+<!-- Nav horizontale mobile (scroll) -->
+<nav class="mobile-nav" id="mobile-nav">
+  <div class="mobile-nav-inner">
+    <a href="#flux">Flux</a>
+    <a href="#scoring">Scoring</a>
+    <a href="#events">Événements</a>
+    <a href="#interets">Intérêts</a>
+    <a href="#utm">UTM</a>
+    <a href="#matching">Matching</a>
+    <a href="#roles">Rôles</a>
+    <a href="#pages">Pages</a>
+  </div>
+</nav>
 
 <div class="wrap">
 
@@ -540,6 +660,7 @@ https://join.atombuyerclub.fr/projet/<span class="up">saint-denis</span>?<span c
       <p class="sec-desc">Trois niveaux d'accès configurés via variables d'environnement. Les rôles définissent ce qui est visible et les comportements par défaut.</p>
 
       <div class="card">
+        <div class="rtable-wrap">
         <table class="rtable">
           <thead>
             <tr>
@@ -582,6 +703,7 @@ https://join.atombuyerclub.fr/projet/<span class="up">saint-denis</span>?<span c
             </tr>
           </tbody>
         </table>
+        </div><!-- /rtable-wrap -->
         <div class="note" style="margin-top:0">
           <strong>Routing email :</strong> quand un lead déclare un intérêt sur un projet, l'email va au founder dont l'email correspond à <span class="inline-code">responsible_admin</span> sur le projet. Si aucun responsable défini, l'email part à tous les admins de la liste <span class="inline-code">ADMIN_EMAILS</span>.
         </div>
@@ -676,14 +798,20 @@ https://join.atombuyerclub.fr/projet/<span class="up">saint-denis</span>?<span c
 </div><!-- /wrap -->
 
 <script>
-// Highlight active TOC link on scroll
-const secs = document.querySelectorAll('.sec[id]');
-const links = document.querySelectorAll('.toc a');
+// Highlight active TOC + mobile nav on scroll
+const secs  = document.querySelectorAll('.sec[id]');
+const links = document.querySelectorAll('.toc a, .mobile-nav a');
+
 function onScroll() {
   let cur = '';
-  secs.forEach(s => { if (window.scrollY + 120 >= s.offsetTop) cur = s.id; });
+  secs.forEach(s => { if (window.scrollY + 130 >= s.offsetTop) cur = s.id; });
   links.forEach(a => {
-    a.classList.toggle('on', a.getAttribute('href') === '#' + cur);
+    const active = a.getAttribute('href') === '#' + cur;
+    a.classList.toggle('on', active);
+    // auto-scroll la nav mobile pour garder le lien actif visible
+    if (active && a.closest('.mobile-nav')) {
+      a.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    }
   });
 }
 window.addEventListener('scroll', onScroll, { passive: true });
