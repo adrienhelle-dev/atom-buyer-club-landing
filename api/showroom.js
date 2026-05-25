@@ -500,11 +500,11 @@ ${text}`;
           await supabase.from('project_showroom_links').insert(
             linked_project_ids.map(pid => ({ project_id: pid, showroom_item_id: id }))
           );
-          // Keep projet_similaire_id in sync with first entry (backward compat)
+          // Sync projet_similaire_id with first entry (backward compat)
           await supabase.from('showroom_items').update({ projet_similaire_id: linked_project_ids[0] }).eq('id', id);
-        } else {
-          await supabase.from('showroom_items').update({ projet_similaire_id: null }).eq('id', id);
         }
+        // NOTE: if linked_project_ids is empty, we intentionally do NOT clear projet_similaire_id
+        // to preserve the legacy backward-compat fallback in GET ?projet_id=
       }
 
       return res.status(200).json({ ok: true, item: data });
