@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
     // ── Mode "recent" : centre de notifications admin (widget FAB) ──
     if (recent === '1') {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const NOTIF_TYPES = ['interet_projet', 'showroom_interest'];
+      const NOTIF_TYPES = ['interet_projet', 'showroom_interest', 'showroom_cta'];
 
       const { data: events, error } = await supabase
         .from('lead_events')

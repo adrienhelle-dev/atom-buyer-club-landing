@@ -579,86 +579,91 @@
 
     /* ── Vue Projets ─────────────────────────────────────────── */
     .projects-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 16px; padding: 24px 28px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px; padding: 24px 28px;
     }
+    /* ── Project cards v2 (style showroom) ─────────────────── */
     .project-card {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
-      overflow: hidden; cursor: pointer; transition: border-color .15s, transform .1s;
-      display: flex; flex-direction: column;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; cursor: pointer; display: flex; flex-direction: column;
+      transition: border-color .18s, transform .2s, box-shadow .2s;
     }
-    .project-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .project-card:hover {
+      border-color: rgba(184,151,90,.55); transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(0,0,0,.45);
+    }
+
+    /* Cover image */
     .project-card-img {
-      width: 100%; aspect-ratio: 16/10; background: var(--bg3);
-      background-size: cover; background-position: center;
-      position: relative; display: flex; align-items: center; justify-content: center;
+      position: relative; width: 100%; aspect-ratio: 4/3; overflow: hidden;
+      background: var(--bg3);
     }
+    .project-card-img img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform .38s ease;
+    }
+    .project-card:hover .project-card-img img { transform: scale(1.05); }
     .project-card-img.empty {
-      background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%);
-      color: var(--dim); font-size: 36px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; color: var(--dim); opacity: .25;
     }
+
+    /* Status badge (overlay) */
     .project-card-status {
       position: absolute; top: 10px; left: 10px;
-      font-size: 10px; font-weight: 600; letter-spacing: .04em;
-      padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(4px);
-      text-transform: uppercase;
+      font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 20px; backdrop-filter: blur(6px); line-height: 1.5;
     }
-    .pcs-disponible { background: rgba(76,175,125,.85);  color: white; }
-    .pcs-en_cours   { background: rgba(244,166,66,.85);  color: white; }
-    .pcs-vendu      { background: rgba(122,120,116,.85); color: white; }
-    .pcs-archive    { background: rgba(122,120,116,.5);  color: var(--cream); }
-    .pcs-brouillon  { background: rgba(184,151,90,.85);  color: white; }
+    .pcs-disponible { background: rgba(76,175,125,.85);  color: #fff; }
+    .pcs-en_cours   { background: rgba(184,151,90,.85);  color: #fff; }
+    .pcs-vendu      { background: rgba(122,120,116,.85); color: #fff; }
+    .pcs-archive    { background: rgba(40,39,35,.8);     color: var(--dim); }
+    .pcs-brouillon  { background: rgba(40,39,35,.75);    color: var(--cream); }
 
-    .project-card-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
-    .project-card-title { font-family: var(--serif); font-size: 19px; font-weight: 400; color: var(--cream); line-height: 1.2; }
-    .project-card-meta { font-size: 12px; color: var(--dim); display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
-    .project-card-meta span:not(:last-child)::after { content: '·'; margin-left: 10px; opacity: .5; }
-    .project-card-prices { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-    .project-card-price-main { font-size: 18px; font-weight: 500; color: var(--gold); }
-    .project-card-price-sub  { font-size: 11px; color: var(--dim); text-align: right; }
-    .project-card-price-sub strong { color: var(--cream); font-weight: 500; }
+    /* Interest badge (overlay, top-right) */
+    .project-card-int {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(76,175,125,.85); color: #fff; backdrop-filter: blur(6px);
+      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; line-height: 1.5;
+    }
 
+    /* Body */
+    .project-card-body { padding: 14px 16px 12px; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .project-card-arr  { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+    .project-card-title { font-family: var(--serif); font-size: 21px; font-weight: 300; color: var(--cream); line-height: 1.15; margin: 2px 0 6px; }
+    .project-card-sub { font-size: 11px; color: var(--dim); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+
+    /* Financial row */
+    .project-card-fin {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      padding-top: 10px; border-top: 1px solid var(--border); margin-top: auto;
+    }
+    .pcf-left .pcf-val  { font-size: 17px; font-weight: 500; color: var(--gold); }
+    .pcf-right .pcf-val { font-size: 14px; font-weight: 500; color: var(--cream); text-align: right; }
+    .pcf-label { font-size: 10px; color: var(--dim); margin-top: 1px; }
+    .pcf-right { text-align: right; }
+
+    /* Actions bar */
     .project-card-actions {
-      display: flex; gap: 5px; padding: 10px 14px 12px; border-top: 1px solid var(--border);
-      flex-wrap: wrap; align-items: center;
+      display: flex; border-top: 1px solid var(--border); background: var(--bg3); flex-shrink: 0;
     }
     .pc-action {
-      flex: 1; min-width: 0; padding: 8px 10px; min-height: 36px;
-      font-size: 11px; font-weight: 500; letter-spacing: .02em;
-      background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+      flex: 1; padding: 9px 0; font-size: 11px; font-weight: 500;
+      background: none; border: none; border-right: 1px solid var(--border);
       color: var(--dim); cursor: pointer; font-family: var(--sans);
-      transition: border-color .15s, color .15s, background .15s;
-      text-decoration: none; text-align: center; white-space: nowrap;
-      display: inline-flex; align-items: center; justify-content: center;
+      transition: color .12s, background .12s; white-space: nowrap;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+      text-decoration: none;
     }
-    .pc-action:hover { border-color: rgba(184,151,90,.5); color: var(--cream); }
-    .pc-action.pc-voir-draft {
-      opacity: .45; /* non publié → grisé */
-    }
-    .pc-action.pc-voir-draft:hover { opacity: .7; }
-    .pc-action.pc-pdf  {
-      background: rgba(184,151,90,.06); color: var(--gold);
-      border-color: rgba(184,151,90,.22);
-    }
-    .pc-action.pc-pdf:hover { background: rgba(184,151,90,.14); }
-    .pc-action.pc-send {
-      background: rgba(76,175,125,.06); color: var(--green);
-      border-color: rgba(76,175,125,.22);
-    }
-    .pc-action.pc-send:hover { background: rgba(76,175,125,.14); }
-    .pc-action.pc-wa   {
-      background: rgba(37,211,102,.06); color: #25d366;
-      border-color: rgba(37,211,102,.22);
-    }
-    .pc-action.pc-wa:hover { background: rgba(37,211,102,.14); }
-    .pc-del {
-      flex: 0 0 auto; background: none; border: 1px solid transparent; color: transparent;
-      font-size: 13px; cursor: pointer; padding: 8px 9px; min-height: 36px; border-radius: 6px;
-      transition: color .15s, background .15s, border-color .15s; line-height: 1;
-      font-family: var(--sans);
-    }
-    .project-card:hover .pc-del { color: var(--dim); border-color: var(--border); }
-    .pc-del:hover { color: var(--red) !important; background: rgba(217,94,94,.08); border-color: rgba(217,94,94,.25) !important; }
+    .pc-action:last-child { border-right: none; }
+    .pc-action:hover { color: var(--cream); background: rgba(255,255,255,.04); }
+    .pc-action.pc-send:hover { color: var(--green); background: rgba(76,175,125,.07); }
+    .pc-action.pc-wa:hover   { color: #25d366;    background: rgba(37,211,102,.07); }
+    .pc-action.pc-pdf:hover  { color: var(--gold); background: rgba(184,151,90,.07); }
+    .pc-action.pc-del        { flex: 0 0 44px; }
+    .pc-action.pc-del:hover  { color: var(--red) !important; background: rgba(217,94,94,.07); }
+    .pc-action.pc-voir-draft { opacity: .45; }
+    .pc-action.pc-voir-draft:hover { opacity: .75; color: var(--cream); }
 
     /* ── Status tabs ─────────────────────────────────────────── */
     .project-tabs {
@@ -2800,53 +2805,53 @@ function waProjectText(p, leadId = null) {
 function projectCard(p) {
   const img    = p.images_3d?.[0] || p.images?.[0] || null;
   const status = PROJECT_STATUS[p.status] || PROJECT_STATUS.disponible;
-  const total  = p.total_all_in ? fmtEuro(p.total_all_in) : '—';
-  const loyer  = p.loyer_atom   ? fmtEuro(p.loyer_atom) + '/mois' : '—';
-  const surf   = p.surface_carrez ? `${p.surface_carrez} m²` : '';
-  const floor  = p.floor != null ? `${p.floor}${p.floor === 0 ? 'RDC' : 'e'}` : '';
-  const arr    = p.arrondissement || '';
-  const meta   = [arr, surf, floor].filter(Boolean).join('|||').split('|||');
-  const slug   = p.slug || p.id;
+  const total  = p.total_all_in ? fmtEuro(p.total_all_in) : null;
+  const loyer  = p.loyer_atom   ? fmtEuro(p.loyer_atom)   : null;
+  const surf   = p.surface_carrez ? `${p.surface_carrez} m²` : null;
+  const floor  = p.floor != null ? (p.floor === 0 ? 'RDC' : `${p.floor}e ét.`) : null;
+  const arr    = p.arrondissement ? `Paris ${p.arrondissement}` : null;
+  const metaTop  = [arr, surf].filter(Boolean).join(' · ');
+  const metaSub  = [floor, p.metro_name ? `Métro ${p.metro_name}` : null].filter(Boolean).join(' · ');
+  const slug = p.slug || p.id;
 
-  // Compteur leads compatibles (moteur de matching côté client)
   const matchCount = leadsCache.filter(l => leadMatchesProject(l, p)).length;
-  const matchBadge = matchCount > 0
-    ? `<span class="match-badge">👥 ${matchCount} lead${matchCount > 1 ? 's' : ''} compatible${matchCount > 1 ? 's' : ''}</span>`
-    : `<span class="match-badge zero">Aucun lead compatible</span>`;
-
-  // Compteur d'intérêts déclarés
-  const intCount = p.interest_count || 0;
-  const intBadge = intCount > 0
-    ? `<span class="match-badge" style="background:rgba(76,175,125,.12);color:#4caf7d;margin-top:4px">⭐ ${intCount} intérêt${intCount > 1 ? 's' : ''} déclaré${intCount > 1 ? 's' : ''}</span>`
-    : '';
-
-  // Admin responsable
-  const respName = p.responsible_admin ? founderNameFromEmail(p.responsible_admin) : '';
-  const respBadge = respName ? `<span style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:4px;margin-top:2px">👤 ${esc(respName)}</span>` : '';
+  const intCount   = p.interest_count || 0;
+  const respInit   = p.responsible_admin ? founderInitials(p.responsible_admin) : null;
 
   return `
-    <div class="project-card">
-      <div class="project-card-img ${img ? '' : 'empty'}" style="${img ? `background-image:url('${esc(img)}')` : ''}" onclick="openProject('${esc(p.id)}')">
-        ${img ? '' : '🏠'}
+    <div class="project-card" onclick="openProject('${esc(p.id)}')">
+      <div class="project-card-img${img ? '' : ' empty'}">
+        ${img ? `<img src="${esc(img)}" alt="${esc(p.title || '')}" loading="lazy"/>` : '🏠'}
         <span class="project-card-status ${status.cls}">${status.label}</span>
+        ${intCount > 0 ? `<span class="project-card-int">⭐ ${intCount}</span>` : ''}
       </div>
-      <div class="project-card-body" onclick="openProject('${esc(p.id)}')">
+      <div class="project-card-body">
+        ${metaTop ? `<div class="project-card-arr">${esc(metaTop)}</div>` : ''}
         <div class="project-card-title">${esc(p.title || 'Sans titre')}</div>
-        <div class="project-card-meta">${meta.map(m => `<span>${esc(m)}</span>`).join('')}</div>
-        ${respBadge}
-        ${matchBadge}
-        ${intBadge}
-        <div class="project-card-prices">
-          <div class="project-card-price-main">${total}</div>
-          <div class="project-card-price-sub"><strong>${loyer}</strong><br>Loyer Atom</div>
+        <div class="project-card-sub">
+          ${matchCount > 0
+            ? `<span style="color:var(--green);font-size:10px">👥 ${matchCount} lead${matchCount > 1 ? 's' : ''}</span>`
+            : `<span style="opacity:.4;font-size:10px">Aucun lead</span>`}
+          ${respInit ? `<span style="opacity:.5">·</span><span style="font-size:10px">${esc(respInit)}</span>` : ''}
+          ${metaSub ? `<span style="opacity:.5">·</span><span style="font-size:10px">${esc(metaSub)}</span>` : ''}
+        </div>
+        <div class="project-card-fin">
+          <div class="pcf-left">
+            <div class="pcf-val">${total || '—'}</div>
+            <div class="pcf-label">Total all-in</div>
+          </div>
+          ${loyer ? `<div class="pcf-right">
+            <div class="pcf-val">${loyer}</div>
+            <div class="pcf-label">Loyer / mois</div>
+          </div>` : ''}
         </div>
       </div>
-      <div class="project-card-actions">
-        ${slug ? `<a class="pc-action${p.public_visible ? '' : ' pc-voir-draft'}" href="/projet/${esc(slug)}" target="_blank" onclick="event.stopPropagation()" title="${p.public_visible ? 'Voir la page publique' : 'Prévisualiser (non publié)'}">Voir</a>` : ''}
-        ${p.status === 'disponible' && matchCount > 0 ? `<button class="pc-action pc-send" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}')" title="Envoyer aux leads compatibles">Envoyer (${matchCount})</button>` : ''}
-        ${p.status === 'disponible' ? `<button class="pc-action pc-wa" onclick="event.stopPropagation(); openSendToLeadsModal('${esc(p.id)}', 'whatsapp')" title="Envoyer via WhatsApp">WhatsApp</button>` : ''}
-        <button class="pc-action pc-pdf" onclick="event.stopPropagation(); downloadPdf('${esc(p.id)}', this)" title="Télécharger la fiche PDF">PDF</button>
-        <button class="pc-del" onclick="event.stopPropagation(); openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
+      <div class="project-card-actions" onclick="event.stopPropagation()">
+        ${slug ? `<a class="pc-action${p.public_visible ? '' : ' pc-voir-draft'}" href="/projet/${esc(slug)}" target="_blank" title="${p.public_visible ? 'Voir →' : 'Aperçu'}">↗</a>` : ''}
+        ${matchCount > 0 ? `<button class="pc-action pc-send" onclick="openSendToLeadsModal('${esc(p.id)}')" title="Envoyer aux leads compatibles">✉ ${matchCount}</button>` : ''}
+        <button class="pc-action pc-wa" onclick="openSendToLeadsModal('${esc(p.id)}', 'whatsapp')" title="WhatsApp">💬</button>
+        <button class="pc-action pc-pdf" onclick="downloadPdf('${esc(p.id)}', this)" title="Fiche PDF">📄</button>
+        <button class="pc-action pc-del" onclick="openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
       </div>
     </div>`;
 }
@@ -3625,9 +3630,21 @@ async function loadNotifs() {
   }
 }
 
+/* Clé localStorage per-user (évite les contaminations multi-compte sur même navigateur) */
+function _notifSeenKey() {
+  try {
+    if (token) {
+      const p = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (p.email) return 'last_seen_notifs_at_' + p.email;
+    }
+  } catch {}
+  return 'last_seen_notifs_at';
+}
+
 function _updateNotifBadge() {
-  const lastSeen = localStorage.getItem('last_seen_notifs_at') || '1970-01-01T00:00:00Z';
-  const unseen   = _notifEvents.filter(e => e.created_at > lastSeen).length;
+  const lastSeen = localStorage.getItem(_notifSeenKey()) || '1970-01-01T00:00:00Z';
+  // Compter uniquement les events avec un lead valide (évite les fantômes de leads supprimés)
+  const unseen   = _notifEvents.filter(e => e.lead_id && e.lead && e.created_at > lastSeen).length;
   const badge    = document.getElementById('notif-badge');
   const fab      = document.getElementById('notif-fab');
   if (!badge || !fab) return;
@@ -3688,7 +3705,7 @@ function switchNotifTab(tab) {
 }
 
 function markNotifsRead() {
-  localStorage.setItem('last_seen_notifs_at', new Date().toISOString());
+  localStorage.setItem(_notifSeenKey(), new Date().toISOString());
   _notifTab = 'read';
   document.getElementById('notif-tab-unread')?.classList.remove('active');
   document.getElementById('notif-tab-read')?.classList.add('active');
@@ -3699,7 +3716,7 @@ function markNotifsRead() {
 function _renderNotifList() {
   const list = document.getElementById('notif-list');
   if (!list) return;
-  const lastSeen = localStorage.getItem('last_seen_notifs_at') || '1970-01-01T00:00:00Z';
+  const lastSeen = localStorage.getItem(_notifSeenKey()) || '1970-01-01T00:00:00Z';
 
   // Filtrer les événements sans lead associé (entrées fantômes sans nom)
   const validEvents = _notifEvents.filter(ev => ev.lead_id && ev.lead);
@@ -5227,14 +5244,22 @@ function renderShowroomGrid() {
     return;
   }
 
-  // Comptage des intérêts showroom depuis les events de notif (30 derniers jours)
+  // Comptage des intérêts showroom depuis les events notif + cache intérêts
+  // showroom_interest : content.slug | showroom_cta : content.showroom_slug
   const srInterests = {};
-  (_notifEvents || []).filter(e => e.type === 'showroom_interest').forEach(e => {
-    try {
-      const c = typeof e.content === 'string' ? JSON.parse(e.content) : (e.content || {});
-      if (c.slug) srInterests[c.slug] = (srInterests[c.slug] || 0) + 1;
-    } catch {}
-  });
+  const _allSrEvents = [
+    ...(_notifEvents || []),
+    ...(interestsCache || []).filter(e => !(_notifEvents || []).some(n => n.id === e.id)),
+  ];
+  _allSrEvents
+    .filter(e => e.type === 'showroom_interest' || e.type === 'showroom_cta')
+    .forEach(e => {
+      try {
+        const c = typeof e.content === 'string' ? JSON.parse(e.content) : (e.content || {});
+        const slug = c.slug || c.showroom_slug;
+        if (slug) srInterests[slug] = (srInterests[slug] || 0) + 1;
+      } catch {}
+    });
 
   grid.innerHTML = filtered.map(item => `
     <div class="sr-card" onclick="openShowroomEdit('${item.id}')">

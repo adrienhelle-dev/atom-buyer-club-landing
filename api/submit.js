@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
     await supabase.from('lead_events').insert([{
       lead_id: leadId,
       type:    'showroom_cta',
-      content: b.utm_content ? JSON.stringify({ showroom_slug: b.utm_content }) : null,
+      content: JSON.stringify({ showroom_slug: b.utm_content || null, item_name: b.showroom_item_name || null }),
       author:  null,
     }]);
   }

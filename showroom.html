@@ -750,9 +750,10 @@
 
     const payload = {
       prenom, nom, email, tel,
-      utm_source:  'showroom',
-      utm_content: currentItem?.slug || null,
-      project_id:  currentItem?.projet_similaire?.id || null,
+      utm_source:       'showroom',
+      utm_content:      currentItem?.slug || null,
+      showroom_item_name: currentItem?.name || null,
+      project_id:       currentItem?.projet_similaire?.id || null,
       referrer:    location.href,
     };
 
