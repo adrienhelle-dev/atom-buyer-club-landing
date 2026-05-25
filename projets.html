@@ -180,6 +180,9 @@
     .plan-item-link { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--cream); text-decoration: none; transition: border-color .15s; }
     .plan-item-link:hover { border-color: var(--gold); }
     .plan-item-name { font-size: 13px; color: var(--gold); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .plan-img-wrap { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); cursor: zoom-in; transition: border-color .15s; }
+    .plan-img-wrap:hover { border-color: rgba(184,151,90,.5); }
+    .plan-img-wrap img { width: 100%; height: auto; display: block; }
 
     /* Bottom CTAs */
     .detail-ctas { display: flex; gap: 12px; margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border); }
@@ -668,9 +671,15 @@
         plansTitle.style.display = '';
         plansGrid.innerHTML = planUrls.map((url, i) => {
           const isPdf = /\.pdf$/i.test(url);
-          const name = decodeURIComponent(url.split('/').pop().replace(/[?#].*/, '') || ('Plan ' + (i + 1)));
+          const isImg = /\.(jpg|jpeg|png|webp)(\?|$)/i.test(url);
+          const name  = decodeURIComponent(url.split('/').pop().replace(/[?#].*/, '') || ('Plan ' + (i + 1)));
+          if (isImg) {
+            return `<a class="plan-img-wrap" href="${esc(url)}" target="_blank" rel="noopener" title="Voir en plein écran">
+              <img src="${esc(url)}" alt="Plan 2D"/>
+            </a>`;
+          }
           return `<a class="plan-item-link" href="${esc(url)}" target="_blank" rel="noopener">
-            <span style="font-size:20px">${isPdf ? '📄' : '🗺️'}</span>
+            <span style="font-size:20px">📄</span>
             <span class="plan-item-name">${esc(name)}</span>
             <span style="font-size:12px;color:var(--dim);flex-shrink:0">↗</span>
           </a>`;

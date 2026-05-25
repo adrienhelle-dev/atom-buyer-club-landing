@@ -5252,7 +5252,7 @@ function renderShowroomGrid() {
     ...(interestsCache || []).filter(e => !(_notifEvents || []).some(n => n.id === e.id)),
   ];
   _allSrEvents
-    .filter(e => e.type === 'showroom_interest' || e.type === 'showroom_cta')
+    .filter(e => (e.type === 'showroom_interest' || e.type === 'showroom_cta') && e.lead)
     .forEach(e => {
       try {
         const c = typeof e.content === 'string' ? JSON.parse(e.content) : (e.content || {});

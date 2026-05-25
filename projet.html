@@ -146,7 +146,10 @@
     .wa-icon { flex-shrink: 0; }
 
     /* Plan 2D */
-    .plans-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .plans-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+    .plan-img-wrap { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); cursor: zoom-in; display: block; transition: border-color .15s; }
+    .plan-img-wrap:hover { border-color: rgba(184,151,90,.5); }
+    .plan-img-wrap img { width: 100%; height: auto; display: block; }
     .plan-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--cream); transition: border-color .15s; }
     .plan-item:hover { border-color: var(--gold); }
     .plan-item-icon { font-size: 20px; flex-shrink: 0; }
@@ -508,11 +511,18 @@ function render() {
     planUrls = planUrls.filter(Boolean);
     if (planUrls.length) {
       document.getElementById('plans-grid').innerHTML = planUrls.map((url, i) => {
-        const isPdf = /\.pdf$/i.test(url);
-        const name = url.split('/').pop().replace(/[?#].*/, '') || `Plan ${i + 1}`;
+        const isPdf  = /\.pdf$/i.test(url);
+        const isImg  = /\.(jpg|jpeg|png|webp)(\?|$)/i.test(url);
+        const rawName = url.split('/').pop().replace(/[?#].*/, '') || `Plan ${i + 1}`;
+        const name   = decodeURIComponent(rawName);
+        if (isImg) {
+          return `<a class="plan-img-wrap" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="Voir le plan en plein écran">
+            <img src="${escapeHtml(url)}" alt="Plan 2D"/>
+          </a>`;
+        }
         return `<a class="plan-item" href="${escapeHtml(url)}" target="_blank" rel="noopener">
-          <span class="plan-item-icon">${isPdf ? '📄' : '🗺️'}</span>
-          <span class="plan-item-name">${escapeHtml(decodeURIComponent(name))}</span>
+          <span class="plan-item-icon">📄</span>
+          <span class="plan-item-name">${escapeHtml(name)}</span>
           <span class="plan-item-arrow">↗</span>
         </a>`;
       }).join('');
