@@ -230,11 +230,11 @@
       background: var(--bg2);
       border-top: 1px solid var(--border);
       box-shadow: 0 -8px 32px rgba(0,0,0,.6);
-      padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+      padding: 14px 0 calc(14px + env(safe-area-inset-bottom));
     }
-    /* Grille intérieure — miroir de .detail-layout */
+    /* Grille intérieure — miroir de .detail-layout (même padding que le contenu) */
     .sticky-inner {
-      max-width: 1100px; margin: 0 auto;
+      max-width: 1100px; margin: 0 auto; padding: 0 32px;
       display: grid; grid-template-columns: 1fr 360px; gap: 40px;
     }
     .sticky-btns { display: flex; gap: 10px; align-items: center; }
@@ -263,7 +263,8 @@
     .sticky-btn-wa:hover { background: rgba(37,211,102,.15); }
     @media(max-width:960px){ .sticky-inner { grid-template-columns: 1fr; gap: 0; } }
     @media(max-width:600px){
-      /* Sticky bar compacte — bouton WA réduit à l'icône */
+      /* Sticky bar compacte — padding aligné sur le contenu, bouton WA réduit à l'icône */
+      .sticky-inner { padding: 0 16px; }
       .sticky-btns { flex-direction: row; flex-wrap: nowrap; gap: 8px; }
       .sticky-btn-wa .wa-label { display: none; }
       .sticky-btn-wa { flex: 0 0 auto; padding: 14px; min-width: 0; }
