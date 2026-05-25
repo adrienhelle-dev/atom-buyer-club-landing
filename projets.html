@@ -508,8 +508,11 @@
       const showroomData = await showroomRes.json().catch(() => ({ items: [] }));
       realizationByProjectId = {};
       for (const item of (showroomData.items || [])) {
-        if (item.projet_similaire?.id) {
-          realizationByProjectId[item.projet_similaire.id] = item;
+        // linked_projects (join table) en priorité, fallback sur projet_similaire_id legacy
+        const linkedIds = (item.linked_projects || []).map(p => p?.id).filter(Boolean);
+        if (!linkedIds.length && item.projet_similaire_id) linkedIds.push(item.projet_similaire_id);
+        for (const pid of linkedIds) {
+          if (!realizationByProjectId[pid]) realizationByProjectId[pid] = item;
         }
       }
     } catch (e) {
