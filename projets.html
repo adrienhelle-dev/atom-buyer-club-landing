@@ -204,6 +204,10 @@
     .fin-val.green { color: var(--green); }
     .sidebar-cta { display: block; width: 100%; padding: 13px; background: var(--violet); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--sans); text-align: center; margin-top: 14px; }
     .sidebar-cta:hover { background: #4848b0; }
+    /* Carte réalisation associée */
+    .realisation-card-cover { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; margin-bottom: 12px; display: block; }
+    .btn-voir-realisation { display: block; width: 100%; padding: 11px; text-align: center; background: var(--gold); border: none; border-radius: 7px; color: var(--bg); font-size: 13px; font-weight: 500; text-decoration: none; transition: opacity .15s; }
+    .btn-voir-realisation:hover { opacity: .85; color: var(--bg); }
     .dpe-badges { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
     .dpe-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
     .dpe-A { background:#00c853;color:#fff; }
@@ -395,6 +399,15 @@
             <div class="dpe-badges" id="dpe-badges"></div>
           </div>
         </div>
+        <!-- Réalisation associée (lien circulaire ↔ showroom) -->
+        <div class="sidebar-card" id="realisation-card" style="display:none">
+          <p class="sidebar-title">Réalisation associée</p>
+          <img id="real-cover" class="realisation-card-cover" src="" alt="" style="display:none"/>
+          <p id="real-name" style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:4px"></p>
+          <p id="real-meta" style="font-size:12px;color:var(--dim);margin-bottom:14px"></p>
+          <a id="real-link" href="#" class="btn-voir-realisation">Voir la réalisation →</a>
+        </div>
+
         <button onclick="openCta()" class="sidebar-cta">Je déclare mon intérêt →</button>
       </div>
     </div>
@@ -449,6 +462,7 @@
   const DEFAULT_WA = '33686475656'; // Adrien par défaut
 
   let allProjects   = [];
+  let realizationByProjectId = {}; // map inverse : project.id → showroom_item
   let currentFilter = 'all';
   let currentProj   = null;
   let galleryMode   = 'photos'; // 'photos' | '3d'
@@ -473,9 +487,22 @@
   // ── Chargement initial ────────────────────────────────────────
   async function init() {
     try {
-      const res  = await fetch('/api/public-project?list=1');
-      const data = await res.json().catch(() => ({ projects: [] }));
+      // Chargement en parallèle : projets + réalisations (pour le lien circulaire)
+      const [projRes, showroomRes] = await Promise.all([
+        fetch('/api/public-project?list=1'),
+        fetch('/api/showroom'),
+      ]);
+      const data = await projRes.json().catch(() => ({ projects: [] }));
       allProjects = data.projects || [];
+
+      // Construire la map inverse project.id → showroom_item
+      const showroomData = await showroomRes.json().catch(() => ({ items: [] }));
+      realizationByProjectId = {};
+      for (const item of (showroomData.items || [])) {
+        if (item.projet_similaire?.id) {
+          realizationByProjectId[item.projet_similaire.id] = item;
+        }
+      }
     } catch (e) {
       allProjects = [];
     }
@@ -641,6 +668,9 @@
     // Financials sidebar
     buildFinancials(proj);
 
+    // Réalisation associée (lien circulaire ↔ showroom)
+    buildRealisationCard(proj);
+
     // WA link
     const waPhone  = proj.wa_contact?.phone || DEFAULT_WA;
     const waName   = proj.wa_contact?.name  || 'Atom Buyers Club';
@@ -652,6 +682,31 @@
     // Mettre à jour modal
     document.getElementById('cta-modal-title').textContent = `Je suis intéressé(e) — ${proj.title || 'ce projet'}`;
     document.getElementById('cta-modal-sub').textContent   = `L'équipe Atom vous recontactera sous 24h pour discuter de ce projet.`;
+  }
+
+  function buildRealisationCard(proj) {
+    const card = document.getElementById('realisation-card');
+    if (!card) return;
+    const real = realizationByProjectId[proj.id];
+    if (!real) { card.style.display = 'none'; return; }
+
+    card.style.display = '';
+    document.getElementById('real-name').textContent = real.name || '';
+    const meta = [real.quartier, real.arrondissement,
+      real.surface ? real.surface + ' m²' : null,
+      real.style   ? real.style            : null,
+    ].filter(Boolean).join(' · ');
+    document.getElementById('real-meta').textContent = meta;
+
+    const cover = document.getElementById('real-cover');
+    if (real.image_cover) {
+      cover.src = real.image_cover; cover.style.display = 'block';
+    } else {
+      cover.style.display = 'none';
+    }
+
+    const link = document.getElementById('real-link');
+    if (link) link.href = real.slug ? '/showroom.html#/' + real.slug : '/showroom.html';
   }
 
   function buildGallery(proj) {

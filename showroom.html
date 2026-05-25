@@ -227,8 +227,8 @@
     .match-tag { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
     .match-title { font-size: 15px; font-weight: 500; color: var(--cream); margin-bottom: 6px; }
     .match-meta { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
-    .btn-match { display: block; width: 100%; padding: 13px; background: var(--violet); color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
-    .btn-match:hover { opacity: .9; }
+    .btn-match { display: block; width: 100%; padding: 13px; background: var(--gold); color: var(--bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; text-decoration: none; transition: opacity .15s; }
+    .btn-match:hover { opacity: .85; }
 
     /* Modal CTA */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
@@ -351,7 +351,7 @@
           <p class="match-tag">📍 Un projet similaire est disponible</p>
           <p class="match-title" id="match-title"></p>
           <p class="match-meta" id="match-meta"></p>
-          <button class="btn-match" onclick="openCta()">Je veux ce type de projet →</button>
+          <a class="btn-match" id="match-btn" href="#">Voir ce projet →</a>
         </div>
 
         <!-- CTA WA (si pas de projet similaire) -->
@@ -643,6 +643,9 @@
       const meta = [proj.arrondissement, proj.surface_carrez ? proj.surface_carrez + ' m²' : null,
         proj.total_all_in ? 'All-in ~' + fmt(proj.total_all_in) + ' €' : null].filter(Boolean).join(' · ');
       document.getElementById('match-meta').textContent = meta;
+      // Lien direct vers la page du projet (lien circulaire)
+      const matchBtn = document.getElementById('match-btn');
+      if (matchBtn) matchBtn.href = proj.slug ? '/projets#/' + proj.slug : '#';
     } else {
       matchCard.style.display = 'none';
     }
