@@ -2399,6 +2399,7 @@
       <option value="_none">Non assigné</option>
     </select>
     <span class="int-count-info" id="int-count-info"></span>
+    <button onclick="loadInterests(true)" title="Rafraîchir" style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--dim);font-size:13px;cursor:pointer;transition:color .15s,border-color .15s" onmouseenter="this.style.color='var(--cream)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--dim)';this.style.borderColor='var(--border)'">↻</button>
   </div>
 
   <!-- Table desktop -->
@@ -2647,7 +2648,7 @@ function showView(view) {
   if (view === 'projects'     && typeof loadProjects        === 'function') loadProjects();
   if (view === 'new-project'  && typeof resetNewProjectForm === 'function') resetNewProjectForm();
   if (view === 'showroom'     && typeof loadShowroom        === 'function') loadShowroom();
-  if (view === 'interets'     && typeof loadInterests       === 'function') loadInterests();
+  if (view === 'interets'     && typeof loadInterests       === 'function') loadInterests(true);
 }
 
 window.addEventListener('hashchange', handleRoute);
@@ -3621,10 +3622,13 @@ async function loadNotifs() {
     const data = await res.json().catch(() => ({}));
     _notifEvents = data.events || [];
     _notifLoaded = true;
+    interestsLoaded = false; // invalide le cache Intérêts → rechargement au prochain onglet
     _updateNotifBadge();
     if (_notifPanelOpen) _renderNotifList();
     // Rafraîchir les cards showroom si l'onglet est actif (met à jour les badges d'intérêts)
     if (document.getElementById('view-showroom')?.classList.contains('active')) renderShowroomGrid();
+    // Rafraîchir l'onglet Intérêts s'il est actif (évite les données périmées)
+    if (document.getElementById('view-interets')?.classList.contains('active')) loadInterests(true);
   } catch (e) {
     console.warn('loadNotifs error:', e);
   }
