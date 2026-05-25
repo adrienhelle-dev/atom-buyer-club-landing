@@ -1381,33 +1381,49 @@
       .int-table td { padding: 11px 10px; }
     }
 
-    /* Mobile (≤600px) : reflow chaque ligne en grille 2-lignes */
+    /* Mobile (≤600px) : layout positionné — évite display:grid sur <tr> (cassé Safari iOS) */
     @media (max-width: 600px) {
       .int-stats  { grid-template-columns: repeat(2, 1fr); }
       .int-toolbar { padding: 10px 14px; gap: 7px; flex-wrap: wrap; }
       .int-filter-sel { font-size: 11px; padding: 6px 22px 6px 9px; }
-      /* Réinitialiser le display table pour permettre le grid sur les lignes */
       .int-table-wrap { border-radius: 0; overflow-x: visible; }
-      .int-table, .int-table tbody { display: block; width: 100%; }
+
+      /* Force tout en block ─ seule méthode fiable sur Safari iOS */
+      .int-table, .int-table thead, .int-table tbody,
+      .int-table tbody tr, .int-table td { display: block; }
+      .int-table { width: 100%; }
       .int-table thead { display: none; }
+
+      /* Ligne = conteneur positionné */
       .int-table tbody tr {
-        display: grid;
-        grid-template-columns: 40px 1fr auto;
-        grid-template-rows: auto auto;
-        padding: 12px 16px;
-        gap: 2px 10px;
-        align-items: start;
+        position: relative;
+        padding: 12px 152px 12px 50px; /* left: toggle | right: boutons */
+        min-height: 58px;
         border-bottom: 1px solid var(--border);
       }
       .int-table tbody tr.is-treated { opacity: .55; }
-      /* Tous les td en block pour participer au grid */
-      .int-table td { display: block; padding: 0; }
-      .int-table td.td-traite  { grid-column:1; grid-row:1/3; display:flex; align-items:center; justify-content:center; }
-      .int-table td.td-lead    { grid-column:2; grid-row:1; padding-top:1px; }
-      .int-table td.td-source  { grid-column:2; grid-row:2; padding-top:3px; }
-      .int-table td.td-meta    { display:none !important; }
-      .int-table td.td-actions { grid-column:3; grid-row:1/3; display:flex; align-items:center; }
-      .int-lead-row            { flex-wrap:wrap; }
+
+      /* Toggle collé à gauche, centré verticalement */
+      .int-table td { padding: 0; }
+      .int-table td.td-traite {
+        position: absolute; left: 10px; top: 0; bottom: 0;
+        width: 36px; display: flex; align-items: center; justify-content: center;
+      }
+      /* Contenu principal : lead + source empilés */
+      .int-table td.td-lead   { display: block; padding: 0; margin-bottom: 4px; }
+      .int-table td.td-source { display: block; padding: 0; }
+      .int-table td.td-meta   { display: none !important; }
+
+      /* Boutons collés à droite, centrés verticalement */
+      .int-table td.td-actions {
+        position: absolute; right: 10px; top: 0; bottom: 0;
+        width: 140px; display: flex; align-items: center; justify-content: flex-end;
+      }
+
+      /* Boutons plus petits sur mobile */
+      .int-table .int-action-btn { width: 28px; height: 28px; border-radius: 6px; }
+      .int-table .int-actions    { gap: 4px; }
+      .int-lead-row              { flex-wrap: wrap; gap: 4px; }
     }
 
     @media (max-width: 640px) {
