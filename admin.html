@@ -52,9 +52,17 @@
     .login-field input {
       background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
       padding: 12px 14px; color: var(--cream); font-family: var(--sans); font-size: 16px;
-      outline: none; transition: border-color .15s;
+      outline: none; transition: border-color .15s; width: 100%; box-sizing: border-box;
     }
     .login-field input:focus { border-color: var(--gold); }
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 44px; }
+    .pass-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--dim);
+      padding: 4px; display: flex; align-items: center; transition: color .15s;
+    }
+    .pass-toggle:hover { color: var(--cream); }
 
     .login-err { font-size: 12px; color: var(--red); margin-bottom: 14px; display: none; }
     .login-err.on { display: block; }
@@ -1139,7 +1147,22 @@
       </div>
       <div class="login-field">
         <label for="l-pass">Mot de passe</label>
-        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" required/>
+        <div class="pass-wrap">
+          <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" required/>
+          <button type="button" class="pass-toggle" onclick="togglePassVis()" title="Afficher / masquer" id="pass-toggle-btn">
+            <!-- œil fermé par défaut -->
+            <svg id="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+            <!-- œil ouvert (caché au départ) -->
+            <svg id="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <button type="submit" class="btn-login" id="btn-login">Se connecter</button>
     </form>
@@ -2202,6 +2225,16 @@ function init() {
     localStorage.getItem('abc_admin_viewer') === '1',
     localStorage.getItem('abc_admin_role')  || 'admin'
   );
+}
+
+function togglePassVis() {
+  const inp    = document.getElementById('l-pass');
+  const eyeOff = document.getElementById('eye-off');
+  const eyeOn  = document.getElementById('eye-on');
+  const show   = inp.type === 'password';
+  inp.type       = show ? 'text' : 'password';
+  eyeOff.style.display = show ? 'none' : '';
+  eyeOn.style.display  = show ? ''     : 'none';
 }
 
 document.getElementById('login-form').addEventListener('submit', async e => {
