@@ -187,13 +187,13 @@
     .utm-copy-btn.copied { background: #4caf70; }
     .utm-history { display: flex; flex-direction: column; gap: 6px; }
     .utm-hist-item {
-      background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
-      padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; display: flex; align-items: center; gap: 8px;
       transition: border-color .15s;
     }
     .utm-hist-item:hover { border-color: var(--dim); }
-    .utm-hist-url { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-family: monospace; }
-    .utm-hist-copy { font-size: 11px; color: var(--dim); border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px; background: none; cursor: pointer; flex-shrink: 0; }
+    .utm-hist-url { font-size: 10px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; }
+    .utm-hist-copy { font-size: 11px; color: var(--dim); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; background: none; cursor: pointer; flex-shrink: 0; transition: color .15s, border-color .15s; }
     .utm-hist-copy:hover { color: var(--gold); border-color: var(--gold); }
     @media (max-width: 480px) { .utm-drawer { width: 100vw; } }
 
@@ -5826,22 +5826,34 @@ function setSrCover(index) {
 }
 
 // ══ UTM BUILDER ════════════════════════════════════════════════
-const BASE_URL = 'https://join.atombuyerclub.fr';
-let _utmDest   = 'projets';
+const BASE_URL  = 'https://join.atombuyerclub.fr';
+const UTM_LS_KEY = 'atom_utm_history';
+let _utmDest    = 'projets';
 let _utmHistory = [];
+let _utmFetching = false;
+
+// ── Persistance localStorage ──────────────────────────────────
+function _utmLoadHistory() {
+  try { _utmHistory = JSON.parse(localStorage.getItem(UTM_LS_KEY) || '[]'); } catch { _utmHistory = []; }
+}
+function _utmSaveHistory() {
+  try { localStorage.setItem(UTM_LS_KEY, JSON.stringify(_utmHistory.slice(0, 20))); } catch {}
+}
 
 function toggleUtmDrawer() {
-  const drawer = document.getElementById('utm-drawer');
-  const open   = drawer.classList.contains('open');
+  const open = document.getElementById('utm-drawer').classList.contains('open');
   if (open) { closeUtmDrawer(); return; }
   openUtmDrawer();
 }
 
 function openUtmDrawer() {
+  _utmLoadHistory();
   document.getElementById('utm-drawer').classList.add('open');
   document.getElementById('utm-overlay').classList.add('on');
   document.getElementById('btn-utm-toggle').classList.add('active');
-  _populateUtmSelectors();
+  renderUtmHistory();
+  // Pré-charger si on est déjà sur projet-item / showroom-item
+  if (_utmDest === 'projet-item' || _utmDest === 'showroom-item') _populateUtmSelectors();
 }
 
 function closeUtmDrawer() {
@@ -5850,31 +5862,61 @@ function closeUtmDrawer() {
   document.getElementById('btn-utm-toggle').classList.remove('active');
 }
 
-function _populateUtmSelectors() {
-  const sel = document.getElementById('utm-item-select');
+// ── Peuple le select projet/réalisation (fetch si cache vide) ─
+async function _populateUtmSelectors() {
+  const sel  = document.getElementById('utm-item-select');
   const dest = _utmDest;
+  const loading = '<option value="">Chargement…</option>';
+
   if (dest === 'projet-item') {
+    // Fetch si cache vide
+    if (!projectsCache.length && !_utmFetching) {
+      _utmFetching = true;
+      sel.innerHTML = loading;
+      try {
+        const r = await fetch('/api/projects', { headers: { Authorization: `Bearer ${token}` } });
+        const d = await r.json();
+        projectsCache = d.projects || [];
+      } catch {}
+      _utmFetching = false;
+    }
     sel.innerHTML = '<option value="">— Choisir un projet —</option>';
-    (projectsCache || []).forEach(p => {
-      if (!p.slug) return;
-      const opt = document.createElement('option');
-      opt.value = p.slug;
-      opt.textContent = p.title + (p.status === 'disponible' ? ' ✦' : '');
-      sel.appendChild(opt);
-    });
+    (projectsCache || [])
+      .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+      .forEach(p => {
+        if (!p.slug) return;
+        const opt = document.createElement('option');
+        opt.value = p.slug;
+        opt.textContent = (p.status === 'disponible' ? '✦ ' : '') + (p.title || p.slug);
+        sel.appendChild(opt);
+      });
+
   } else if (dest === 'showroom-item') {
+    if (!showroomCache.length && !_utmFetching) {
+      _utmFetching = true;
+      sel.innerHTML = loading;
+      try {
+        const r = await fetch('/api/showroom', { headers: { Authorization: `Bearer ${token}` } });
+        const d = await r.json();
+        showroomCache = d.items || [];
+      } catch {}
+      _utmFetching = false;
+    }
     sel.innerHTML = '<option value="">— Choisir une réalisation —</option>';
-    (showroomCache || []).forEach(item => {
-      if (!item.slug) return;
-      const opt = document.createElement('option');
-      opt.value = item.slug;
-      opt.textContent = item.title || item.name || item.slug;
-      sel.appendChild(opt);
-    });
+    (showroomCache || [])
+      .sort((a, b) => (a.title || a.name || '').localeCompare(b.title || b.name || ''))
+      .forEach(item => {
+        if (!item.slug) return;
+        const opt = document.createElement('option');
+        opt.value = item.slug;
+        opt.textContent = item.title || item.name || item.slug;
+        sel.appendChild(opt);
+      });
   }
+  buildUtmUrl();
 }
 
-function selectUtmDest(btn) {
+async function selectUtmDest(btn) {
   document.querySelectorAll('.utm-dest-btn').forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
   _utmDest = btn.dataset.dest;
@@ -5885,19 +5927,18 @@ function selectUtmDest(btn) {
   itemField.style.display = needItem ? '' : 'none';
   if (needItem) {
     itemLabel.textContent = _utmDest === 'projet-item' ? 'Choisir le projet' : 'Choisir la réalisation';
-    _populateUtmSelectors();
+    await _populateUtmSelectors();
+  } else {
+    buildUtmUrl();
   }
-  buildUtmUrl();
 }
 
 function onUtmSourceChange() {
   const src    = document.getElementById('utm-source').value;
   const medium = document.getElementById('utm-medium');
   const termF  = document.getElementById('utm-term-field');
-  // Auto-fill medium si vide
   const autoMedium = { instagram: 'social', facebook: 'social', meta: 'social', google: 'cpc', email: 'email', tiktok: 'social', linkedin: 'social', sms: 'sms' };
   if (!medium.value && autoMedium[src]) medium.value = autoMedium[src];
-  // Mot-clé seulement pour Google
   termF.style.display = src === 'google' ? '' : 'none';
   buildUtmUrl();
 }
@@ -5925,69 +5966,95 @@ function buildUtmUrl() {
     return;
   }
 
-  // Séparer le hash des showroom-item avant d'ajouter les query params
   let baseNoHash = base, hash = '';
-  if (base.includes('#')) {
-    [baseNoHash, hash] = base.split('#');
-    hash = '#' + hash;
-  }
+  if (base.includes('#')) { [baseNoHash, hash] = base.split('#'); hash = '#' + hash; }
 
   const params = new URLSearchParams();
   params.set('utm_source', src);
-  if (medium)   params.set('utm_medium', medium);
+  if (medium)  params.set('utm_medium', medium);
   params.set('utm_campaign', campaign);
-  if (content)  params.set('utm_content', content);
-  if (term)     params.set('utm_term', term);
+  if (content) params.set('utm_content', content);
+  if (term)    params.set('utm_term', term);
 
   const fullUrl = `${baseNoHash}?${params.toString()}${hash}`;
+  const safeUrl = fullUrl.replace(/'/g, '%27');
 
   resultEl.innerHTML = `
-    <div class="utm-result-url" id="utm-url-text">${fullUrl}</div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="utm-copy-btn" id="utm-copy-main" onclick="copyUtmUrl('${fullUrl.replace(/'/g, "\\'")}', this)">Copier le lien</button>
-      <button onclick="saveUtmToHistory('${fullUrl.replace(/'/g, "\\'")}', '${src}')" style="background:none;border:1px solid var(--border);color:var(--dim);border-radius:6px;font-size:12px;padding:7px 12px;cursor:pointer" onmouseover="this.style.borderColor='var(--dim)';this.style.color='var(--cream)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'">Sauvegarder</button>
-    </div>`;
+    <div class="utm-result-url">${fullUrl}</div>
+    <button class="utm-copy-btn" id="utm-copy-main"
+      onclick="copyAndSaveUtm('${safeUrl}','${src}','${campaign.replace(/'/g,'%27')}',this)">
+      Copier le lien
+    </button>`;
 }
 
-function copyUtmUrl(url, btn) {
-  navigator.clipboard.writeText(url).then(() => {
-    const orig = btn.textContent;
+// Copie + auto-save dans l'historique
+function copyAndSaveUtm(url, src, campaign, btn) {
+  const decoded = decodeURIComponent(url.replace(/%27/g, "'"));
+  navigator.clipboard.writeText(decoded).then(() => {
     btn.textContent = '✓ Copié !';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    setTimeout(() => { btn.textContent = 'Copier le lien'; btn.classList.remove('copied'); }, 2000);
+    // Auto-save
+    _utmAddToHistory(decoded, src, decodeURIComponent(campaign.replace(/%27/g, "'")));
   });
 }
 
-function saveUtmToHistory(url, src) {
-  if (_utmHistory.find(h => h.url === url)) return;
-  _utmHistory.unshift({ url, src, ts: Date.now() });
-  if (_utmHistory.length > 12) _utmHistory.pop();
+function _utmAddToHistory(url, src, campaign) {
+  if (_utmHistory.find(h => h.url === url)) return; // dédoublonnage
+  _utmHistory.unshift({ url, src, campaign, ts: Date.now() });
+  if (_utmHistory.length > 20) _utmHistory.pop();
+  _utmSaveHistory();
   renderUtmHistory();
 }
+
+const UTM_SRC_ICONS = { instagram: '📸', facebook: '🔵', google: '🔍', meta: '🌐', email: '✉️', tiktok: '🎵', linkedin: '💼', sms: '💬' };
 
 function renderUtmHistory() {
   const block = document.getElementById('utm-history-block');
   const list  = document.getElementById('utm-history-list');
   if (!_utmHistory.length) { block.style.display = 'none'; return; }
   block.style.display = '';
-  list.innerHTML = _utmHistory.map((h, i) => `
-    <div class="utm-hist-item" onclick="copyFromHistory(${i})">
-      <span class="utm-hist-url" title="${h.url}">${h.url}</span>
-      <button class="utm-hist-copy" onclick="event.stopPropagation();copyUtmUrl('${h.url.replace(/'/g, "\\'")}',this)" title="Copier">⎘</button>
-    </div>`).join('');
+  list.innerHTML = _utmHistory.map((h, i) => {
+    const icon = UTM_SRC_ICONS[h.src] || '🔗';
+    const date = new Date(h.ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    return `
+    <div class="utm-hist-item">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:13px">${icon}</span>
+          <span style="font-size:12px;color:var(--cream);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.campaign || h.src}</span>
+          <span style="font-size:10px;color:var(--dim);margin-left:auto;flex-shrink:0">${date}</span>
+        </div>
+        <div class="utm-hist-url" title="${h.url}">${h.url}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;margin-left:8px">
+        <button class="utm-hist-copy" onclick="copyFromHistory(${i},this)" title="Copier">⎘</button>
+        <button class="utm-hist-copy" onclick="deleteFromHistory(${i})" title="Supprimer" style="color:var(--red);border-color:rgba(217,94,94,.25)">✕</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function copyFromHistory(i) {
+function copyFromHistory(i, btn) {
   const url = _utmHistory[i]?.url;
-  if (url) navigator.clipboard.writeText(url).then(() => {
-    // flash feedback
-    const items = document.querySelectorAll('.utm-hist-item');
-    if (items[i]) { items[i].style.borderColor = 'var(--gold)'; setTimeout(() => { items[i].style.borderColor = ''; }, 1200); }
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.color = 'var(--gold)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
   });
+}
+
+function deleteFromHistory(i) {
+  _utmHistory.splice(i, 1);
+  _utmSaveHistory();
+  renderUtmHistory();
 }
 
 function clearUtmHistory() {
   _utmHistory = [];
+  _utmSaveHistory();
   renderUtmHistory();
 }
 
