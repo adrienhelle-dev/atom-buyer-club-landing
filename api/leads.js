@@ -78,9 +78,11 @@ module.exports = async function handler(req, res) {
 
     let q = supabase.from('leads').select('*', { count: 'exact' }).order('created_at', { ascending: false });
 
-    // "organic" regroupe aussi fiche_projet
-    if (source === 'organic') q = q.in('utm_source', ['organic', 'fiche_projet']);
-    else if (source)          q = q.eq('utm_source', source);
+    // "organic" = source organique pure uniquement
+    // "fiche_projet" = leads venus d'une page projet sans UTM payant
+    if (source === 'organic')      q = q.eq('utm_source', 'organic');
+    else if (source === 'fiche_projet') q = q.in('utm_source', ['fiche_projet', 'projet']);
+    else if (source)               q = q.eq('utm_source', source);
     if (status) q = q.eq('status', status);
     if (search) q = q.or(`email.ilike.%${search}%,nom.ilike.%${search}%,prenom.ilike.%${search}%`);
 

@@ -6,7 +6,7 @@ const { Resend } = require('resend');
 const TIMING = { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' };
 const FIN    = { comptant: 'Comptant', emprunt: 'Emprunt bancaire' };
 const BUDGET = { 'moins-150k': '< 150 k€', '150-250k': '150–250 k€', '250-400k': '250–400 k€', '400-600k': '400–600 k€', '600k-1m': '600 k€–1 M€', 'plus-1m': '> 1 M€' };
-const SOURCE = { google: 'Google Ads', instagram: 'Instagram Ads', facebook: 'Facebook Ads', meta: 'Meta Ads', email: 'Email', organic: 'Organique' };
+const SOURCE = { google: 'Google Ads', instagram: 'Instagram Ads', facebook: 'Facebook Ads', meta: 'Meta Ads', email: 'Email', organic: 'Organique', showroom: 'Showroom', projet: 'Page projet', fiche_projet: 'Page projet' };
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();

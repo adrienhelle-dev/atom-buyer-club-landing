@@ -344,6 +344,8 @@
     .badge-facebook { background: rgba(24,119,242,.15);  color: #1877f2; }
     .badge-meta     { background: rgba(24,119,242,.15);  color: #1877f2; }
     .badge-organic  { background: rgba(76,175,125,.15);  color: #4caf7d; }
+    .badge-showroom { background: rgba(184,151,90,.12);  color: var(--gold); }
+    .badge-projet   { background: rgba(122,120,116,.12); color: #a09d99; }
     .badge-default  { background: rgba(184,151,90,.1);   color: var(--gold); }
 
     .timing-badge {
@@ -1434,6 +1436,9 @@
         <option value="instagram">Instagram</option>
         <option value="facebook">Facebook</option>
         <option value="meta">Meta Ads</option>
+        <option value="email">Email</option>
+        <option value="showroom">Showroom</option>
+        <option value="fiche_projet">Page projet</option>
         <option value="organic">Organique</option>
       </select>
       <select class="filter-select" id="status-filter" onchange="loadLeads(1)">
@@ -2477,7 +2482,6 @@ const TIMING = { asap:'Dès que possible', '3mois':'Dans 3 mois', '6mois':'Dans 
 const FIN    = { comptant:'Comptant', emprunt:'Emprunt bancaire' };
 const BUDGET = { 'moins-150k':'< 150 k€','150-250k':'150–250 k€','250-400k':'250–400 k€','400-600k':'400–600 k€','600k-1m':'600 k€–1 M€','plus-1m':'> 1 M€' };
 // Sources d'acquisition canoniques
-// fiche_projet = lead venu d'une page projet sans UTM payant → assimilé Organique
 const SRC_LABELS = {
   google:       'Google Ads',
   instagram:    'Instagram Ads',
@@ -2485,7 +2489,9 @@ const SRC_LABELS = {
   meta:         'Meta Ads',
   email:        'Email',
   organic:      'Organique',
-  fiche_projet: 'Organique',   // page projet sans canal payant = organique
+  fiche_projet: 'Page projet',  // lead venu d'une page projet sans UTM payant
+  projet:       'Page projet',  // alias court
+  showroom:     'Showroom',
 };
 const SRC_CLASS  = {
   google:       'badge-google',
@@ -2494,10 +2500,12 @@ const SRC_CLASS  = {
   meta:         'badge-meta',
   email:        'badge-default',
   organic:      'badge-organic',
-  fiche_projet: 'badge-organic',
+  fiche_projet: 'badge-projet',
+  projet:       'badge-projet',
+  showroom:     'badge-showroom',
 };
-// Ensemble des sources qui se regroupent sous "Organique" (pour les stats)
-const ORGANIC_SRC_KEYS = new Set(['organic', 'fiche_projet']);
+// Ensemble des sources groupées sous "Organique" dans les stats (pas dans l'affichage)
+const ORGANIC_SRC_KEYS = new Set(['organic']);
 function normalizeSrc(src) {
   if (!src) return null;
   const s = src.toLowerCase();
