@@ -1418,6 +1418,11 @@
       </div>
     </div>
     <div class="toolbar-filters">
+      <!-- Vue viewer : sélecteur en 1ère position pour être visible en premier sur mobile -->
+      <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
+        <option value="hot">🔥 Leads chauds</option>
+        <option value="all">Tous les leads</option>
+      </select>
       <select class="filter-select" id="src-filter" onchange="loadLeads(1)">
         <option value="">Toutes les sources</option>
         <option value="google">Google Ads</option>
@@ -1434,11 +1439,6 @@
         <option value="qualifie">Qualifié</option>
         <option value="signe">Signé</option>
         <option value="perdu">Non retenu</option>
-      </select>
-      <!-- Vue viewer : sélecteur visible uniquement pour Thierry & Alexandre -->
-      <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
-        <option value="hot">Leads chauds (8+)</option>
-        <option value="all">Tous les leads</option>
       </select>
     </div>
   </div>
