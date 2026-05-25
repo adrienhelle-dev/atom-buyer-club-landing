@@ -30,9 +30,17 @@
       display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
       position: sticky; top: 0; z-index: 100;
     }
+    .header > * { min-width: 0; }
     .header svg { width: 56px; height: auto; }
+    .header > a { overflow: hidden; display: flex; align-items: center; gap: 10px; }
     .header-right { display: flex; justify-content: flex-end; }
-    @media(max-width:600px){ .header { padding: 12px 16px; } }
+    /* Mobile : flex simple pour éviter l'overflow du header */
+    @media(max-width:600px){
+      .header { padding: 12px 16px; display: flex; justify-content: space-between; }
+      .header-right { display: none; }
+      .header > a .header-sub { display: none; }
+      .header svg { width: 44px; }
+    }
 
     /* ── Toggle Réalisations / Projets ───────────────────────────── */
     .page-toggle {
@@ -123,9 +131,13 @@
     .detail-back { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13px; cursor: pointer; margin-bottom: 24px; }
     .detail-back:hover { color: var(--cream); }
     .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: start; }
+    /* min-width:0 sur les enfants de grille — empêche le grid blowout sur mobile */
+    .detail-layout > * { min-width: 0; }
     @media(max-width:900px){ .detail-layout { grid-template-columns: 1fr; gap: 24px; } }
-    /* Sidebar : désactive le sticky sur mobile (inutile en colonne unique) */
-    @media(max-width:900px){ .detail-sidebar { position: static !important; } }
+    /* Sidebar : static + contrainte de largeur sur mobile */
+    @media(max-width:900px){
+      .detail-sidebar { position: static !important; width: 100%; max-width: 100%; overflow: hidden; }
+    }
 
     /* Gallery detail */
     .detail-gallery { margin-bottom: 32px; }
@@ -188,12 +200,16 @@
       white-space: nowrap; transition: background .15s;
     }
     .sticky-btn-wa:hover { background: rgba(37,211,102,.15); }
+    .sticky-btn-wa .wa-label { }  /* desktop: texte visible */
     @media(max-width:900px){
       .sticky-layout { grid-template-columns: 1fr; padding: 0 16px; }
     }
-    @media(max-width:500px){
-      .sticky-btns { flex-direction: column; }
-      .sticky-btn-primary { width: 100%; }
+    @media(max-width:600px){
+      /* Sticky bar compacte — une seule rangée avec bouton WA réduit à l'icône */
+      .sticky-btns { flex-direction: row; flex-wrap: nowrap; gap: 8px; }
+      .sticky-btn-wa .wa-label { display: none; }
+      .sticky-btn-wa { flex: 0 0 auto; padding: 14px; min-width: 0; }
+      .sticky-btn-primary { flex: 1; font-size: 14px; padding: 14px 16px; white-space: normal; text-align: center; }
     }
 
     /* Sidebar */
@@ -237,11 +253,10 @@
 <body>
 
 <header class="header">
-  <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none">
-    <svg viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none" style="height:22px;width:auto">
+  <a href="/" style="text-decoration:none">
+    <svg viewBox="0 0 69 20" xmlns="http://www.w3.org/2000/svg" fill="none" style="height:22px;width:auto;display:block">
       <path d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144ZM20.4549 19.7444C17.5149 19.7444 16.1349 17.5544 16.1349 14.7344L16.1349 5.43444 14.2449 5.43444 14.2449 5.01444C16.6449 4.77444 18.5049 3.24444 18.9849 0.514443L19.4049 0.514443 19.4049 4.23444 23.8749 4.23444 23.3649 5.43444 19.4049 5.43444 19.4049 14.4044C19.4049 16.4144 20.3049 17.8544 21.8049 17.8544 23.0949 17.8544 23.8449 16.8044 24.0849 15.6944L24.4449 15.7544C24.1749 17.9144 22.6149 19.7444 20.4549 19.7444ZM31.8887 19.7444C27.6287 19.7444 24.2687 16.2644 24.2687 11.7644 24.2687 7.02444 27.7487 3.93444 31.8287 3.93444 35.9687 3.93444 39.3887 7.23445 39.3887 11.8244 39.3887 16.5044 36.0587 19.7444 31.8887 19.7444ZM27.7787 12.4244C28.3187 16.5944 30.3287 19.4744 32.8187 19.1444 35.3387 18.8144 36.4187 15.3344 35.8487 11.1044 35.3087 6.93444 33.2987 4.17444 30.8687 4.53444 28.3487 4.89444 27.2687 8.34445 27.7787 12.4244ZM58.6606 19.4444L58.6606 19.0544C60.1306 19.0544 61.1806 18.4844 60.9106 16.4444L59.9506 9.57444C59.5906 7.05444 58.5406 5.73444 56.8306 5.73444 55.0604 5.73444 54.0704 7.14444 53.8604 8.73444 53.8904 9.03444 53.9204 9.36445 53.9204 9.69445L53.9204 16.4144C53.9204 18.4844 54.8204 19.0544 56.0206 19.0544L56.0206 19.4444 48.7004 19.4444 48.7004 19.0544C49.8704 19.0544 50.7104 18.4844 50.7104 16.4144L50.7104 10.2044C50.7104 7.29445 49.5404 5.70444 47.5604 5.70444 45.9104 5.70444 44.6504 7.08444 44.4704 8.52444L44.4704 16.4144C44.4704 18.4844 45.3104 19.0544 46.4804 19.0544L46.4804 19.4444 39.1304 19.4444 39.1304 19.0544C40.3304 19.0544 41.2304 18.4844 41.2304 16.4144L41.2304 7.50445C41.2304 6.03444 40.6304 5.55444 39.2504 5.52445L39.2504 5.13444C40.8404 5.01444 42.6404 4.68444 44.2004 3.96444L44.4704 4.11444 44.4704 7.32444C45.0704 5.58444 46.7804 3.93444 49.0004 3.93444 51.2204 3.93444 53.0804 5.28444 53.7104 7.77445 54.1904 5.76444 55.8706 3.93444 58.3006 3.93444 60.8806 3.93444 62.6506 5.55444 63.2206 9.48445L64.2406 16.4444C64.5406 18.4844 65.4106 19.0544 66.6406 19.0544L66.6406 19.4444Z" fill="#F5F2ED"/>
     </svg>
-    <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#7a7874">Buyers Club</span>
   </a>
   <div class="page-toggle">
     <a href="/showroom.html" class="toggle-btn active">Réalisations</a>
@@ -279,8 +294,8 @@
   <div class="sticky-layout">
     <div class="sticky-btns">
       <a id="detail-sticky-wa" class="sticky-btn-wa" href="#" target="_blank">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Contacter l'équipe Atom
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <span class="wa-label">Contacter l'équipe Atom</span>
       </a>
       <button class="sticky-btn-primary" onclick="openCta()">
         Investir dans un projet identique →
@@ -525,7 +540,7 @@
     document.getElementById('detail-meta').innerHTML = metaParts.join('<span style="color:var(--border)"> · </span>');
 
     // Description
-    const descText = item.description_longue || item.description_courte || '';
+    const descText = (item.description_longue || item.description_courte || '').trim();
     document.getElementById('detail-desc').textContent = descText;
     document.getElementById('desc-title').style.display = descText ? '' : 'none';
     document.getElementById('detail-desc').style.display = descText ? '' : 'none';
