@@ -1129,6 +1129,202 @@
     .sr-statut-pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
     .sr-statut-pill.pub  { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); }
     .sr-statut-pill.draft { background: rgba(122,120,116,.12); color: var(--dim); border: 1px solid var(--border); }
+
+    /* ══ VUE INTÉRÊTS ══════════════════════════════════════════ */
+    /* Pastille nav */
+    .nav-tab-badge {
+      display: inline-block; background: var(--gold); color: var(--bg);
+      font-size: 9px; font-weight: 700; padding: 0 5px; line-height: 15px;
+      border-radius: 8px; margin-left: 5px; vertical-align: middle;
+    }
+
+    /* Stats strip */
+    .int-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+    .int-stat {
+      padding: 16px 20px; border-right: 1px solid var(--border);
+    }
+    .int-stat:last-child { border-right: none; }
+    .int-stat-value {
+      font-size: 26px; font-weight: 300; color: var(--cream); letter-spacing: -.02em; line-height: 1.1;
+    }
+    .int-stat-label {
+      font-size: 11px; color: var(--dim); margin-top: 3px; letter-spacing: .03em;
+    }
+
+    /* Filters toolbar */
+    .int-toolbar {
+      padding: 12px 20px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .int-filter-sel {
+      background: var(--bg2); border: 1px solid var(--border); color: var(--cream);
+      font-family: var(--sans); font-size: 12px; padding: 7px 26px 7px 10px;
+      border-radius: 8px; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7874'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+    }
+    .int-filter-sel:focus { border-color: var(--gold); }
+    .int-count-info {
+      margin-left: auto; font-size: 11px; color: var(--dim);
+    }
+
+    /* Table wrapper */
+    .int-table-wrap {
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .int-table {
+      width: 100%; border-collapse: collapse; min-width: 760px;
+    }
+    .int-table thead th {
+      padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
+      border-bottom: 1px solid var(--border); background: var(--bg2);
+      white-space: nowrap;
+    }
+    .int-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+    }
+    .int-table tbody tr:hover { background: rgba(255,255,255,.025); }
+    .int-table tbody tr.is-treated { opacity: .55; }
+    .int-table td {
+      padding: 13px 14px; font-size: 13px; color: var(--cream); vertical-align: middle;
+    }
+
+    /* Type badges */
+    .int-type-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 500; padding: 3px 9px;
+      border-radius: 20px; white-space: nowrap; letter-spacing: .02em;
+    }
+    .int-type-badge.projet    { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.25); }
+    .int-type-badge.showroom  { background: rgba(184,151,90,.12); color: var(--gold); border: 1px solid rgba(184,151,90,.25); }
+    .int-type-badge.cta       { background: rgba(91,91,214,.12); color: #5B5BD6; border: 1px solid rgba(91,91,214,.25); }
+
+    /* Source cell */
+    .int-source-name {
+      font-weight: 500; color: var(--cream); font-size: 13px; line-height: 1.3;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
+    }
+    .int-source-link {
+      display: inline-block; margin-top: 2px; font-size: 11px; color: var(--gold);
+      text-decoration: none; opacity: .8;
+    }
+    .int-source-link:hover { opacity: 1; text-decoration: underline; }
+
+    /* Lead cell */
+    .int-lead-name {
+      font-weight: 500; color: var(--cream); font-size: 13px;
+      cursor: pointer; text-decoration: underline; text-decoration-color: transparent;
+      transition: text-decoration-color .15s;
+    }
+    .int-lead-name:hover { text-decoration-color: var(--gold); color: var(--gold); }
+    .int-lead-meta {
+      font-size: 11px; color: var(--dim); margin-top: 2px;
+    }
+
+    /* Score pill */
+    .int-score {
+      display: inline-block; min-width: 26px; text-align: center;
+      padding: 2px 6px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    }
+    .int-score.hot  { background: rgba(184,151,90,.15); color: var(--gold); }
+    .int-score.warm { background: rgba(76,175,125,.12); color: #4caf7d; }
+    .int-score.cold { background: rgba(122,120,116,.1);  color: var(--dim); }
+
+    /* Actions cell */
+    .int-actions {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .int-action-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 7px;
+      border: 1px solid var(--border); background: none;
+      color: var(--dim); cursor: pointer; font-size: 13px;
+      transition: background .12s, color .12s, border-color .12s;
+      text-decoration: none; flex-shrink: 0;
+    }
+    .int-action-btn:hover { color: var(--cream); border-color: var(--dim); background: var(--bg3); }
+    .int-action-btn.wa  { color: #25d366; border-color: rgba(37,211,102,.3); }
+    .int-action-btn.wa:hover { background: rgba(37,211,102,.08); border-color: #25d366; }
+    .int-action-btn.mail { color: var(--gold); border-color: rgba(184,151,90,.3); }
+    .int-action-btn.mail:hover { background: rgba(184,151,90,.08); border-color: var(--gold); }
+
+    /* Toggle switch treated */
+    .int-toggle-wrap {
+      display: flex; align-items: center; justify-content: center;
+    }
+    .int-toggle {
+      position: relative; display: inline-block; width: 36px; height: 20px;
+      flex-shrink: 0;
+    }
+    .int-toggle input { opacity: 0; width: 0; height: 0; }
+    .int-toggle-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 20px; transition: background .2s, border-color .2s;
+    }
+    .int-toggle-slider::before {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      border-radius: 50%; background: var(--dim);
+      left: 2px; top: 2px; transition: transform .2s, background .2s;
+    }
+    .int-toggle input:checked + .int-toggle-slider { background: rgba(76,175,125,.2); border-color: #4caf7d; }
+    .int-toggle input:checked + .int-toggle-slider::before { transform: translateX(16px); background: #4caf7d; }
+
+    /* Empty / loading */
+    .int-empty {
+      padding: 64px 24px; text-align: center; color: var(--dim); font-size: 14px;
+    }
+    .int-empty-icon { font-size: 36px; opacity: .25; margin-bottom: 14px; }
+
+    /* Mobile card layout */
+    @media (max-width: 768px) {
+      .int-table-wrap { display: none; }
+      .int-cards { display: block; }
+      .int-stats { grid-template-columns: repeat(2, 1fr); }
+      .int-toolbar { padding: 10px 14px; gap: 7px; }
+      .int-filter-sel { font-size: 11px; padding: 6px 22px 6px 9px; }
+    }
+    @media (min-width: 769px) {
+      .int-cards { display: none; }
+    }
+
+    /* Card (mobile) */
+    .int-card {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px; transition: background .12s;
+    }
+    .int-card:active { background: rgba(255,255,255,.03); }
+    .int-card.is-treated { opacity: .55; }
+    .int-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px; gap: 8px;
+    }
+    .int-card-name {
+      font-weight: 500; font-size: 14px; color: var(--cream); flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .int-card-body {
+      display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--dim);
+    }
+    .int-card-source {
+      font-size: 13px; color: var(--cream); font-weight: 500;
+    }
+    .int-card-footer {
+      display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .int-card-time { font-size: 11px; color: var(--dim); margin-left: auto; }
+
+    @media (max-width: 640px) {
+      .int-stats { grid-template-columns: repeat(2, 1fr); }
+      .int-stat { padding: 12px 14px; }
+      .int-stat-value { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
@@ -1194,6 +1390,9 @@
     <button class="nav-tab" data-view="leads"    onclick="setRoute('leads')">Leads</button>
     <button class="nav-tab" data-view="projects" onclick="setRoute('projects')">Projets</button>
     <button class="nav-tab" data-view="showroom" onclick="setRoute('showroom')">Showroom</button>
+    <button class="nav-tab" data-view="interets" onclick="setRoute('interets')">
+      Intérêts<span class="nav-tab-badge" id="interets-tab-badge" style="display:none"></span>
+    </button>
   </nav>
 
   <!-- ══ VUE LEADS ═════════════════════════════════════════════ -->
@@ -2131,6 +2330,77 @@
 </div>
 
 
+<!-- ══ VUE INTÉRÊTS ══════════════════════════════════════════ -->
+<div class="view" id="view-interets">
+
+  <!-- Stats -->
+  <div class="int-stats" id="int-stats">
+    <div class="int-stat">
+      <div class="int-stat-value" id="int-s-total">—</div>
+      <div class="int-stat-label">Total intérêts</div>
+    </div>
+    <div class="int-stat">
+      <div class="int-stat-value" id="int-s-untreated" style="color:var(--gold)">—</div>
+      <div class="int-stat-label">Non traités</div>
+    </div>
+    <div class="int-stat">
+      <div class="int-stat-value" id="int-s-projet">—</div>
+      <div class="int-stat-label">Sur projets</div>
+    </div>
+    <div class="int-stat">
+      <div class="int-stat-value" id="int-s-showroom">—</div>
+      <div class="int-stat-label">Sur réalisations</div>
+    </div>
+  </div>
+
+  <!-- Toolbar / Filtres -->
+  <div class="int-toolbar">
+    <select class="int-filter-sel" id="int-type-filter" onchange="renderInterestsTable()">
+      <option value="">Tous types</option>
+      <option value="interet_projet">⭐ Projets</option>
+      <option value="showroom_interest">★ Showroom</option>
+      <option value="showroom_cta">◎ CTA</option>
+    </select>
+    <select class="int-filter-sel" id="int-status-filter" onchange="renderInterestsTable()">
+      <option value="">Tous statuts</option>
+      <option value="untreated">Non traités</option>
+      <option value="treated">Traités</option>
+    </select>
+    <select class="int-filter-sel" id="int-founder-filter" onchange="renderInterestsTable()">
+      <option value="">Tous founders</option>
+      <option value="adrien.helle@atom-capital.fr">Adrien</option>
+      <option value="alexandre.kiman@atom-capital.fr">Alexandre</option>
+      <option value="thierry.vignal@atom-capital.fr">Thierry</option>
+      <option value="_none">Non assigné</option>
+    </select>
+    <span class="int-count-info" id="int-count-info"></span>
+  </div>
+
+  <!-- Table desktop -->
+  <div class="int-table-wrap">
+    <table class="int-table">
+      <thead>
+        <tr>
+          <th style="width:50px;text-align:center">Traité</th>
+          <th>Lead</th>
+          <th>Type</th>
+          <th>Projet / Réalisation</th>
+          <th>Founder</th>
+          <th>Date</th>
+          <th style="width:130px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="int-tbody">
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--dim)">Chargement…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Cards mobile -->
+  <div id="int-cards"></div>
+
+</div>
+
 <!-- ══ WIDGET NOTIFICATIONS (chat flottant bas-droite) ════════ -->
 <div class="notif-widget" id="notif-widget">
   <!-- Panneau -->
@@ -2305,7 +2575,7 @@ function showDashboard(email, isViewer, role = 'admin') {
   // ── Rôle "projects" : accès restreint à l'onglet Projets uniquement ──
   if (role === 'projects') {
     // Masquer les onglets Leads et Showroom
-    document.querySelectorAll('.nav-tab[data-view="leads"], .nav-tab[data-view="showroom"]')
+    document.querySelectorAll('.nav-tab[data-view="leads"], .nav-tab[data-view="showroom"], .nav-tab[data-view="interets"]')
       .forEach(t => { t.style.display = 'none'; });
     // Masquer le centre de notifications (données leads)
     const nw = document.getElementById('notif-widget');
@@ -2329,7 +2599,7 @@ function applyScoreViewFilter() {
 }
 
 /* ── Routeur SPA par hash ───────────────────────────────────── */
-const VALID_VIEWS = ['leads', 'projects', 'new-project', 'showroom', 'showroom-edit'];
+const VALID_VIEWS = ['leads', 'projects', 'new-project', 'showroom', 'showroom-edit', 'interets'];
 
 function setRoute(view) {
   location.hash = '#' + view;
@@ -2352,6 +2622,7 @@ function showView(view) {
   if (view === 'projects'     && typeof loadProjects        === 'function') loadProjects();
   if (view === 'new-project'  && typeof resetNewProjectForm === 'function') resetNewProjectForm();
   if (view === 'showroom'     && typeof loadShowroom        === 'function') loadShowroom();
+  if (view === 'interets'     && typeof loadInterests       === 'function') loadInterests();
 }
 
 window.addEventListener('hashchange', handleRoute);
@@ -4475,6 +4746,267 @@ function phoneIntl(tel) {
 }
 
 init();
+
+/* ══ INTÉRÊTS — Tour de contrôle ════════════════════════════════ */
+let interestsCache   = [];
+let interestsLoaded  = false;
+
+const INT_TYPE_META = {
+  interet_projet:    { label: 'Projet',    icon: '⭐', cls: 'projet',   short: 'Projet' },
+  showroom_interest: { label: 'Showroom',  icon: '★',  cls: 'showroom', short: 'Showroom' },
+  showroom_cta:      { label: 'CTA',       icon: '◎',  cls: 'cta',      short: 'CTA' },
+};
+
+async function loadInterests(force = false) {
+  if (interestsLoaded && !force) { renderInterestsTable(); return; }
+  const tbody = document.getElementById('int-tbody');
+  const cards = document.getElementById('int-cards');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--dim)">Chargement…</td></tr>';
+  if (cards) cards.innerHTML = '<div class="int-empty"><div class="int-empty-icon">⏳</div><div>Chargement…</div></div>';
+
+  try {
+    const res  = await fetch('/api/events?interests=1', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json().catch(() => ({}));
+    interestsCache  = data.events || [];
+    interestsLoaded = true;
+    renderInterestsTable();
+    _updateInterestsBadge();
+  } catch (e) {
+    console.warn('loadInterests error:', e);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--dim)">Erreur de chargement</td></tr>';
+  }
+}
+
+function _updateInterestsBadge() {
+  const untreated = interestsCache.filter(ev => ev.lead && !ev.content?.treated).length;
+  const badge = document.getElementById('interets-tab-badge');
+  if (!badge) return;
+  if (untreated > 0) {
+    badge.textContent    = untreated > 99 ? '99+' : String(untreated);
+    badge.style.display  = '';
+  } else {
+    badge.style.display  = 'none';
+  }
+}
+
+function _interestSource(ev) {
+  const c = ev.content || {};
+  if (ev.type === 'interet_projet') {
+    return { name: c.project_title || c.project_name || 'Projet', link: c.project_slug ? '/projets.html#/' + c.project_slug : (c.project_id ? '/projets.html#/' + c.project_id : null) };
+  }
+  if (ev.type === 'showroom_interest') {
+    return { name: c.item_name || c.name || c.slug || 'Réalisation', link: c.slug ? '/showroom.html#/' + c.slug : null };
+  }
+  if (ev.type === 'showroom_cta') {
+    return { name: c.showroom_slug || c.item_name || 'Showroom', link: c.showroom_slug ? '/showroom.html#/' + c.showroom_slug : '/showroom.html' };
+  }
+  return { name: '—', link: null };
+}
+
+function _filteredInterests() {
+  const typeF    = document.getElementById('int-type-filter')?.value    || '';
+  const statusF  = document.getElementById('int-status-filter')?.value  || '';
+  const founderF = document.getElementById('int-founder-filter')?.value || '';
+
+  return interestsCache.filter(ev => {
+    if (!ev.lead) return false; // masquer les fantômes sans lead
+    if (typeF && ev.type !== typeF) return false;
+    const treated = !!(ev.content?.treated);
+    if (statusF === 'treated'   && !treated) return false;
+    if (statusF === 'untreated' && treated)  return false;
+    if (founderF === '_none' && ev.lead.assigned_to) return false;
+    if (founderF && founderF !== '_none' && ev.lead.assigned_to !== founderF) return false;
+    return true;
+  });
+}
+
+function renderInterestsTable() {
+  const items = _filteredInterests();
+
+  // Stats
+  const total     = interestsCache.filter(ev => ev.lead).length;
+  const untreated = interestsCache.filter(ev => ev.lead && !ev.content?.treated).length;
+  const projetCt  = interestsCache.filter(ev => ev.lead && ev.type === 'interet_projet').length;
+  const srCt      = interestsCache.filter(ev => ev.lead && (ev.type === 'showroom_interest' || ev.type === 'showroom_cta')).length;
+  const setS = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setS('int-s-total', total);
+  setS('int-s-untreated', untreated);
+  setS('int-s-projet', projetCt);
+  setS('int-s-showroom', srCt);
+
+  const countInfo = document.getElementById('int-count-info');
+  if (countInfo) countInfo.textContent = items.length !== total ? `${items.length} résultats` : `${total} intérêts`;
+
+  // ── Table desktop ────────────────────────────────────────────
+  const tbody = document.getElementById('int-tbody');
+  if (tbody) {
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:48px;color:var(--dim)">
+        <div style="font-size:28px;opacity:.2;margin-bottom:10px">⭐</div>
+        Aucun intérêt${interestsCache.length ? ' pour ces filtres' : ' enregistré pour le moment'}
+      </td></tr>`;
+    } else {
+      tbody.innerHTML = items.map(ev => _buildInterestRow(ev)).join('');
+    }
+  }
+
+  // ── Cards mobile ─────────────────────────────────────────────
+  const cards = document.getElementById('int-cards');
+  if (cards) {
+    if (!items.length) {
+      cards.innerHTML = `<div class="int-empty"><div class="int-empty-icon">⭐</div><div>Aucun intérêt${interestsCache.length ? ' pour ces filtres' : ''}</div></div>`;
+    } else {
+      cards.innerHTML = items.map(ev => _buildInterestCard(ev)).join('');
+    }
+  }
+
+  _updateInterestsBadge();
+}
+
+function _buildInterestRow(ev) {
+  const lead     = ev.lead;
+  const treated  = !!(ev.content?.treated);
+  const meta     = INT_TYPE_META[ev.type] || { label: ev.type, icon: '·', cls: 'cta' };
+  const source   = _interestSource(ev);
+  const leadName = (`${lead.prenom || ''} ${lead.nom || ''}`).trim() || lead.email || 'Lead';
+  const score    = lead.score || 0;
+  const scoreCls = score >= 8 ? 'hot' : score >= 5 ? 'warm' : 'cold';
+  const assignedColor = founderColor(lead.assigned_to);
+  const assignedInit  = lead.assigned_to ? founderInitials(lead.assigned_to) : '—';
+
+  const waText = _buildWaText(lead, source);
+  const phone  = phoneIntl(lead.tel);
+
+  return `<tr class="${treated ? 'is-treated' : ''}" id="int-row-${esc(ev.id)}">
+    <td>
+      <div class="int-toggle-wrap">
+        <label class="int-toggle" title="${treated ? 'Marquer comme non traité' : 'Marquer comme traité'}">
+          <input type="checkbox" ${treated ? 'checked' : ''} onchange="toggleInterestTreated('${esc(ev.id)}', this.checked)">
+          <span class="int-toggle-slider"></span>
+        </label>
+      </div>
+    </td>
+    <td>
+      <div class="int-lead-name" onclick="openLeadFromNotif('${esc(lead.id)}')">${esc(leadName)}</div>
+      <div class="int-lead-meta">
+        <span class="int-score ${scoreCls}">${score}</span>
+        ${lead.email ? `<span style="margin-left:6px">${esc(lead.email)}</span>` : ''}
+      </div>
+    </td>
+    <td>
+      <span class="int-type-badge ${meta.cls}">${meta.icon} ${meta.label}</span>
+    </td>
+    <td>
+      <div class="int-source-name">${esc(source.name)}</div>
+      ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank">Voir →</a>` : ''}
+    </td>
+    <td>
+      ${lead.assigned_to
+        ? `<span class="founder-badge" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44" title="${esc(lead.assigned_to)}">${assignedInit}</span>`
+        : `<span style="color:var(--dim);font-size:12px">—</span>`}
+    </td>
+    <td style="white-space:nowrap;font-size:12px;color:var(--dim)">${timeAgo(ev.created_at)}</td>
+    <td>
+      <div class="int-actions">
+        <button class="int-action-btn" title="Ouvrir la fiche lead" onclick="openLeadFromNotif('${esc(lead.id)}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+        ${source.link ? `<a class="int-action-btn" href="${esc(source.link)}" target="_blank" title="Voir le projet / la réalisation">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </a>` : ''}
+        ${lead.email ? `<a class="int-action-btn mail" href="mailto:${esc(lead.email)}?subject=${encodeURIComponent('Votre intérêt — ' + source.name)}" title="Envoyer un email">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        </a>` : ''}
+        ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="Proposer un RDV visite via WhatsApp">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        </a>` : ''}
+      </div>
+    </td>
+  </tr>`;
+}
+
+function _buildInterestCard(ev) {
+  const lead     = ev.lead;
+  const treated  = !!(ev.content?.treated);
+  const meta     = INT_TYPE_META[ev.type] || { label: ev.type, icon: '·', cls: 'cta' };
+  const source   = _interestSource(ev);
+  const leadName = (`${lead.prenom || ''} ${lead.nom || ''}`).trim() || lead.email || 'Lead';
+  const score    = lead.score || 0;
+  const scoreCls = score >= 8 ? 'hot' : score >= 5 ? 'warm' : 'cold';
+  const waText   = _buildWaText(lead, source);
+  const phone    = phoneIntl(lead.tel);
+  const assignedColor = founderColor(lead.assigned_to);
+  const assignedInit  = lead.assigned_to ? founderInitials(lead.assigned_to) : null;
+
+  return `<div class="int-card ${treated ? 'is-treated' : ''}" id="int-card-${esc(ev.id)}">
+    <div class="int-card-header">
+      <span class="int-card-name" onclick="openLeadFromNotif('${esc(lead.id)}')">${esc(leadName)}</span>
+      <span class="int-score ${scoreCls}" style="flex-shrink:0">${score}</span>
+      ${assignedInit ? `<span class="founder-badge" style="flex-shrink:0;background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>` : ''}
+      <label class="int-toggle" style="flex-shrink:0">
+        <input type="checkbox" ${treated ? 'checked' : ''} onchange="toggleInterestTreated('${esc(ev.id)}', this.checked)">
+        <span class="int-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="int-card-body">
+      <div><span class="int-type-badge ${meta.cls}">${meta.icon} ${meta.label}</span></div>
+      <div class="int-card-source">${esc(source.name)}</div>
+      ${lead.email ? `<div>${esc(lead.email)}</div>` : ''}
+    </div>
+    <div class="int-card-footer">
+      <button class="int-action-btn" title="Ouvrir la fiche" onclick="openLeadFromNotif('${esc(lead.id)}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+      ${source.link ? `<a class="int-action-btn" href="${esc(source.link)}" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </a>` : ''}
+      ${lead.email ? `<a class="int-action-btn mail" href="mailto:${esc(lead.email)}?subject=${encodeURIComponent('Votre intérêt — ' + source.name)}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+      </a>` : ''}
+      ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+      </a>` : ''}
+      <span class="int-card-time">${timeAgo(ev.created_at)}</span>
+    </div>
+  </div>`;
+}
+
+function _buildWaText(lead, source) {
+  const prenom = lead.prenom || '';
+  return `Bonjour ${prenom},\n\nNous avons bien noté votre intérêt pour « ${source.name} ».\nNous serions ravis de vous proposer une visite — seriez-vous disponible prochainement ?\n\nCordialement,\nL'équipe Atom`;
+}
+
+async function toggleInterestTreated(eventId, treated) {
+  // Optimistic update
+  const ev = interestsCache.find(e => e.id === eventId);
+  if (ev) {
+    ev.content = { ...(ev.content || {}), treated: !!treated };
+  }
+  // Visuel immédiat
+  const row  = document.getElementById('int-row-' + eventId);
+  const card = document.getElementById('int-card-' + eventId);
+  if (row)  row.classList.toggle('is-treated', !!treated);
+  if (card) card.classList.toggle('is-treated', !!treated);
+  _updateInterestsBadge();
+
+  // Persister en DB
+  try {
+    const res = await fetch('/api/events', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: eventId, treated: !!treated }),
+    });
+    if (!res.ok) throw new Error('patch failed');
+  } catch (e) {
+    console.warn('toggleInterestTreated error:', e);
+    // Rollback visuel
+    if (ev) ev.content.treated = !treated;
+    if (row)  row.classList.toggle('is-treated', !treated);
+    if (card) card.classList.toggle('is-treated', !treated);
+    _updateInterestsBadge();
+  }
+}
 
 /* ══ SHOWROOM ═══════════════════════════════════════════════════ */
 let showroomCache    = [];

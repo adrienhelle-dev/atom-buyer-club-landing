@@ -6,16 +6,15 @@ module.exports = async function handler(req, res) {
   const payload = verifyToken(tokenFromReq(req));
   if (!payload) return res.status(401).json({ error: 'Non autorisé' });
 
-  // GET — liste des événements d'un lead  OU  récents toutes sources confondues
+  // GET — liste des événements d'un lead  OU  récents  OU  tous intérêts
   if (req.method === 'GET') {
-    const { lead_id, recent } = req.query;
+    const { lead_id, recent, interests } = req.query;
 
-    // ── Mode "recent" : centre de notifications admin ────────────
+    // ── Mode "recent" : centre de notifications admin (widget FAB) ──
     if (recent === '1') {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const NOTIF_TYPES = ['interet_projet', 'showroom_interest'];
 
-      // Étape 1 : récupérer les événements
       const { data: events, error } = await supabase
         .from('lead_events')
         .select('id, type, content, created_at, lead_id')
@@ -26,7 +25,6 @@ module.exports = async function handler(req, res) {
       if (error) { console.error('Events recent GET:', error); return res.status(500).json({ error: 'db_error', detail: error.message }); }
       if (!events || !events.length) return res.status(200).json({ events: [] });
 
-      // Étape 2 : enrichir avec les noms des leads (requête séparée, plus fiable)
       const leadIds = [...new Set(events.map(e => e.lead_id).filter(Boolean))];
       const { data: leads } = await supabase
         .from('leads')
@@ -34,6 +32,35 @@ module.exports = async function handler(req, res) {
         .in('id', leadIds);
       const leadMap = Object.fromEntries((leads || []).map(l => [l.id, l]));
       const enriched = events.map(e => ({ ...e, lead: leadMap[e.lead_id] || null }));
+
+      return res.status(200).json({ events: enriched });
+    }
+
+    // ── Mode "interests" : vue Tour de contrôle (tout l'historique) ──
+    if (interests === '1') {
+      const INTEREST_TYPES = ['interet_projet', 'showroom_interest', 'showroom_cta'];
+
+      const { data: events, error } = await supabase
+        .from('lead_events')
+        .select('id, type, content, created_at, lead_id')
+        .in('type', INTEREST_TYPES)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) { console.error('Events interests GET:', error); return res.status(500).json({ error: 'db_error', detail: error.message }); }
+      if (!events || !events.length) return res.status(200).json({ events: [] });
+
+      const leadIds = [...new Set(events.map(e => e.lead_id).filter(Boolean))];
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('id, prenom, nom, email, tel, assigned_to, score')
+        .in('id', leadIds);
+      const leadMap = Object.fromEntries((leads || []).map(l => [l.id, l]));
+
+      const enriched = events.map(e => {
+        let content = {};
+        try { content = e.content ? (typeof e.content === 'string' ? JSON.parse(e.content) : e.content) : {}; } catch {}
+        return { ...e, content, lead: leadMap[e.lead_id] || null };
+      });
 
       return res.status(200).json({ events: enriched });
     }
@@ -61,6 +88,39 @@ module.exports = async function handler(req, res) {
       .single();
     if (error) { console.error('Events POST:', error); return res.status(500).json({ error: 'db_error' }); }
     return res.status(200).json({ ok: true, event: data });
+  }
+
+  // PATCH — marquer un intérêt comme traité / non traité
+  if (req.method === 'PATCH') {
+    const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    const { id, treated } = b;
+    if (!id) return res.status(400).json({ error: 'id requis' });
+
+    // Récupérer le content actuel
+    const { data: current, error: fetchErr } = await supabase
+      .from('lead_events')
+      .select('content')
+      .eq('id', id)
+      .single();
+    if (fetchErr) return res.status(500).json({ error: 'db_error', detail: fetchErr.message });
+
+    let content = {};
+    try { content = current?.content ? (typeof current.content === 'string' ? JSON.parse(current.content) : current.content) : {}; } catch {}
+
+    const newContent = {
+      ...content,
+      treated:    !!treated,
+      treated_by: treated ? payload.email : null,
+      treated_at: treated ? new Date().toISOString() : null,
+    };
+
+    const { error: updateErr } = await supabase
+      .from('lead_events')
+      .update({ content: newContent })
+      .eq('id', id);
+    if (updateErr) return res.status(500).json({ error: 'db_error', detail: updateErr.message });
+
+    return res.status(200).json({ ok: true });
   }
 
   return res.status(405).end();
