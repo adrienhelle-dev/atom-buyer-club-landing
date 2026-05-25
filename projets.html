@@ -569,7 +569,7 @@
       return;
     }
     grid.innerHTML = projects.map(p => {
-      const img   = (p.images || [])[0] || null;
+      const img   = (p.images_3d || [])[0] || (p.images || [])[0] || null;
       const surf  = p.surface_carrez ? p.surface_carrez + ' m²' : null;
       const etage = floorLabel(p.floor);
       const metro = p.metro_name ? `${p.metro_name}${p.metro_distance ? ' · ' + p.metro_distance + ' min' : ''}` : null;
