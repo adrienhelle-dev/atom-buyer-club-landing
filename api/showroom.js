@@ -25,48 +25,89 @@ module.exports = async function handler(req, res) {
       const payload = verifyToken(tokenFromReq(req));
       const isAdmin = !!payload;
 
-      // ── Reverse-lookup : showroom item lié à un projet ──────────
+      // ── Reverse-lookup : showroom items liés à un projet ──────────
       if (projet_id) {
-        const { data, error } = await supabase
-          .from('showroom_items')
-          .select('id, name, slug, image_cover, images_after, quartier, arrondissement')
-          .eq('projet_similaire_id', projet_id)
-          .eq('is_published', true)
-          .maybeSingle();
-        if (error) return res.status(500).json({ error: 'db_error' });
-        return res.status(200).json({ item: data || null });
+        // Check join table first
+        const { data: links } = await supabase
+          .from('project_showroom_links')
+          .select('item:showroom_item_id(id, name, slug, image_cover, images_after, quartier, arrondissement)')
+          .eq('project_id', projet_id);
+
+        let items = (links || []).map(l => l.item).filter(Boolean);
+
+        // Backward compat fallback
+        if (!items.length) {
+          const { data: legacyItems } = await supabase
+            .from('showroom_items')
+            .select('id, name, slug, image_cover, images_after, quartier, arrondissement')
+            .eq('projet_similaire_id', projet_id)
+            .eq('is_published', true);
+          items = legacyItems || [];
+        }
+
+        return res.status(200).json({ items });
       }
 
       if (slug || id) {
         // Item unique
-        let q = supabase.from('showroom_items').select(`
-          *,
-          projet_similaire:projet_similaire_id (
-            id, title, arrondissement, surface_carrez, total_all_in,
-            loyer_atom, mensualite, rendement_brut, slug
-          )
-        `);
+        let q = supabase.from('showroom_items').select('*');
         if (!isAdmin) q = q.eq('is_published', true);
         if (slug) q = q.eq('slug', slug);
         if (id)   q = q.eq('id', id);
         const { data, error } = await q.maybeSingle();
         if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
         if (!data) return res.status(404).json({ error: 'not_found' });
-        return res.status(200).json({ item: data });
+
+        // Fetch linked projects from join table
+        const { data: links } = await supabase
+          .from('project_showroom_links')
+          .select('project:project_id(id, title, arrondissement, surface_carrez, total_all_in, loyer_atom, mensualite, rendement_brut, slug)')
+          .eq('showroom_item_id', data.id);
+
+        let linked_projects = (links || []).map(l => l.project).filter(Boolean);
+        // Backward compat: if no join table links but has projet_similaire_id
+        if (!linked_projects.length && data.projet_similaire_id) {
+          const { data: proj } = await supabase
+            .from('projects')
+            .select('id, title, arrondissement, surface_carrez, total_all_in, slug')
+            .eq('id', data.projet_similaire_id)
+            .maybeSingle();
+          if (proj) linked_projects = [proj];
+        }
+        return res.status(200).json({ item: { ...data, linked_projects } });
       }
 
       // Liste
-      let q = supabase.from('showroom_items').select(`
-        *,
-        projet_similaire:projet_similaire_id (
-          id, title, arrondissement, surface_carrez, total_all_in, slug
-        )
-      `).order('ordre', { ascending: true }).order('created_at', { ascending: false });
+      let q = supabase.from('showroom_items').select('*')
+        .order('ordre', { ascending: true }).order('created_at', { ascending: false });
       if (!isAdmin) q = q.eq('is_published', true);
 
       const { data, error } = await q;
       if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
-      return res.status(200).json({ items: data || [] });
+      const items = data || [];
+
+      // Batch-fetch linked projects for all items
+      if (items.length) {
+        const itemIds = items.map(i => i.id);
+        const { data: allLinks } = await supabase
+          .from('project_showroom_links')
+          .select('showroom_item_id, project:project_id(id, title, arrondissement, surface_carrez, total_all_in, slug)')
+          .in('showroom_item_id', itemIds);
+        const linksMap = {};
+        (allLinks || []).forEach(l => {
+          if (!linksMap[l.showroom_item_id]) linksMap[l.showroom_item_id] = [];
+          if (l.project) linksMap[l.showroom_item_id].push(l.project);
+        });
+        items.forEach(item => {
+          item.linked_projects = linksMap[item.id] || [];
+          // Backward compat fallback (no join-table entries yet)
+          if (!item.linked_projects.length && item.projet_similaire_id) {
+            item.linked_projects = [{ id: item.projet_similaire_id }];
+          }
+        });
+      }
+
+      return res.status(200).json({ items });
     }
 
     // ── Action publique "interest" — enregistre l'intérêt d'un lead existant ──
@@ -421,6 +462,17 @@ ${text}`;
 
       const { data, error } = await supabase.from('showroom_items').insert([insert]).select().single();
       if (error) return res.status(500).json({ error: 'db_error', detail: error.message, code: error.code });
+
+      // Handle linked_project_ids (many-to-many)
+      const linked_project_ids_post = Array.isArray(b.linked_project_ids) ? b.linked_project_ids : null;
+      if (linked_project_ids_post !== null && linked_project_ids_post.length) {
+        await supabase.from('project_showroom_links').insert(
+          linked_project_ids_post.map(pid => ({ project_id: pid, showroom_item_id: data.id }))
+        );
+        // Keep projet_similaire_id in sync with first entry (backward compat)
+        await supabase.from('showroom_items').update({ projet_similaire_id: linked_project_ids_post[0] }).eq('id', data.id);
+      }
+
       return res.status(200).json({ ok: true, item: data });
     }
 
@@ -439,6 +491,22 @@ ${text}`;
 
       const { data, error } = await supabase.from('showroom_items').update(updates).eq('id', id).select().single();
       if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+
+      // Handle linked_project_ids (many-to-many)
+      const linked_project_ids = Array.isArray(b.linked_project_ids) ? b.linked_project_ids : null;
+      if (linked_project_ids !== null) {
+        await supabase.from('project_showroom_links').delete().eq('showroom_item_id', id);
+        if (linked_project_ids.length) {
+          await supabase.from('project_showroom_links').insert(
+            linked_project_ids.map(pid => ({ project_id: pid, showroom_item_id: id }))
+          );
+          // Keep projet_similaire_id in sync with first entry (backward compat)
+          await supabase.from('showroom_items').update({ projet_similaire_id: linked_project_ids[0] }).eq('id', id);
+        } else {
+          await supabase.from('showroom_items').update({ projet_similaire_id: null }).eq('id', id);
+        }
+      }
+
       return res.status(200).json({ ok: true, item: data });
     }
 

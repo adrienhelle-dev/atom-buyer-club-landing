@@ -274,11 +274,8 @@
 
       <!-- Réalisation similaire (injectée par JS si disponible) -->
       <div id="real-card" class="real-card" style="display:none">
-        <div class="real-card-tag">🖼 Réalisation similaire</div>
-        <img id="real-card-img" class="real-card-img" src="" alt="" style="display:none"/>
-        <div class="real-card-name" id="real-card-name"></div>
-        <div class="real-card-meta" id="real-card-meta"></div>
-        <a id="real-card-btn" class="real-card-btn" href="#">Voir cette réalisation →</a>
+        <div class="real-card-tag" id="real-card-tag">🖼 Réalisation similaire</div>
+        <div id="real-cards-list"></div>
       </div>
     </aside>
   </div>
@@ -601,29 +598,31 @@ async function loadRealisationSimilaire() {
     const res = await fetch(`/api/showroom?projet_id=${encodeURIComponent(project.id)}`);
     if (!res.ok) return;
     const d = await res.json();
-    const item = d?.item;
-    if (!item) return;
+    const items = d?.items || (d?.item ? [d.item] : []);
+    if (!items.length) return;
 
-    const card    = document.getElementById('real-card');
-    const nameEl  = document.getElementById('real-card-name');
-    const metaEl  = document.getElementById('real-card-meta');
-    const btnEl   = document.getElementById('real-card-btn');
-    const imgEl   = document.getElementById('real-card-img');
+    const card = document.getElementById('real-card');
+    document.getElementById('real-card-tag').textContent = items.length > 1
+      ? `🖼 ${items.length} réalisations similaires` : '🖼 Réalisation similaire';
 
-    nameEl.textContent = item.name || '';
-    const meta = [item.quartier, item.arrondissement ? `Paris ${item.arrondissement}` : null].filter(Boolean).join(' · ');
-    metaEl.textContent = meta;
-    btnEl.href = item.slug ? `/showroom#/${item.slug}` : '/showroom';
-
-    // Image : cover ou première photo après
-    let imgUrl = item.image_cover || null;
-    if (!imgUrl && item.images_after?.length) {
-      try {
-        const arr = typeof item.images_after === 'string' ? JSON.parse(item.images_after) : item.images_after;
-        imgUrl = Array.isArray(arr) ? arr[0] : null;
-      } catch {}
-    }
-    if (imgUrl) { imgEl.src = imgUrl; imgEl.style.display = 'block'; }
+    document.getElementById('real-cards-list').innerHTML = items.map((item, i) => {
+      let imgUrl = item.image_cover || null;
+      if (!imgUrl && item.images_after) {
+        try {
+          const arr = typeof item.images_after === 'string' ? JSON.parse(item.images_after) : item.images_after;
+          imgUrl = Array.isArray(arr) ? arr[0] : null;
+        } catch {}
+      }
+      const meta = [item.quartier, item.arrondissement ? `Paris ${item.arrondissement}` : null].filter(Boolean).join(' · ');
+      const href = item.slug ? `/showroom#/${item.slug}` : '/showroom';
+      const sep = i > 0 ? 'border-top:1px solid rgba(184,151,90,.15);padding-top:14px;margin-top:14px;' : '';
+      return `<div style="${sep}">
+        ${imgUrl ? `<img class="real-card-img" src="${escapeHtml(imgUrl)}" alt="${escapeHtml(item.name||'')}"/>` : ''}
+        <div class="real-card-name">${escapeHtml(item.name || '')}</div>
+        ${meta ? `<div class="real-card-meta">${escapeHtml(meta)}</div>` : ''}
+        <a class="real-card-btn" href="${escapeHtml(href)}">Voir cette réalisation →</a>
+      </div>`;
+    }).join('');
 
     card.style.display = 'block';
   } catch {}

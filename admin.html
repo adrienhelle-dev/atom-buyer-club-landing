@@ -1319,6 +1319,12 @@
       text-decoration: none; opacity: .8;
     }
     .int-source-link:hover { opacity: 1; text-decoration: underline; }
+    .int-lead-fiche { font-size: 11px; color: var(--gold); cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none; }
+    .int-lead-fiche:hover { text-decoration: underline; }
+    .tag-chips-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
+    .tag-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: rgba(184,151,90,.1); border: 1px solid rgba(184,151,90,.25); border-radius: 20px; font-size: 12px; color: var(--gold); }
+    .tag-chip button { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 13px; padding: 0; line-height: 1; }
+    .tag-chip button:hover { color: var(--red); }
 
     /* Lead cell */
     .int-lead-name {
@@ -2192,11 +2198,12 @@
               <input type="text" id="sr-locataire" placeholder="ex: Entreprise tech, mission 6 mois"/>
             </div>
             <div class="np-field span-2">
-              <label for="sr-projet-similaire">Projet similaire disponible à la vente</label>
-              <select id="sr-projet-similaire">
-                <option value="">— Aucun —</option>
+              <label>Projets similaires disponibles à la vente</label>
+              <div class="tag-chips-list" id="sr-linked-chips"></div>
+              <select id="sr-linked-add-sel" onchange="srAddLinkedProject(this.value)">
+                <option value="">+ Associer un projet…</option>
               </select>
-              <span class="np-field-help">Quand un lead clique "Je veux ce type de projet", il est redirigé vers ce projet.</span>
+              <span class="np-field-help">Les leads intéressés par cette réalisation voient ces projets. Plusieurs projets possibles.</span>
             </div>
           </div>
         </div>
@@ -5221,7 +5228,6 @@ function _buildInterestRow(ev) {
   const waText = _buildWaText(lead, source);
   const phone  = phoneIntl(lead.tel);
 
-  const SVG_PERSON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
   const SVG_MAIL   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>`;
   const SVG_WA     = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>`;
 
@@ -5241,6 +5247,7 @@ function _buildInterestRow(ev) {
         <span class="int-score ${scoreCls}">${score}</span>
         ${lead.email ? `<span style="margin-left:6px">${esc(lead.email)}</span>` : ''}
       </div>
+      <span class="int-lead-fiche" onclick="openLeadFromNotif('${esc(lead.id)}')">Voir la fiche →</span>
     </div>
     <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
@@ -5254,7 +5261,6 @@ function _buildInterestRow(ev) {
     </div>
     <div class="int-col col-actions">
       <div class="int-actions">
-        <button class="int-action-btn" title="Fiche lead" onclick="openLeadFromNotif('${esc(lead.id)}')">${SVG_PERSON}</button>
         ${lead.email ? `<button class="int-action-btn mail" title="Envoyer un email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom||'')}','${esc(lead.email)}')">${SVG_MAIL}</button>` : ''}
         ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="WhatsApp">${SVG_WA}</a>` : ''}
         <button class="int-action-btn" style="color:var(--red);border-color:rgba(217,94,94,.3)" title="Supprimer cet intérêt" onclick="openDelIntModal('${esc(ev.id)}','${esc(leadName)} — ${esc(source.name)}')">
@@ -5336,6 +5342,22 @@ async function toggleInterestTreated(eventId, treated) {
 }
 
 /* ══ SHOWROOM ═══════════════════════════════════════════════════ */
+/*
+-- SQL MIGRATION — Run in Supabase SQL editor before deploying this feature:
+CREATE TABLE project_showroom_links (
+  project_id       uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  showroom_item_id uuid NOT NULL REFERENCES showroom_items(id) ON DELETE CASCADE,
+  PRIMARY KEY (project_id, showroom_item_id)
+);
+CREATE INDEX idx_psl_showroom ON project_showroom_links(showroom_item_id);
+CREATE INDEX idx_psl_project  ON project_showroom_links(project_id);
+
+-- Migrate existing single-link data:
+INSERT INTO project_showroom_links (project_id, showroom_item_id)
+SELECT projet_similaire_id, id FROM showroom_items
+WHERE projet_similaire_id IS NOT NULL
+ON CONFLICT DO NOTHING;
+*/
 let showroomCache    = [];
 let editingShowroomId = null;
 let srAfterImages  = [];  // [{url:..., path:...}]
@@ -5471,10 +5493,12 @@ function resetShowroomForm() {
    'sr-desc-courte','sr-desc-longue','sr-equipements','sr-caracteristiques',
    'sr-cover','sr-video',
    'sr-prix','sr-travaux','sr-loyer','sr-locataire','sr-statut-loc',
-   'sr-ordre','sr-source-url','sr-projet-similaire','sr-responsible'].forEach(id => {
+   'sr-ordre','sr-source-url','sr-responsible'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = el.tagName === 'SELECT' ? (el.options[0]?.value || '') : '';
   });
+  _srLinkedProjectIds = [];
+  _srRenderLinkedChips();
   srAfterImages = []; srBeforeImages = [];
   renderSrImageGrid('after'); renderSrImageGrid('before');
   // Réinitialiser le champ cover en mode "auto"
@@ -5540,7 +5564,9 @@ function populateShowroomForm(item) {
   sv('sr-ordre',        item.ordre ?? 0);
   sv('sr-source-url',   item.source_url);
   sv('sr-responsible',  item.responsible_admin);
-  sv('sr-projet-similaire', item.projet_similaire_id || '');
+  _srLinkedProjectIds = (item.linked_projects || []).map(p => p?.id).filter(Boolean);
+  if (!_srLinkedProjectIds.length && item.projet_similaire_id) _srLinkedProjectIds = [item.projet_similaire_id];
+  _srRenderLinkedChips();
   document.getElementById('sr-published').checked = !!item.is_published;
   document.getElementById('sr-featured').checked  = !!item.is_featured;
   // Statut badge
@@ -5554,15 +5580,45 @@ function populateShowroomForm(item) {
   setSrBtnDirty(false);
 }
 
+let _srLinkedProjectIds = [];
+let _srAvailableProjects = [];
+
+function srAddLinkedProject(projectId) {
+  if (!projectId || _srLinkedProjectIds.includes(projectId)) {
+    document.getElementById('sr-linked-add-sel').value = ''; return;
+  }
+  _srLinkedProjectIds.push(projectId);
+  _srRenderLinkedChips();
+  document.getElementById('sr-linked-add-sel').value = '';
+}
+
+function srRemoveLinkedProject(projectId) {
+  _srLinkedProjectIds = _srLinkedProjectIds.filter(id => id !== projectId);
+  _srRenderLinkedChips();
+}
+
+function _srRenderLinkedChips() {
+  const container = document.getElementById('sr-linked-chips');
+  if (!container) return;
+  container.innerHTML = _srLinkedProjectIds.map(pid => {
+    const proj = _srAvailableProjects.find(p => p.id === pid);
+    const label = proj ? (proj.title || proj.slug) : pid.slice(0,8) + '…';
+    return `<span class="tag-chip">${esc(label)}<button onclick="srRemoveLinkedProject('${esc(pid)}')">✕</button></span>`;
+  }).join('') || '<span style="font-size:12px;color:var(--dim)">Aucun projet associé</span>';
+}
+
 async function loadAvailableProjects() {
-  const sel = document.getElementById('sr-projet-similaire');
+  const sel = document.getElementById('sr-linked-add-sel');
   if (!sel) return;
-  const res  = await fetch('/api/projects?status=disponible', { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch('/api/projects', { headers: { Authorization: `Bearer ${token}` } });
   const { projects } = await res.json().catch(() => ({ projects: [] }));
-  const currentVal = sel.value;
-  sel.innerHTML = '<option value="">— Aucun —</option>' +
-    (projects || []).map(p => `<option value="${p.id}">${esc(p.title)} — ${p.arrondissement || '?'}</option>`).join('');
-  sel.value = currentVal;
+  _srAvailableProjects = projects || [];
+  sel.innerHTML = '<option value="">+ Associer un projet…</option>' +
+    _srAvailableProjects
+      .sort((a, b) => (a.title||'').localeCompare(b.title||''))
+      .map(p => `<option value="${p.id}">${esc(p.title || p.slug)} — ${p.arrondissement || '?'}${p.status === 'disponible' ? ' ✦' : ''}</option>`)
+      .join('');
+  _srRenderLinkedChips();
 }
 
 function showSrSection(n) {
@@ -5682,7 +5738,7 @@ function getSrPayload() {
     loyer_mensuel:      parseFloat(document.getElementById('sr-loyer').value) || null,
     locataire_type:     document.getElementById('sr-locataire').value.trim() || null,
     statut_location:    document.getElementById('sr-statut-loc').value || 'Loué',
-    projet_similaire_id: document.getElementById('sr-projet-similaire').value || null,
+    linked_project_ids: _srLinkedProjectIds,
     is_published:       document.getElementById('sr-published').checked,
     is_featured:        document.getElementById('sr-featured').checked,
     ordre:              parseInt(document.getElementById('sr-ordre').value) || 0,
@@ -5972,7 +6028,7 @@ function _buildDestUrl() {
   if (_utmDest === 'projets')       return `${BASE_URL}/projets`;
   if (_utmDest === 'showroom')      return `${BASE_URL}/showroom`;
   if (_utmDest === 'projet-item')   return slug ? `${BASE_URL}/projet/${slug}` : null;
-  if (_utmDest === 'showroom-item') return slug ? `${BASE_URL}/showroom#${slug}` : null;
+  if (_utmDest === 'showroom-item') return slug ? `${BASE_URL}/showroom#/${slug}` : null;
   return null;
 }
 

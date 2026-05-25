@@ -348,10 +348,8 @@
 
         <!-- Projet similaire -->
         <div class="match-card" id="match-card" style="display:none">
-          <p class="match-tag">📍 Un projet similaire est disponible</p>
-          <p class="match-title" id="match-title"></p>
-          <p class="match-meta" id="match-meta"></p>
-          <a class="btn-match" id="match-btn" href="#">Voir ce projet →</a>
+          <p class="match-tag">📍 Projet(s) similaire(s) disponible(s)</p>
+          <div id="match-projects-list"></div>
         </div>
 
         <!-- CTA WA (si pas de projet similaire) -->
@@ -624,28 +622,33 @@
 
   function buildMatching(item) {
     const matchCard = document.getElementById('match-card');
-    const waCard    = document.getElementById('wa-card');
-    const proj      = item.projet_similaire;
-    // WA du responsable de la réalisation, ou défaut Adrien
-    const waNumber  = FOUNDER_WA[item.responsible_admin] || DEFAULT_WA;
-    const waMsg     = encodeURIComponent(`Bonjour, j'ai consulté la réalisation "${item.name}" sur le Showroom Atom Buyers Club et je souhaite en savoir plus.`);
-    const waHref    = `https://wa.me/${waNumber}?text=${waMsg}`;
+    // Support both new linked_projects array and legacy projet_similaire
+    const projects = (item.linked_projects && item.linked_projects.length)
+      ? item.linked_projects
+      : (item.projet_similaire ? [item.projet_similaire] : []);
 
-    // Mettre à jour le bouton WA dans la sticky bar de détail
+    const waNumber = FOUNDER_WA[item.responsible_admin] || DEFAULT_WA;
+    const waMsg = encodeURIComponent(`Bonjour, j'ai consulté la réalisation "${item.name}" sur le Showroom Atom Buyers Club et je souhaite en savoir plus.`);
     const stickyWa = document.getElementById('detail-sticky-wa');
-    if (stickyWa) stickyWa.href = waHref;
+    if (stickyWa) stickyWa.href = `https://wa.me/${waNumber}?text=${waMsg}`;
 
-    // Sidebar : match-card si projet similaire dispo, sinon masqué
-    waCard.style.display = 'none'; // remplacé par le CTA bas de page
-    if (proj) {
+    document.getElementById('wa-card').style.display = 'none';
+
+    if (projects.length) {
       matchCard.style.display = '';
-      document.getElementById('match-title').textContent = proj.title || '';
-      const meta = [proj.arrondissement, proj.surface_carrez ? proj.surface_carrez + ' m²' : null,
-        proj.total_all_in ? 'All-in ~' + fmt(proj.total_all_in) + ' €' : null].filter(Boolean).join(' · ');
-      document.getElementById('match-meta').textContent = meta;
-      // Lien direct vers la page du projet (lien circulaire)
-      const matchBtn = document.getElementById('match-btn');
-      if (matchBtn) matchBtn.href = proj.slug ? '/projets#/' + proj.slug : '#';
+      document.getElementById('match-projects-list').innerHTML = projects.map(proj => {
+        const meta = [proj.arrondissement, proj.surface_carrez ? proj.surface_carrez + ' m²' : null,
+          proj.total_all_in ? 'All-in ~' + fmt(proj.total_all_in) + ' €' : null].filter(Boolean).join(' · ');
+        const href = proj.slug ? '/projet/' + proj.slug : '#';
+        return `<div class="match-proj-item" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(184,151,90,.15);">
+          <p class="match-title" style="margin-bottom:4px">${esc(proj.title || '')}</p>
+          <p class="match-meta" style="margin-bottom:8px">${esc(meta)}</p>
+          <a class="btn-match" href="${esc(href)}">Voir ce projet →</a>
+        </div>`;
+      }).join('');
+      // Remove last border
+      const items = matchCard.querySelectorAll('.match-proj-item');
+      if (items.length) items[items.length-1].style.borderBottom = 'none';
     } else {
       matchCard.style.display = 'none';
     }
@@ -706,7 +709,7 @@
         body: JSON.stringify({
           prenom: sl.prenom, nom: sl.nom, email: sl.email, tel: sl.tel,
           utm_source: 'showroom', utm_content: currentItem?.slug || null,
-          project_id: currentItem?.projet_similaire?.id || null,
+          project_id: (currentItem?.linked_projects?.[0]?.id) || currentItem?.projet_similaire?.id || null,
           referrer: location.href,
           ...(leadId ? { lead_id_hint: leadId } : {}),
         }),
@@ -717,7 +720,7 @@
     document.getElementById('cta-modal').classList.add('on');
     document.getElementById('cta-form-wrap').style.display = '';
     document.getElementById('cta-confirm').style.display   = 'none';
-    if (currentItem?.projet_similaire) {
+    if (currentItem?.linked_projects?.length || currentItem?.projet_similaire) {
       document.getElementById('cta-sub').textContent =
         `Vous êtes intéressé(e) par "${currentItem.name}". L'équipe Atom vous contacte sous 24h.`;
     }
@@ -753,7 +756,7 @@
       utm_source:       'showroom',
       utm_content:      currentItem?.slug || null,
       showroom_item_name: currentItem?.name || null,
-      project_id:       currentItem?.projet_similaire?.id || null,
+      project_id:       (currentItem?.linked_projects?.[0]?.id) || currentItem?.projet_similaire?.id || null,
       referrer:    location.href,
     };
 
