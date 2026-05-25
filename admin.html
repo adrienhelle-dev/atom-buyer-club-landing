@@ -3792,24 +3792,39 @@ function _updateNotifBadge() {
   const unseen   = _notifEvents.filter(e => e.lead_id && e.lead && e.created_at > lastSeen).length;
   const badge    = document.getElementById('notif-badge');
   const fab      = document.getElementById('notif-fab');
-  if (!badge || !fab) return;
-  if (unseen > 0) {
-    badge.textContent   = unseen > 99 ? '99+' : String(unseen);
-    badge.style.display = '';
-    fab.classList.add('has-new');
-  } else {
-    badge.style.display = 'none';
-    fab.classList.remove('has-new');
+  if (badge && fab) {
+    if (unseen > 0) {
+      badge.textContent   = unseen > 99 ? '99+' : String(unseen);
+      badge.style.display = '';
+      fab.classList.add('has-new');
+    } else {
+      badge.style.display = 'none';
+      fab.classList.remove('has-new');
+    }
+    // Sous-titre du panneau
+    const sub = document.getElementById('notif-panel-sub');
+    if (sub) sub.textContent = unseen > 0 ? `${unseen} non lu${unseen > 1 ? 's' : ''}` : '30 derniers jours';
+    // Si de nouvelles notifs arrivent alors qu'on est sur l'onglet "lues", repasser sur "nouvelles"
+    if (unseen > 0 && _notifTab === 'read') {
+      _notifTab = 'unread';
+      document.getElementById('notif-tab-unread')?.classList.add('active');
+      document.getElementById('notif-tab-read')?.classList.remove('active');
+    }
   }
-  // Sous-titre du panneau
-  const sub = document.getElementById('notif-panel-sub');
-  if (sub) sub.textContent = unseen > 0 ? `${unseen} non lu${unseen > 1 ? 's' : ''}` : '30 derniers jours';
 
-  // Si de nouvelles notifs arrivent alors qu'on est sur l'onglet "lues", repasser sur "nouvelles"
-  if (unseen > 0 && _notifTab === 'read') {
-    _notifTab = 'unread';
-    document.getElementById('notif-tab-unread')?.classList.add('active');
-    document.getElementById('notif-tab-read')?.classList.remove('active');
+  // ── Badge onglet "Intérêts" ───────────────────────────────────
+  // Utilise _notifEvents (30 derniers jours) si interestsCache pas encore chargé,
+  // sinon interestsCache (historique complet, plus fiable)
+  const source = interestsCache.length ? interestsCache : _notifEvents;
+  const untreated = source.filter(e => e.lead && !e.content?.treated).length;
+  const intBadge  = document.getElementById('interets-tab-badge');
+  if (intBadge) {
+    if (untreated > 0) {
+      intBadge.textContent   = untreated > 99 ? '99+' : String(untreated);
+      intBadge.style.display = '';
+    } else {
+      intBadge.style.display = 'none';
+    }
   }
 }
 
