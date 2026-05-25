@@ -1259,28 +1259,45 @@
       margin-left: auto; font-size: 11px; color: var(--dim);
     }
 
-    /* Table wrapper */
-    .int-table-wrap {
-      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    /* ── Liste intérêts (div-based — fiable sur tous navigateurs mobiles) ── */
+    .int-list-wrap { overflow-x: hidden; }
+    .int-list { width: 100%; }
+
+    /* Header */
+    .int-list-head {
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 130px 116px;
+      padding: 0; border-bottom: 1px solid var(--border); background: var(--bg2);
     }
-    .int-table {
-      width: 100%; border-collapse: collapse; min-width: 760px;
+    .int-list-head-cell {
+      padding: 10px 14px; font-size: 10px; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--dim); white-space: nowrap;
     }
-    .int-table thead th {
-      padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 600;
-      letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
-      border-bottom: 1px solid var(--border); background: var(--bg2);
-      white-space: nowrap;
-    }
-    .int-table tbody tr {
+    .int-list-head-cell.col-traite { text-align: center; }
+
+    /* Ligne */
+    .int-list-item {
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 130px 116px;
+      align-items: center;
       border-bottom: 1px solid var(--border);
       transition: background .12s;
     }
-    .int-table tbody tr:hover { background: rgba(255,255,255,.025); }
-    .int-table tbody tr.is-treated { opacity: .55; }
-    .int-table td {
-      padding: 13px 14px; font-size: 13px; color: var(--cream); vertical-align: middle;
+    .int-list-item:hover { background: rgba(255,255,255,.025); }
+    .int-list-item.is-treated { opacity: .55; }
+    .int-col { padding: 13px 14px; font-size: 13px; color: var(--cream); min-width: 0; }
+    .int-col.col-traite { display: flex; align-items: center; justify-content: center; padding: 0; }
+
+    /* Tablet (≤900px) : cache la colonne meta */
+    @media (max-width: 900px) {
+      .int-list-head { grid-template-columns: 50px 1fr 1fr 116px; }
+      .int-list-item { grid-template-columns: 50px 1fr 1fr 116px; }
+      .int-col.col-meta { display: none; }
+      .int-col { padding: 11px 10px; }
     }
+
+    /* Rétro-compat pour ancienne classe int-table-wrap */
+    .int-table-wrap { overflow-x: hidden; }
 
     /* Type badges */
     .int-type-badge {
@@ -1369,61 +1386,46 @@
     }
     .int-empty-icon { font-size: 36px; opacity: .25; margin-bottom: 14px; }
 
-    /* ── Responsive table — une seule vue qui s'adapte ─────────── */
-    .int-table { min-width: unset; } /* pas de min-width, on laisse le grid gérer */
-
     /* Lead row layout */
     .int-lead-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
 
-    /* Tablet (≤900px) : colonnes compactes, cache meta */
-    @media (max-width: 900px) {
-      .int-table th.th-meta, .int-table td.td-meta { display: none; }
-      .int-table td { padding: 11px 10px; }
-    }
-
-    /* Mobile (≤600px) : layout positionné — évite display:grid sur <tr> (cassé Safari iOS) */
+    /* Mobile (≤600px) : flex-wrap sur divs — aucune magie table, fonctionne partout */
     @media (max-width: 600px) {
       .int-stats  { grid-template-columns: repeat(2, 1fr); }
       .int-toolbar { padding: 10px 14px; gap: 7px; flex-wrap: wrap; }
       .int-filter-sel { font-size: 11px; padding: 6px 22px 6px 9px; }
-      .int-table-wrap { border-radius: 0; overflow-x: visible; }
 
-      /* Force tout en block ─ seule méthode fiable sur Safari iOS */
-      .int-table, .int-table thead, .int-table tbody,
-      .int-table tbody tr, .int-table td { display: block; }
-      .int-table { width: 100%; }
-      .int-table thead { display: none; }
+      /* Header masqué sur mobile */
+      .int-list-head { display: none; }
 
-      /* Ligne = conteneur positionné */
-      .int-table tbody tr {
-        position: relative;
-        padding: 12px 152px 12px 50px; /* left: toggle | right: boutons */
-        min-height: 58px;
-        border-bottom: 1px solid var(--border);
+      /* Ligne = flex-wrap : ligne 1 toggle+lead+actions, ligne 2 source */
+      .int-list-item {
+        display: flex; flex-wrap: wrap; align-items: center;
+        padding: 12px 14px; gap: 0;
       }
-      .int-table tbody tr.is-treated { opacity: .55; }
-
-      /* Toggle collé à gauche, centré verticalement */
-      .int-table td { padding: 0; }
-      .int-table td.td-traite {
-        position: absolute; left: 10px; top: 0; bottom: 0;
-        width: 36px; display: flex; align-items: center; justify-content: center;
+      .int-col { padding: 0; }
+      .int-col.col-traite {
+        order: 1; width: 38px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0 4px 0 0;
       }
-      /* Contenu principal : lead + source empilés */
-      .int-table td.td-lead   { display: block; padding: 0; margin-bottom: 4px; }
-      .int-table td.td-source { display: block; padding: 0; }
-      .int-table td.td-meta   { display: none !important; }
-
-      /* Boutons collés à droite, centrés verticalement */
-      .int-table td.td-actions {
-        position: absolute; right: 10px; top: 0; bottom: 0;
-        width: 140px; display: flex; align-items: center; justify-content: flex-end;
+      .int-col.col-lead {
+        order: 2; flex: 1; min-width: 0; padding-right: 8px;
       }
+      .int-col.col-actions {
+        order: 3; flex-shrink: 0;
+      }
+      .int-col.col-source {
+        order: 4; flex-basis: 100%;
+        padding-left: 42px; /* aligne sous le nom (toggle 38px + gap 4px) */
+        padding-top: 5px;
+      }
+      .int-col.col-meta { display: none !important; }
 
       /* Boutons plus petits sur mobile */
-      .int-table .int-action-btn { width: 28px; height: 28px; border-radius: 6px; }
-      .int-table .int-actions    { gap: 4px; }
-      .int-lead-row              { flex-wrap: wrap; gap: 4px; }
+      .int-action-btn { width: 28px; height: 28px; border-radius: 6px; }
+      .int-actions    { gap: 4px; }
+      .int-lead-row   { flex-wrap: wrap; gap: 4px; }
     }
 
     @media (max-width: 640px) {
@@ -2538,22 +2540,20 @@
     <button onclick="loadInterests(true)" title="Rafraîchir" style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--dim);font-size:13px;cursor:pointer;transition:color .15s,border-color .15s" onmouseenter="this.style.color='var(--cream)';this.style.borderColor='var(--gold)'" onmouseleave="this.style.color='var(--dim)';this.style.borderColor='var(--border)'">↻</button>
   </div>
 
-  <!-- Table — responsive (desktop, tablette, iPhone) -->
-  <div class="int-table-wrap">
-    <table class="int-table">
-      <thead>
-        <tr>
-          <th class="th-traite" style="width:50px;text-align:center">Traité</th>
-          <th class="th-lead">Lead</th>
-          <th class="th-source">Projet / Réalisation</th>
-          <th class="th-meta">Founder · Date</th>
-          <th class="th-actions" style="width:110px">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="int-tbody">
-        <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--dim)">Chargement…</td></tr>
-      </tbody>
-    </table>
+  <!-- Liste intérêts — div-based, responsive natif tous navigateurs -->
+  <div class="int-list-wrap">
+    <div class="int-list">
+      <div class="int-list-head">
+        <div class="int-list-head-cell col-traite">Traité</div>
+        <div class="int-list-head-cell">Lead</div>
+        <div class="int-list-head-cell">Projet / Réalisation</div>
+        <div class="int-list-head-cell col-meta">Founder · Date</div>
+        <div class="int-list-head-cell">Actions</div>
+      </div>
+      <div id="int-tbody">
+        <div style="text-align:center;padding:40px;color:var(--dim)">Chargement…</div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -5098,7 +5098,7 @@ const INT_TYPE_META = {
 async function loadInterests(force = false) {
   if (interestsLoaded && !force) { renderInterestsTable(); return; }
   const tbody = document.getElementById('int-tbody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--dim)">Chargement…</td></tr>';
+  if (tbody) tbody.innerHTML = '<div style="text-align:center;padding:40px;color:var(--dim)">Chargement…</div>';
 
   try {
     const res  = await fetch('/api/events?interests=1', { headers: { Authorization: `Bearer ${token}` } });
@@ -5185,10 +5185,10 @@ function renderInterestsTable() {
   const tbody = document.getElementById('int-tbody');
   if (tbody) {
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:48px;color:var(--dim)">
+      tbody.innerHTML = `<div style="text-align:center;padding:48px;color:var(--dim)">
         <div style="font-size:28px;opacity:.2;margin-bottom:10px">⭐</div>
         Aucun intérêt${interestsCache.length ? ' pour ces filtres' : ' enregistré pour le moment'}
-      </td></tr>`;
+      </div>`;
     } else {
       tbody.innerHTML = items.map(ev => _buildInterestRow(ev)).join('');
     }
@@ -5215,36 +5215,34 @@ function _buildInterestRow(ev) {
   const SVG_MAIL   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>`;
   const SVG_WA     = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>`;
 
-  return `<tr class="${treated ? 'is-treated' : ''}" id="int-row-${esc(ev.id)}">
-    <td class="td-traite">
-      <div class="int-toggle-wrap">
-        <label class="int-toggle" title="${treated ? 'Marquer non traité' : 'Marquer traité'}">
-          <input type="checkbox" ${treated ? 'checked' : ''} onchange="toggleInterestTreated('${esc(ev.id)}', this.checked)">
-          <span class="int-toggle-slider"></span>
-        </label>
-      </div>
-    </td>
-    <td class="td-lead">
+  return `<div class="int-list-item ${treated ? 'is-treated' : ''}" id="int-row-${esc(ev.id)}">
+    <div class="int-col col-traite">
+      <label class="int-toggle" title="${treated ? 'Marquer non traité' : 'Marquer traité'}">
+        <input type="checkbox" ${treated ? 'checked' : ''} onchange="toggleInterestTreated('${esc(ev.id)}', this.checked)">
+        <span class="int-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="int-col col-lead">
       <div class="int-lead-row">
         <span class="int-lead-name" onclick="openLeadFromNotif('${esc(lead.id)}')">${esc(leadName)}</span>
-        <span class="int-type-badge ${meta.cls}">${meta.icon} ${meta.short}</span>
+        <span class="int-type-badge ${meta.cls}">${meta.icon} ${meta.short || meta.label}</span>
       </div>
       <div class="int-lead-meta">
         <span class="int-score ${scoreCls}">${score}</span>
         ${lead.email ? `<span style="margin-left:6px">${esc(lead.email)}</span>` : ''}
       </div>
-    </td>
-    <td class="td-source">
+    </div>
+    <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
       ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank">Voir →</a>` : ''}
-    </td>
-    <td class="td-meta">
+    </div>
+    <div class="int-col col-meta">
       ${lead.assigned_to
         ? `<span class="founder-badge" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>`
         : ''}
       <div style="font-size:11px;color:var(--dim);margin-top:3px">${timeAgo(ev.created_at)}</div>
-    </td>
-    <td class="td-actions">
+    </div>
+    <div class="int-col col-actions">
       <div class="int-actions">
         <button class="int-action-btn" title="Fiche lead" onclick="openLeadFromNotif('${esc(lead.id)}')">${SVG_PERSON}</button>
         ${lead.email ? `<button class="int-action-btn mail" title="Envoyer un email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom||'')}','${esc(lead.email)}')">${SVG_MAIL}</button>` : ''}
@@ -5253,8 +5251,8 @@ function _buildInterestRow(ev) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
       </div>
-    </td>
-  </tr>`;
+    </div>
+  </div>`;
 }
 
 /* ── Delete intérêt ─────────────────────────────────────────── */
