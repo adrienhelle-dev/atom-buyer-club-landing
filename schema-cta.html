@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schéma CTA · Atom Buyers Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0f0e0c; --bg2:#161512; --bg3:#1e1d1a; --border:#2c2b27;
+      --cream:#F5F2ED; --dim:#7a7874; --gold:#B8975A; --green:#4caf7d;
+      --red:#d95e5e; --blue:#5B5BD6;
+      --sans:'DM Sans',system-ui,sans-serif;
+      --serif:'Cormorant Garamond',Georgia,serif;
+      --mono:'DM Mono','Courier New',monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--sans);background:var(--bg);color:var(--cream);-webkit-font-smoothing:antialiased;line-height:1.6;}
+
+    /* Header */
+    .hd{background:var(--bg2);border-bottom:1px solid var(--border);padding:28px 48px;position:sticky;top:0;z-index:50;}
+    .hd-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+    .logo{font-family:var(--serif);font-size:22px;font-weight:300;}
+    .chip{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);background:rgba(184,151,90,.1);border:1px solid rgba(184,151,90,.25);padding:4px 12px;border-radius:20px;margin-left:12px;}
+    .hd-sub{font-size:12px;color:var(--dim);margin-top:4px;}
+    .back{font-size:12px;color:var(--dim);text-decoration:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;transition:color .15s,border-color .15s;}
+    .back:hover{color:var(--cream);border-color:var(--dim);}
+
+    /* Layout */
+    .wrap{max-width:1200px;margin:0 auto;padding:48px 48px 100px;display:flex;gap:48px;align-items:flex-start;}
+    .toc{position:sticky;top:90px;width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;}
+    .toc-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;padding-left:10px;}
+    .toc a{font-size:12px;color:var(--dim);text-decoration:none;padding:5px 10px;border-radius:6px;border-left:2px solid transparent;transition:all .15s;}
+    .toc a:hover,.toc a.on{color:var(--gold);border-left-color:var(--gold);background:rgba(184,151,90,.06);}
+    .content{flex:1;min-width:0;display:flex;flex-direction:column;gap:60px;}
+
+    /* Section */
+    .sec{scroll-margin-top:100px;}
+    .sec-tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+    .sec-title{font-family:var(--serif);font-size:30px;font-weight:300;color:var(--cream);line-height:1.2;margin-bottom:12px;}
+    .sec-desc{font-size:14px;color:var(--dim);max-width:680px;line-height:1.75;margin-bottom:24px;}
+
+    /* Cards */
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;}
+    .card-title{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:16px;}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+    .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+
+    /* Flow */
+    .flow{display:flex;align-items:stretch;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px 20px;gap:4px;flex-wrap:wrap;}
+    .fstep{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;min-width:110px;text-align:center;flex:1;}
+    .fstep.c-gold{border-color:rgba(184,151,90,.4);background:rgba(184,151,90,.06);}
+    .fstep.c-green{border-color:rgba(76,175,125,.35);background:rgba(76,175,125,.06);}
+    .fstep.c-blue{border-color:rgba(91,91,214,.35);background:rgba(91,91,214,.06);}
+    .fstep.c-red{border-color:rgba(217,94,94,.35);background:rgba(217,94,94,.06);}
+    .fi{font-size:20px;}
+    .ft{font-size:12px;font-weight:500;color:var(--cream);}
+    .fs{font-size:10px;color:var(--dim);line-height:1.4;margin-top:2px;}
+    .farrow{display:flex;align-items:center;padding:0 2px;color:var(--border);font-size:20px;flex-shrink:0;align-self:center;}
+
+    /* Scoring */
+    .sg{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .sblock{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px;}
+    .sbt{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:12px;}
+    .srow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+    .srow:last-child{border-bottom:none;}
+    .slabel{font-size:13px;color:var(--cream);}
+    .pts{font-size:13px;font-weight:600;}
+    .ph{color:var(--gold);}
+    .pm{color:var(--green);}
+    .pl{color:var(--dim);}
+    .score-badge{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;font-size:17px;font-weight:600;flex-shrink:0;}
+    .sh{background:rgba(184,151,90,.15);color:var(--gold);}
+    .sw{background:rgba(76,175,125,.12);color:var(--green);}
+    .sc{background:rgba(122,120,116,.1);color:var(--dim);}
+    .slevel{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);}
+    .slevel:last-child{border-bottom:none;}
+    .slevel-info{font-size:13px;color:var(--cream);}
+    .slevel-sub{font-size:11px;color:var(--dim);margin-top:2px;}
+
+    /* Events */
+    .ev-list{display:flex;flex-direction:column;gap:8px;}
+    .ev{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;}
+    .ev-icon{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .ev-name{font-size:13px;font-weight:500;color:var(--cream);margin-bottom:3px;}
+    .ev-desc{font-size:12px;color:var(--dim);line-height:1.5;}
+    .ev-badge{margin-left:auto;flex-shrink:0;font-size:10px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;align-self:flex-start;}
+    .b-notif{background:rgba(91,91,214,.12);color:var(--blue);border:1px solid rgba(91,91,214,.25);}
+    .b-interet{background:rgba(184,151,90,.12);color:var(--gold);border:1px solid rgba(184,151,90,.25);}
+    .b-silent{background:rgba(122,120,116,.1);color:var(--dim);border:1px solid var(--border);}
+
+    /* UTM */
+    .url-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--cream);line-height:1.8;overflow-x:auto;word-break:break-all;margin-bottom:16px;}
+    .up{color:var(--gold);}
+    .uv{color:var(--green);}
+    .utm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .uitem{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+    .upname{font-family:var(--mono);font-size:12px;color:var(--gold);margin-bottom:5px;}
+    .updesc{font-size:12px;color:var(--dim);line-height:1.5;}
+    .upex{font-size:11px;color:var(--dim);margin-top:6px;font-family:var(--mono);}
+    .upex span{color:var(--green);}
+
+    /* Matching */
+    .mitem{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;}
+    .micon{font-size:20px;margin-bottom:8px;}
+    .mtitle{font-size:13px;font-weight:500;color:var(--cream);margin-bottom:5px;}
+    .mdesc{font-size:12px;color:var(--dim);line-height:1.5;}
+    .mpts{font-size:11px;font-weight:500;color:var(--gold);margin-top:8px;}
+
+    /* Roles table */
+    .rtable{width:100%;border-collapse:collapse;}
+    .rtable th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);}
+    .rtable td{padding:11px 14px;font-size:13px;border-bottom:1px solid rgba(44,43,39,.6);vertical-align:middle;}
+    .rtable tr:last-child td{border-bottom:none;}
+    .rtable tr:hover td{background:rgba(255,255,255,.02);}
+    .rname{font-weight:500;color:var(--cream);}
+    .chk{color:var(--green);}
+    .cr{color:var(--border);}
+    .cpart{color:var(--gold);}
+
+    /* Pages */
+    .pitem{display:flex;align-items:flex-start;gap:14px;padding:13px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;}
+    .purl{font-family:var(--mono);font-size:12px;color:var(--gold);min-width:260px;flex-shrink:0;padding-top:2px;}
+    .pdesc{font-size:13px;color:var(--dim);}
+    .ptag{font-size:10px;color:var(--dim);border:1px solid var(--border);border-radius:4px;padding:2px 7px;white-space:nowrap;flex-shrink:0;}
+
+    /* Misc */
+    .note{background:rgba(184,151,90,.06);border:1px solid rgba(184,151,90,.2);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--dim);line-height:1.65;margin-top:14px;}
+    .note strong{color:var(--gold);}
+    .inline-code{font-family:var(--mono);font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--gold);}
+    .sep{height:1px;background:var(--border);margin:6px 0;}
+
+    @media(max-width:900px){
+      .hd{padding:18px 20px;}
+      .wrap{padding:28px 20px 60px;flex-direction:column;}
+      .toc{display:none;}
+      .g2,.g3,.g4,.sg,.utm-grid{grid-template-columns:1fr;}
+      .flow{flex-direction:column;}
+      .farrow{transform:rotate(90deg);align-self:center;}
+      .purl{min-width:auto;}
+    }
+  </style>
+</head>
+<body>
+
+<header class="hd">
+  <div class="hd-inner">
+    <div>
+      <div><span class="logo">atom</span><span class="chip">Schéma CTA</span></div>
+      <div class="hd-sub">Architecture & mécanique du dashboard — référence interne Atom Buyers Club</div>
+    </div>
+    <a href="/admin" class="back">← Dashboard admin</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-label">Sommaire</div>
+    <a href="#flux">Flux général</a>
+    <a href="#scoring">Scoring leads</a>
+    <a href="#events">Événements timeline</a>
+    <a href="#interets">Intérêts</a>
+    <a href="#utm">Sources & UTM</a>
+    <a href="#matching">Matching projets</a>
+    <a href="#roles">Rôles admin</a>
+    <a href="#pages">Pages publiques</a>
+  </nav>
+
+  <div class="content">
+
+    <!-- ══ 1. FLUX GÉNÉRAL ══════════════════════════════════════ -->
+    <section class="sec" id="flux">
+      <div class="sec-tag">01 — Vue d'ensemble</div>
+      <h2 class="sec-title">Flux général d'un lead</h2>
+      <p class="sec-desc">De la première visite sur le site jusqu'à la prise de contact et la qualification dans l'admin — toutes les étapes du parcours.</p>
+
+      <div class="flow">
+        <div class="fstep">
+          <div class="fi">🌐</div>
+          <div class="ft">Visite</div>
+          <div class="fs">Page projet, showroom, listing, ou lien UTM campagne</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep c-blue">
+          <div class="fi">📋</div>
+          <div class="ft">Formulaire</div>
+          <div class="fs">Prénom, nom, email, tél + profil (timing, budget…)</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep c-gold">
+          <div class="fi">💾</div>
+          <div class="ft">POST /api/submit</div>
+          <div class="fs">Création ou mise à jour du lead en base + log événements</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep">
+          <div class="fi">🔔</div>
+          <div class="ft">Notification email</div>
+          <div class="fs">Lead chaud ou intérêt projet → Resend vers founder responsable</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep c-green">
+          <div class="fi">🎯</div>
+          <div class="ft">Admin</div>
+          <div class="fs">Vue Leads, scoring, assignation, suivi timeline</div>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:20px">
+        <strong>Leads existants :</strong> si l'email est déjà en base, le lead est mis à jour (sans écraser les UTMs d'acquisition originaux). Un nouveau lead crée un événement <span class="inline-code">inscription</span> dans la timeline.
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">Ce qui est stocké pour chaque lead</div>
+        <div class="g3">
+          <div>
+            <div style="font-size:11px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Identité</div>
+            <div style="font-size:13px;line-height:2;color:var(--cream)">prenom · nom<br>email · tel</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Profil acheteur</div>
+            <div style="font-size:13px;line-height:2;color:var(--cream)">timing · financement<br>accord · capacite<br>arrondissements</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Acquisition</div>
+            <div style="font-size:13px;line-height:2;color:var(--cream)">utm_source · utm_medium<br>utm_campaign · utm_content<br>utm_term · gclid · fbclid · referrer</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ 2. SCORING ══════════════════════════════════════════ -->
+    <section class="sec" id="scoring">
+      <div class="sec-tag">02 — Qualification</div>
+      <h2 class="sec-title">Algorithme de scoring</h2>
+      <p class="sec-desc">Le score (0–10) est calculé côté client à partir du profil acheteur. Il n'est jamais stocké en base. Deux règles spéciales : plancher 8 si timing = "dès que possible", plafond 7 sinon.</p>
+
+      <div class="sg">
+        <div>
+          <div class="sblock">
+            <div class="sbt">Timing d'achat</div>
+            <div class="srow"><span class="slabel">Dès que possible</span><span class="pts ph">+4 pts</span></div>
+            <div class="srow"><span class="slabel">Dans 3 mois</span><span class="pts pm">+3 pts</span></div>
+            <div class="srow"><span class="slabel">Dans 6 mois</span><span class="pts pm">+2 pts</span></div>
+            <div class="srow"><span class="slabel">En réflexion</span><span class="pts pl">+1 pt</span></div>
+          </div>
+          <div class="sblock" style="margin-top:12px">
+            <div class="sbt">Financement (si emprunt)</div>
+            <div class="srow"><span class="slabel">Accord bancaire validé</span><span class="pts ph">+4 pts</span></div>
+            <div class="srow"><span class="slabel">Courtier souhaité</span><span class="pts pm">+2 pts</span></div>
+            <div class="srow"><span class="slabel">Pas encore démarré</span><span class="pts pm">+2 pts</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="sblock">
+            <div class="sbt">Financement (si comptant)</div>
+            <div class="srow"><span class="slabel">Comptant</span><span class="pts ph">+6 pts</span></div>
+          </div>
+          <div class="sblock" style="margin-top:12px">
+            <div class="sbt">Budget (si emprunt)</div>
+            <div class="srow"><span class="slabel">&gt; 1 M€ ou 600k–1 M€</span><span class="pts ph">+2 pts</span></div>
+            <div class="srow"><span class="slabel">250k–600k€</span><span class="pts ph">+2 pts</span></div>
+            <div class="srow"><span class="slabel">150–250k€</span><span class="pts pm">+1 pt</span></div>
+            <div class="srow"><span class="slabel">Moins de 150k€</span><span class="pts pl">0 pt</span></div>
+          </div>
+          <div class="sblock" style="margin-top:12px">
+            <div class="sbt">Niveaux de score</div>
+            <div class="slevel">
+              <div class="score-badge sh">8</div>
+              <div><div class="slevel-info">Lead chaud</div><div class="slevel-sub">Score ≥ 8 — filtre par défaut pour Thierry & Alexandre</div></div>
+            </div>
+            <div class="slevel">
+              <div class="score-badge sw">5</div>
+              <div><div class="slevel-info">Lead tiède</div><div class="slevel-sub">Score 5–7</div></div>
+            </div>
+            <div class="slevel">
+              <div class="score-badge sc">2</div>
+              <div><div class="slevel-info">Lead froid</div><div class="slevel-sub">Score &lt; 5</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Règle ASAP :</strong> si <span class="inline-code">timing = asap</span>, le score final est automatiquement <strong style="color:var(--cream)">au moins 8</strong> (lead chaud garanti), même si le profil financement est incomplet. Un lead sans financement déclaré mais pressé reste prioritaire.
+      </div>
+    </section>
+
+    <!-- ══ 3. ÉVÉNEMENTS TIMELINE ══════════════════════════════ -->
+    <section class="sec" id="events">
+      <div class="sec-tag">03 — Traçabilité</div>
+      <h2 class="sec-title">Événements & timeline</h2>
+      <p class="sec-desc">Chaque action sur un lead est loggée dans la table <span class="inline-code">lead_events</span>. La timeline du lead affiche l'historique chronologique. Certains événements déclenchent aussi une notification.</p>
+
+      <div class="ev-list">
+        <div class="ev">
+          <div class="ev-icon" style="background:rgba(76,175,125,.12);color:var(--green)">✦</div>
+          <div>
+            <div class="ev-name">inscription</div>
+            <div class="ev-desc">Créé automatiquement lors de la première soumission du formulaire par un lead. Marque l'origine du lead en base.</div>
+          </div>
+          <div class="ev-badge b-silent">Silencieux</div>
+        </div>
+        <div class="ev">
+          <div class="ev-icon" style="background:rgba(184,151,90,.12);color:var(--gold)">📌</div>
+          <div>
+            <div class="ev-name">interet_projet</div>
+            <div class="ev-desc">Le lead a soumis le formulaire depuis une fiche projet (project_id en body). Enregistré aussi dans <span class="inline-code">project_interests</span>. Contenu : <span class="inline-code">{ project_id, project_title }</span>.</div>
+          </div>
+          <div class="ev-badge b-interet">Onglet Intérêts</div>
+        </div>
+        <div class="ev">
+          <div class="ev-icon" style="background:rgba(184,151,90,.12);color:var(--gold)">🖼</div>
+          <div>
+            <div class="ev-name">showroom_interest</div>
+            <div class="ev-desc">Le lead a cliqué "Je suis intéressé" sur une réalisation du showroom. Contenu : <span class="inline-code">{ slug, item_name }</span>.</div>
+          </div>
+          <div class="ev-badge b-interet">Onglet Intérêts</div>
+        </div>
+        <div class="ev">
+          <div class="ev-icon" style="background:rgba(91,91,214,.12);color:var(--blue)">◎</div>
+          <div>
+            <div class="ev-name">showroom_cta</div>
+            <div class="ev-desc">Le lead est arrivé via un CTA showroom (<span class="inline-code">utm_source=showroom</span>). Contenu : <span class="inline-code">{ showroom_slug, item_name }</span>.</div>
+          </div>
+          <div class="ev-badge b-interet">Onglet Intérêts</div>
+        </div>
+        <div class="ev">
+          <div class="ev-icon" style="background:rgba(44,43,39,.6);color:var(--dim)">⇄</div>
+          <div>
+            <div class="ev-name">status_change</div>
+            <div class="ev-desc">Changement de statut du lead depuis l'admin (nouveau → contacté → qualifié → proposition → signé…). Contenu : <span class="inline-code">{ status }</span>. Auteur = email du founder qui a changé.</div>
+          </div>
+          <div class="ev-badge b-silent">Silencieux</div>
+        </div>
+        <div class="ev">
+          <div class="ev-icon" style="background:rgba(44,43,39,.6);color:var(--dim)">✎</div>
+          <div>
+            <div class="ev-name">note</div>
+            <div class="ev-desc">Note manuelle ajoutée par un founder depuis la fiche lead. Texte libre. Auteur = email du founder.</div>
+          </div>
+          <div class="ev-badge b-silent">Silencieux</div>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:0">
+        <strong>Contenu JSON :</strong> le champ <span class="inline-code">content</span> de chaque événement est un objet JSON libre. Pour les intérêts, il contient aussi <span class="inline-code">treated</span>, <span class="inline-code">treated_by</span>, <span class="inline-code">treated_at</span> après traitement depuis l'onglet Intérêts.
+      </div>
+    </section>
+
+    <!-- ══ 4. INTÉRÊTS ════════════════════════════════════════ -->
+    <section class="sec" id="interets">
+      <div class="sec-tag">04 — Suivi commercial</div>
+      <h2 class="sec-title">Cycle de vie d'un intérêt</h2>
+      <p class="sec-desc">Les intérêts sont les événements les plus commercialement importants. Ils ont leur propre onglet dans l'admin avec statistiques, filtres, et suivi de traitement.</p>
+
+      <div class="flow">
+        <div class="fstep c-blue">
+          <div class="fi">🌐</div>
+          <div class="ft">Lead soumet</div>
+          <div class="fs">Depuis fiche projet, showroom, ou CTA ads</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep c-gold">
+          <div class="fi">💾</div>
+          <div class="ft">Événement créé</div>
+          <div class="fs">lead_events + project_interests (si projet)</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep">
+          <div class="fi">📧</div>
+          <div class="ft">Email envoyé</div>
+          <div class="fs">Founder responsable du projet (ou tous admins en fallback)</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep">
+          <div class="fi">🔴</div>
+          <div class="ft">Badge onglet</div>
+          <div class="fs">Compteur "non traités" mis à jour par le polling (60s)</div>
+        </div>
+        <div class="farrow">›</div>
+        <div class="fstep c-green">
+          <div class="fi">✓</div>
+          <div class="ft">Traité</div>
+          <div class="fs">Toggle dans l'onglet Intérêts → treated_by + treated_at loggés</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">Types d'intérêts suivis dans l'onglet</div>
+        <div class="g3">
+          <div class="mitem">
+            <div class="micon">📌</div>
+            <div class="mtitle">interet_projet</div>
+            <div class="mdesc">Lead intéressé par un projet spécifique. Lié à la table <span class="inline-code">project_interests</span>.</div>
+            <div class="mpts">Suppression = cascade sur project_interests</div>
+          </div>
+          <div class="mitem">
+            <div class="micon">🖼</div>
+            <div class="mtitle">showroom_interest</div>
+            <div class="mdesc">Lead intéressé par une réalisation dans le showroom.</div>
+            <div class="mpts">Suppression = event seul</div>
+          </div>
+          <div class="mitem">
+            <div class="micon">◎</div>
+            <div class="mtitle">showroom_cta</div>
+            <div class="mdesc">Lead venu via un lien showroom trackté (<span class="inline-code">utm_source=showroom</span>).</div>
+            <div class="mpts">Suppression = event seul</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ 5. SOURCES & UTM ═══════════════════════════════════ -->
+    <section class="sec" id="utm">
+      <div class="sec-tag">05 — Tracking & campagnes</div>
+      <h2 class="sec-title">Sources & paramètres UTM</h2>
+      <p class="sec-desc">Chaque lead conserve ses paramètres d'acquisition originaux. Les UTMs ne sont jamais écrasés si un lead revient avec un autre formulaire. Utilise le <strong style="color:var(--cream)">Générateur de liens</strong> (bouton 🔗 dans l'admin) pour créer des URLs trackées.</p>
+
+      <div class="url-box">
+https://join.atombuyerclub.fr/projet/<span class="up">saint-denis</span>?<span class="up">utm_source</span>=<span class="uv">instagram</span>&<span class="up">utm_medium</span>=<span class="uv">social</span>&<span class="up">utm_campaign</span>=<span class="uv">saint-denis-juin25</span>&<span class="up">utm_content</span>=<span class="uv">visuel-terrasse-v1</span></div>
+
+      <div class="utm-grid">
+        <div class="uitem">
+          <div class="upname">utm_source</div>
+          <div class="updesc">Plateforme publicitaire ou canal d'acquisition. Détermine l'étiquette source dans l'admin.</div>
+          <div class="upex">Valeurs : <span>instagram</span> · <span>google</span> · <span>facebook</span> · <span>meta</span> · <span>email</span> · <span>organic</span> · <span>showroom</span> · <span>fiche_projet</span></div>
+        </div>
+        <div class="uitem">
+          <div class="upname">utm_medium</div>
+          <div class="updesc">Type de média. Auto-rempli par le générateur selon la source.</div>
+          <div class="upex">Valeurs : <span>cpc</span> · <span>social</span> · <span>email</span> · <span>organic</span></div>
+        </div>
+        <div class="uitem">
+          <div class="upname">utm_campaign</div>
+          <div class="updesc">Nom de la campagne. Utilisé dans les emails de notification et filtres admin.</div>
+          <div class="upex">Ex: <span>saint-denis-juin25</span> · <span>retargeting-leads-chauds</span></div>
+        </div>
+        <div class="uitem">
+          <div class="upname">utm_content</div>
+          <div class="updesc">Identifiant du visuel ou de la variante. Permet l'A/B test créatifs.</div>
+          <div class="upex">Ex: <span>visuel-terrasse-v1</span> · <span>video-tour-30s</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">4 destinations disponibles dans le générateur</div>
+        <div class="g4">
+          <div class="mitem">
+            <div class="micon">🏗</div>
+            <div class="mtitle">Listing Projets</div>
+            <div class="mdesc"><span class="inline-code">/projets</span></div>
+            <div class="mpts">Tous les projets disponibles</div>
+          </div>
+          <div class="mitem">
+            <div class="micon">🖼</div>
+            <div class="mtitle">Listing Showroom</div>
+            <div class="mdesc"><span class="inline-code">/showroom</span></div>
+            <div class="mpts">Toutes les réalisations</div>
+          </div>
+          <div class="mitem">
+            <div class="micon">📌</div>
+            <div class="mtitle">Projet spécifique</div>
+            <div class="mdesc"><span class="inline-code">/projet/slug</span></div>
+            <div class="mpts">Intérêt projet auto-loggé</div>
+          </div>
+          <div class="mitem">
+            <div class="micon">📷</div>
+            <div class="mtitle">Réalisation</div>
+            <div class="mdesc"><span class="inline-code">/showroom#slug</span></div>
+            <div class="mpts">Ouvre la card directement</div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:16px">
+          <strong>Auto-tracking projet :</strong> si le lead arrive via <span class="inline-code">/projet/saint-denis?utm_...</span> et remplit le formulaire, l'événement <span class="inline-code">interet_projet</span> est créé automatiquement avec le project_id en plus des UTMs.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ 6. MATCHING ═══════════════════════════════════════ -->
+    <section class="sec" id="matching">
+      <div class="sec-tag">06 — Qualification commerciale</div>
+      <h2 class="sec-title">Algorithme de matching lead ↔ projet</h2>
+      <p class="sec-desc">Le moteur de matching calcule un score de compatibilité entre un lead et les projets disponibles. Utilisé dans "Envoyer aux leads compatibles" depuis les cards projets et dans la section "Projets compatibles" de la fiche lead.</p>
+
+      <div class="g3">
+        <div class="mitem">
+          <div class="micon">🗺</div>
+          <div class="mtitle">Arrondissement</div>
+          <div class="mdesc">Le projet doit être dans un arrondissement que le lead a sélectionné. Critère éliminatoire.</div>
+          <div class="mpts">Non-match → exclu du résultat</div>
+        </div>
+        <div class="mitem">
+          <div class="micon">💶</div>
+          <div class="mtitle">Budget</div>
+          <div class="mdesc">La capacité de financement du lead est comparée au prix du projet. Calcul par tranche.</div>
+          <div class="mpts">+1 à +3 pts selon adéquation</div>
+        </div>
+        <div class="mitem">
+          <div class="micon">📋</div>
+          <div class="mtitle">Statut projet</div>
+          <div class="mdesc">Seuls les projets <span class="inline-code">disponible</span> sont proposés. Les projets <span class="inline-code">vendu</span> ou <span class="inline-code">archive</span> sont exclus.</div>
+          <div class="mpts">Filtre sur status = disponible</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">Statuts de projet</div>
+        <div class="g4">
+          <div style="background:var(--bg3);border:1px solid rgba(76,175,125,.35);border-radius:8px;padding:12px 14px;">
+            <div style="font-size:11px;font-weight:500;color:var(--green);margin-bottom:4px">disponible</div>
+            <div style="font-size:12px;color:var(--dim)">Visible publiquement, matchable, proposable aux leads</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid rgba(184,151,90,.35);border-radius:8px;padding:12px 14px;">
+            <div style="font-size:11px;font-weight:500;color:var(--gold);margin-bottom:4px">en_cours</div>
+            <div style="font-size:12px;color:var(--dim)">Projet en construction ou sous réservation</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid rgba(217,94,94,.35);border-radius:8px;padding:12px 14px;">
+            <div style="font-size:11px;font-weight:500;color:var(--red);margin-bottom:4px">vendu</div>
+            <div style="font-size:12px;color:var(--dim)">Transaction finalisée, exclu du matching</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+            <div style="font-size:11px;font-weight:500;color:var(--dim);margin-bottom:4px">archive</div>
+            <div style="font-size:12px;color:var(--dim)">Archivé, masqué des vues publiques</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ 7. RÔLES ═══════════════════════════════════════════ -->
+    <section class="sec" id="roles">
+      <div class="sec-tag">07 — Accès & permissions</div>
+      <h2 class="sec-title">Rôles administrateurs</h2>
+      <p class="sec-desc">Trois niveaux d'accès configurés via variables d'environnement. Les rôles définissent ce qui est visible et les comportements par défaut.</p>
+
+      <div class="card">
+        <table class="rtable">
+          <thead>
+            <tr>
+              <th>Rôle</th>
+              <th>Env var</th>
+              <th>Leads</th>
+              <th>Projets</th>
+              <th>Showroom</th>
+              <th>Intérêts</th>
+              <th>Filtre par défaut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="rname">admin</span></td>
+              <td><span class="inline-code">ADMIN_EMAILS</span></td>
+              <td class="chk">✓ tout</td>
+              <td class="chk">✓ tout</td>
+              <td class="chk">✓ tout</td>
+              <td class="chk">✓ tout</td>
+              <td style="color:var(--dim)">Tous leads</td>
+            </tr>
+            <tr>
+              <td><span class="rname">viewer</span></td>
+              <td><span class="inline-code">VIEWER_EMAILS</span></td>
+              <td class="chk">✓ tout</td>
+              <td class="chk">✓ tout</td>
+              <td class="chk">✓ tout</td>
+              <td class="chk">✓ tout</td>
+              <td style="color:var(--gold)">Leads chauds (score ≥ 8)</td>
+            </tr>
+            <tr>
+              <td><span class="rname">projects</span></td>
+              <td><span class="inline-code">PROJECTS_EMAILS</span></td>
+              <td class="cr">—</td>
+              <td class="chk">✓ tout</td>
+              <td class="cr">—</td>
+              <td class="cr">—</td>
+              <td style="color:var(--dim)">Vue Projets uniquement</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note" style="margin-top:0">
+          <strong>Routing email :</strong> quand un lead déclare un intérêt sur un projet, l'email va au founder dont l'email correspond à <span class="inline-code">responsible_admin</span> sur le projet. Si aucun responsable défini, l'email part à tous les admins de la liste <span class="inline-code">ADMIN_EMAILS</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ 8. PAGES PUBLIQUES ═════════════════════════════════ -->
+    <section class="sec" id="pages">
+      <div class="sec-tag">08 — Architecture frontend</div>
+      <h2 class="sec-title">Pages publiques & API</h2>
+      <p class="sec-desc">Structure des URLs publiques (Vercel, <span class="inline-code">cleanUrls: true</span>) et des endpoints API protégés.</p>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Pages visiteurs</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="pitem">
+            <div class="purl">/</div>
+            <div class="pdesc">Landing page principale — formulaire de qualification, accroches, CTA</div>
+            <div class="ptag">index.html</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/projets</div>
+            <div class="pdesc">Listing des projets disponibles avec fiches publiques</div>
+            <div class="ptag">projets.html</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/projet/:slug</div>
+            <div class="pdesc">Fiche projet individuelle — formulaire d'intérêt, plans 2D, description, specs</div>
+            <div class="ptag">projet.html</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/showroom</div>
+            <div class="pdesc">Galerie des réalisations passées avec intérêt direct</div>
+            <div class="ptag">showroom.html</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/admin</div>
+            <div class="pdesc">Dashboard administrateur — leads, projets, showroom, intérêts, générateur de liens</div>
+            <div class="ptag">admin.html</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/schema-cta</div>
+            <div class="pdesc">Cette page — référence architecture & mécanique</div>
+            <div class="ptag">schema-cta.html</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Endpoints API (Vercel Serverless)</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="pitem">
+            <div class="purl">/api/submit</div>
+            <div class="pdesc">POST — Crée ou met à jour un lead + log événements + envoi emails (public, sans auth)</div>
+            <div class="ptag">Public</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/api/leads</div>
+            <div class="pdesc">GET liste paginée avec filtres · PATCH statut/notes · DELETE — Protégé JWT</div>
+            <div class="ptag">Auth</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/api/events</div>
+            <div class="pdesc">GET historique lead / récents / intérêts · POST note manuelle · PATCH traitement · DELETE</div>
+            <div class="ptag">Auth</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/api/projects</div>
+            <div class="pdesc">GET liste/détail · POST création · PUT modification · DELETE (soft + hard) — CRUD complet</div>
+            <div class="ptag">Auth</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/api/showroom</div>
+            <div class="pdesc">GET liste/détail · POST création · PUT modification · DELETE réalisation</div>
+            <div class="ptag">Auth</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/api/auth</div>
+            <div class="pdesc">POST — Vérifie email + mot de passe, retourne un JWT signé (24h)</div>
+            <div class="ptag">Public</div>
+          </div>
+          <div class="pitem">
+            <div class="purl">/api/generate-pdf</div>
+            <div class="pdesc">POST — Génère un PDF projet en 9 pages avec Puppeteer (1024 MB, timeout 60s)</div>
+            <div class="ptag">Auth</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /wrap -->
+
+<script>
+// Highlight active TOC link on scroll
+const secs = document.querySelectorAll('.sec[id]');
+const links = document.querySelectorAll('.toc a');
+function onScroll() {
+  let cur = '';
+  secs.forEach(s => { if (window.scrollY + 120 >= s.offsetTop) cur = s.id; });
+  links.forEach(a => {
+    a.classList.toggle('on', a.getAttribute('href') === '#' + cur);
+  });
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+</script>
+</body>
+</html>
