@@ -117,6 +117,86 @@
     }
     .btn-logout:hover { color: var(--cream); border-color: var(--dim); }
 
+    /* ── Bouton UTM builder ──────────────────────────────────────── */
+    .btn-utm {
+      font-size: 12px; color: var(--dim); background: none; border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 10px; cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .btn-utm:hover, .btn-utm.active { color: var(--gold); border-color: var(--gold); background: rgba(184,151,90,.06); }
+
+    /* ── Tiroir UTM ──────────────────────────────────────────────── */
+    .utm-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw;
+      background: var(--bg2); border-left: 1px solid var(--border);
+      z-index: 600; transform: translateX(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .utm-drawer.open { transform: translateX(0); }
+    .utm-drawer-overlay {
+      position: fixed; inset: 0; z-index: 599; display: none;
+    }
+    .utm-drawer-overlay.on { display: block; }
+    .utm-header {
+      padding: 20px 22px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-shrink: 0;
+    }
+    .utm-header-title { font-family: var(--serif); font-size: 20px; font-weight: 300; color: var(--cream); line-height: 1.2; }
+    .utm-header-sub { font-size: 12px; color: var(--dim); margin-top: 3px; }
+    .utm-close { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 18px; padding: 2px 4px; flex-shrink: 0; }
+    .utm-close:hover { color: var(--cream); }
+    .utm-body { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 20px; }
+    .utm-section-title { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+    .utm-field { display: flex; flex-direction: column; gap: 5px; }
+    .utm-label { font-size: 12px; color: var(--dim); }
+    .utm-input, .utm-select {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--cream); font-size: 13px; padding: 8px 10px; width: 100%;
+      outline: none; transition: border-color .15s;
+    }
+    .utm-input:focus, .utm-select:focus { border-color: var(--gold); }
+    .utm-select option { background: var(--bg2); }
+    .utm-dest-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .utm-dest-btn {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--dim); font-size: 12px; padding: 10px 12px; cursor: pointer;
+      text-align: left; transition: all .15s; line-height: 1.35;
+    }
+    .utm-dest-btn:hover { border-color: var(--dim); color: var(--cream); }
+    .utm-dest-btn.sel { border-color: var(--gold); color: var(--gold); background: rgba(184,151,90,.07); }
+    .utm-dest-icon { font-size: 16px; display: block; margin-bottom: 4px; }
+    .utm-dest-name { font-weight: 500; display: block; }
+    .utm-dest-sub { font-size: 10px; opacity: .7; display: block; margin-top: 2px; }
+    .utm-result {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .utm-result-url {
+      font-size: 11px; color: var(--cream); word-break: break-all; line-height: 1.5;
+      font-family: 'Courier New', monospace; max-height: 80px; overflow-y: auto;
+    }
+    .utm-result-empty { font-size: 12px; color: var(--dim); text-align: center; padding: 12px 0; }
+    .utm-copy-btn {
+      background: var(--gold); color: var(--bg); border: none; border-radius: 6px;
+      font-size: 12px; font-weight: 500; padding: 8px 14px; cursor: pointer; transition: opacity .15s; align-self: flex-start;
+    }
+    .utm-copy-btn:hover { opacity: .85; }
+    .utm-copy-btn.copied { background: #4caf70; }
+    .utm-history { display: flex; flex-direction: column; gap: 6px; }
+    .utm-hist-item {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .utm-hist-item:hover { border-color: var(--dim); }
+    .utm-hist-url { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-family: monospace; }
+    .utm-hist-copy { font-size: 11px; color: var(--dim); border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px; background: none; cursor: pointer; flex-shrink: 0; }
+    .utm-hist-copy:hover { color: var(--gold); border-color: var(--gold); }
+    @media (max-width: 480px) { .utm-drawer { width: 100vw; } }
+
     /* ── Widget notifications flottant (style chat) ─────────────── */
     .notif-widget {
       display: none !important;
@@ -1391,6 +1471,10 @@
     </div>
     <div class="topbar-right">
       <span class="topbar-email" id="admin-email"></span>
+      <button class="btn-utm" id="btn-utm-toggle" onclick="toggleUtmDrawer()" title="Générateur de liens campagne">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Liens
+      </button>
       <button class="btn-logout" onclick="logout()">Déconnexion</button>
     </div>
   </div>
@@ -5741,6 +5825,278 @@ function setSrCover(index) {
   updateSrCoverPreview();
 }
 
+// ══ UTM BUILDER ════════════════════════════════════════════════
+const BASE_URL = 'https://join.atombuyerclub.fr';
+let _utmDest   = 'projets';
+let _utmHistory = [];
+
+function toggleUtmDrawer() {
+  const drawer = document.getElementById('utm-drawer');
+  const open   = drawer.classList.contains('open');
+  if (open) { closeUtmDrawer(); return; }
+  openUtmDrawer();
+}
+
+function openUtmDrawer() {
+  document.getElementById('utm-drawer').classList.add('open');
+  document.getElementById('utm-overlay').classList.add('on');
+  document.getElementById('btn-utm-toggle').classList.add('active');
+  _populateUtmSelectors();
+}
+
+function closeUtmDrawer() {
+  document.getElementById('utm-drawer').classList.remove('open');
+  document.getElementById('utm-overlay').classList.remove('on');
+  document.getElementById('btn-utm-toggle').classList.remove('active');
+}
+
+function _populateUtmSelectors() {
+  const sel = document.getElementById('utm-item-select');
+  const dest = _utmDest;
+  if (dest === 'projet-item') {
+    sel.innerHTML = '<option value="">— Choisir un projet —</option>';
+    (projectsCache || []).forEach(p => {
+      if (!p.slug) return;
+      const opt = document.createElement('option');
+      opt.value = p.slug;
+      opt.textContent = p.title + (p.status === 'disponible' ? ' ✦' : '');
+      sel.appendChild(opt);
+    });
+  } else if (dest === 'showroom-item') {
+    sel.innerHTML = '<option value="">— Choisir une réalisation —</option>';
+    (showroomCache || []).forEach(item => {
+      if (!item.slug) return;
+      const opt = document.createElement('option');
+      opt.value = item.slug;
+      opt.textContent = item.title || item.name || item.slug;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+function selectUtmDest(btn) {
+  document.querySelectorAll('.utm-dest-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  _utmDest = btn.dataset.dest;
+
+  const needItem = _utmDest === 'projet-item' || _utmDest === 'showroom-item';
+  const itemField = document.getElementById('utm-item-field');
+  const itemLabel = document.getElementById('utm-item-label');
+  itemField.style.display = needItem ? '' : 'none';
+  if (needItem) {
+    itemLabel.textContent = _utmDest === 'projet-item' ? 'Choisir le projet' : 'Choisir la réalisation';
+    _populateUtmSelectors();
+  }
+  buildUtmUrl();
+}
+
+function onUtmSourceChange() {
+  const src    = document.getElementById('utm-source').value;
+  const medium = document.getElementById('utm-medium');
+  const termF  = document.getElementById('utm-term-field');
+  // Auto-fill medium si vide
+  const autoMedium = { instagram: 'social', facebook: 'social', meta: 'social', google: 'cpc', email: 'email', tiktok: 'social', linkedin: 'social', sms: 'sms' };
+  if (!medium.value && autoMedium[src]) medium.value = autoMedium[src];
+  // Mot-clé seulement pour Google
+  termF.style.display = src === 'google' ? '' : 'none';
+  buildUtmUrl();
+}
+
+function _buildDestUrl() {
+  const slug = document.getElementById('utm-item-select').value;
+  if (_utmDest === 'projets')       return `${BASE_URL}/projets`;
+  if (_utmDest === 'showroom')      return `${BASE_URL}/showroom`;
+  if (_utmDest === 'projet-item')   return slug ? `${BASE_URL}/projet/${slug}` : null;
+  if (_utmDest === 'showroom-item') return slug ? `${BASE_URL}/showroom#${slug}` : null;
+  return null;
+}
+
+function buildUtmUrl() {
+  const src      = document.getElementById('utm-source').value.trim();
+  const medium   = document.getElementById('utm-medium').value.trim();
+  const campaign = document.getElementById('utm-campaign').value.trim();
+  const content  = document.getElementById('utm-content').value.trim();
+  const term     = document.getElementById('utm-term').value.trim();
+  const resultEl = document.getElementById('utm-result');
+
+  const base = _buildDestUrl();
+  if (!base || !src || !campaign) {
+    resultEl.innerHTML = `<div class="utm-result-empty">Complète la destination, la source et la campagne</div>`;
+    return;
+  }
+
+  // Séparer le hash des showroom-item avant d'ajouter les query params
+  let baseNoHash = base, hash = '';
+  if (base.includes('#')) {
+    [baseNoHash, hash] = base.split('#');
+    hash = '#' + hash;
+  }
+
+  const params = new URLSearchParams();
+  params.set('utm_source', src);
+  if (medium)   params.set('utm_medium', medium);
+  params.set('utm_campaign', campaign);
+  if (content)  params.set('utm_content', content);
+  if (term)     params.set('utm_term', term);
+
+  const fullUrl = `${baseNoHash}?${params.toString()}${hash}`;
+
+  resultEl.innerHTML = `
+    <div class="utm-result-url" id="utm-url-text">${fullUrl}</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="utm-copy-btn" id="utm-copy-main" onclick="copyUtmUrl('${fullUrl.replace(/'/g, "\\'")}', this)">Copier le lien</button>
+      <button onclick="saveUtmToHistory('${fullUrl.replace(/'/g, "\\'")}', '${src}')" style="background:none;border:1px solid var(--border);color:var(--dim);border-radius:6px;font-size:12px;padding:7px 12px;cursor:pointer" onmouseover="this.style.borderColor='var(--dim)';this.style.color='var(--cream)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'">Sauvegarder</button>
+    </div>`;
+}
+
+function copyUtmUrl(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copié !';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function saveUtmToHistory(url, src) {
+  if (_utmHistory.find(h => h.url === url)) return;
+  _utmHistory.unshift({ url, src, ts: Date.now() });
+  if (_utmHistory.length > 12) _utmHistory.pop();
+  renderUtmHistory();
+}
+
+function renderUtmHistory() {
+  const block = document.getElementById('utm-history-block');
+  const list  = document.getElementById('utm-history-list');
+  if (!_utmHistory.length) { block.style.display = 'none'; return; }
+  block.style.display = '';
+  list.innerHTML = _utmHistory.map((h, i) => `
+    <div class="utm-hist-item" onclick="copyFromHistory(${i})">
+      <span class="utm-hist-url" title="${h.url}">${h.url}</span>
+      <button class="utm-hist-copy" onclick="event.stopPropagation();copyUtmUrl('${h.url.replace(/'/g, "\\'")}',this)" title="Copier">⎘</button>
+    </div>`).join('');
+}
+
+function copyFromHistory(i) {
+  const url = _utmHistory[i]?.url;
+  if (url) navigator.clipboard.writeText(url).then(() => {
+    // flash feedback
+    const items = document.querySelectorAll('.utm-hist-item');
+    if (items[i]) { items[i].style.borderColor = 'var(--gold)'; setTimeout(() => { items[i].style.borderColor = ''; }, 1200); }
+  });
+}
+
+function clearUtmHistory() {
+  _utmHistory = [];
+  renderUtmHistory();
+}
+
 </script>
+
+<!-- ══ TIROIR UTM BUILDER ══════════════════════════════════════ -->
+<div class="utm-drawer-overlay" id="utm-overlay" onclick="closeUtmDrawer()"></div>
+<div class="utm-drawer" id="utm-drawer">
+  <div class="utm-header">
+    <div>
+      <div class="utm-header-title">Générateur de liens</div>
+      <div class="utm-header-sub">Crée des URLs trackées pour tes campagnes ads</div>
+    </div>
+    <button class="utm-close" onclick="closeUtmDrawer()">✕</button>
+  </div>
+  <div class="utm-body">
+
+    <!-- Destination -->
+    <div>
+      <div class="utm-section-title">Destination</div>
+      <div class="utm-dest-grid">
+        <button class="utm-dest-btn sel" data-dest="projets" onclick="selectUtmDest(this)">
+          <span class="utm-dest-icon">🏗</span>
+          <span class="utm-dest-name">Listing Projets</span>
+          <span class="utm-dest-sub">/projets</span>
+        </button>
+        <button class="utm-dest-btn" data-dest="showroom" onclick="selectUtmDest(this)">
+          <span class="utm-dest-icon">🖼</span>
+          <span class="utm-dest-name">Listing Showroom</span>
+          <span class="utm-dest-sub">/showroom</span>
+        </button>
+        <button class="utm-dest-btn" data-dest="projet-item" onclick="selectUtmDest(this)">
+          <span class="utm-dest-icon">📌</span>
+          <span class="utm-dest-name">Projet spécifique</span>
+          <span class="utm-dest-sub">/projet/slug</span>
+        </button>
+        <button class="utm-dest-btn" data-dest="showroom-item" onclick="selectUtmDest(this)">
+          <span class="utm-dest-icon">📷</span>
+          <span class="utm-dest-name">Réalisation spécifique</span>
+          <span class="utm-dest-sub">/showroom#slug</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sélecteur projet/réalisation (conditionnel) -->
+    <div id="utm-item-field" style="display:none">
+      <div class="utm-field">
+        <label class="utm-label" id="utm-item-label">Choisir le projet</label>
+        <select class="utm-select" id="utm-item-select" onchange="buildUtmUrl()">
+          <option value="">— Sélectionner —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- UTM params -->
+    <div>
+      <div class="utm-section-title">Paramètres UTM</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="utm-field">
+          <label class="utm-label">Source <span style="color:var(--red)">*</span></label>
+          <select class="utm-select" id="utm-source" onchange="onUtmSourceChange()">
+            <option value="">— Choisir —</option>
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="google">Google Ads</option>
+            <option value="meta">Meta (multi-plateforme)</option>
+            <option value="email">Email</option>
+            <option value="tiktok">TikTok</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="sms">SMS</option>
+          </select>
+        </div>
+        <div class="utm-field">
+          <label class="utm-label">Medium</label>
+          <input class="utm-input" id="utm-medium" type="text" placeholder="cpc, social, email…" oninput="buildUtmUrl()">
+        </div>
+        <div class="utm-field">
+          <label class="utm-label">Campagne <span style="color:var(--red)">*</span></label>
+          <input class="utm-input" id="utm-campaign" type="text" placeholder="ex: saint-denis-mai25" oninput="buildUtmUrl()">
+        </div>
+        <div class="utm-field">
+          <label class="utm-label">Contenu / Créatif</label>
+          <input class="utm-input" id="utm-content" type="text" placeholder="ex: visuel-terrasse-v2" oninput="buildUtmUrl()">
+        </div>
+        <div class="utm-field" id="utm-term-field" style="display:none">
+          <label class="utm-label">Mot-clé (Google)</label>
+          <input class="utm-input" id="utm-term" type="text" placeholder="ex: appartement neuf paris" oninput="buildUtmUrl()">
+        </div>
+      </div>
+    </div>
+
+    <!-- URL générée -->
+    <div>
+      <div class="utm-section-title">Lien généré</div>
+      <div class="utm-result" id="utm-result">
+        <div class="utm-result-empty">Sélectionne une source et une campagne pour générer le lien</div>
+      </div>
+    </div>
+
+    <!-- Historique session -->
+    <div id="utm-history-block" style="display:none">
+      <div class="utm-section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Liens générés (session)</span>
+        <button onclick="clearUtmHistory()" style="background:none;border:none;color:var(--dim);font-size:11px;cursor:pointer;padding:0">Effacer</button>
+      </div>
+      <div class="utm-history" id="utm-history-list"></div>
+    </div>
+
+  </div>
+</div>
 </body>
 </html>
