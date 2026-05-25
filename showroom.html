@@ -313,7 +313,7 @@
         <h1 class="detail-name" id="detail-name"></h1>
         <div class="detail-meta" id="detail-meta"></div>
 
-        <p class="detail-section-title">Description</p>
+        <p class="detail-section-title" id="desc-title">Description</p>
         <p class="detail-desc" id="detail-desc"></p>
 
         <p class="detail-section-title" id="equip-title" style="display:none">Équipements</p>
@@ -525,7 +525,10 @@
     document.getElementById('detail-meta').innerHTML = metaParts.join('<span style="color:var(--border)"> · </span>');
 
     // Description
-    document.getElementById('detail-desc').textContent = item.description_longue || item.description_courte || '';
+    const descText = item.description_longue || item.description_courte || '';
+    document.getElementById('detail-desc').textContent = descText;
+    document.getElementById('desc-title').style.display = descText ? '' : 'none';
+    document.getElementById('detail-desc').style.display = descText ? '' : 'none';
 
     // Équipements
     const equip = [...(item.equipements || []), ...(item.caracteristiques || [])];
@@ -593,13 +596,13 @@
     if (item.loyer_mensuel)   rows.push({ l: 'Loyer actuel',       v: fmt(item.loyer_mensuel) + ' €/mois', gold: true });
     if (item.rendement_brut)  rows.push({ l: 'Rendement',          v: item.rendement_brut + ' %', gold: true });
     if (item.mensualite_type) rows.push({ l: 'Mensualité type',    v: fmt(item.mensualite_type) + ' €' });
-    if (!rows.length) { card.style.display = 'none'; return; }
+    const statut = item.statut_location;
+    const locType = item.locataire_type;
+    if (!rows.length && !statut) { card.style.display = 'none'; return; }
     card.style.display = '';
     document.getElementById('fin-rows').innerHTML = rows.map(r =>
       `<div class="fin-row"><span class="fin-label">${esc(r.l)}</span><span class="fin-val${r.gold ? ' gold' : ''}">${esc(r.v)}</span></div>`
     ).join('');
-    const statut = item.statut_location;
-    const locType = item.locataire_type;
     document.getElementById('statut-badge-wrap').innerHTML = statut
       ? `<span class="statut-badge">● ${esc(statut)}${locType ? ' — ' + esc(locType) : ''}</span>` : '';
   }

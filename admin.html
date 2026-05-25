@@ -2199,7 +2199,8 @@ function init() {
   token = localStorage.getItem('abc_admin_token');
   if (token) showDashboard(
     localStorage.getItem('abc_admin_email') || '',
-    localStorage.getItem('abc_admin_viewer') === '1'
+    localStorage.getItem('abc_admin_viewer') === '1',
+    localStorage.getItem('abc_admin_role')  || 'admin'
   );
 }
 
@@ -2227,10 +2228,11 @@ document.getElementById('login-form').addEventListener('submit', async e => {
   localStorage.setItem('abc_admin_token', token);
   localStorage.setItem('abc_admin_email', data.email);
   localStorage.setItem('abc_admin_viewer', data.isViewer ? '1' : '0');
-  showDashboard(data.email, data.isViewer);
+  localStorage.setItem('abc_admin_role', data.role || 'admin');
+  showDashboard(data.email, data.isViewer, data.role || 'admin');
 });
 
-function showDashboard(email, isViewer) {
+function showDashboard(email, isViewer, role = 'admin') {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('admin-email').textContent = email;
@@ -2243,6 +2245,20 @@ function showDashboard(email, isViewer) {
     if (sel) { sel.style.display = ''; sel.value = 'hot'; }
   }
 
+  // ── Rôle "projects" : accès restreint à l'onglet Projets uniquement ──
+  if (role === 'projects') {
+    // Masquer les onglets Leads et Showroom
+    document.querySelectorAll('.nav-tab[data-view="leads"], .nav-tab[data-view="showroom"]')
+      .forEach(t => { t.style.display = 'none'; });
+    // Masquer le centre de notifications (données leads)
+    const nw = document.getElementById('notif-widget');
+    if (nw) nw.style.display = 'none';
+    // Aller directement sur Projets
+    setRoute('projects');
+    return;
+  }
+
+  // Rôle admin complet
   loadLeads(1);
   handleRoute(); // applique la vue selon le hash actuel (ou #leads par défaut)
   showNotifWidget();   // rend le FAB visible
@@ -3072,6 +3088,8 @@ async function saveProject(forceStatus) {
 function logout() {
   localStorage.removeItem('abc_admin_token');
   localStorage.removeItem('abc_admin_email');
+  localStorage.removeItem('abc_admin_viewer');
+  localStorage.removeItem('abc_admin_role');
   token = null;
   _notifEvents  = [];
   _notifLoaded  = false;
