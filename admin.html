@@ -5009,8 +5009,15 @@ function renderInterestsTable() {
   setS('int-s-projet', projetCt);
   setS('int-s-showroom', srCt);
 
+  const founderF  = document.getElementById('int-founder-filter')?.value || '';
   const countInfo = document.getElementById('int-count-info');
-  if (countInfo) countInfo.textContent = items.length !== total ? `${items.length} résultats` : `${total} intérêts`;
+  if (countInfo) {
+    if (founderF && items.length < total) {
+      countInfo.innerHTML = `<span style="color:var(--gold)">${items.length} résultat${items.length>1?'s':''}</span> <span style="opacity:.5">/ ${total} au total — filtre founder actif</span>`;
+    } else {
+      countInfo.textContent = items.length !== total ? `${items.length} résultat${items.length>1?'s':''}` : `${total} intérêt${total>1?'s':''}`;
+    }
+  }
 
   // ── Table desktop ────────────────────────────────────────────
   const tbody = document.getElementById('int-tbody');
