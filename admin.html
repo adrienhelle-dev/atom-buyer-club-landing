@@ -203,22 +203,26 @@
     .notif-empty-icon { font-size: 28px; opacity: .3; margin-bottom: 10px; }
     .notif-loading { padding: 24px; text-align: center; color: var(--dim); font-size: 12px; }
 
-    /* ── Sections Nouvelles / Lues ─────────────────────────────── */
-    .notif-section-hdr {
-      padding: 8px 18px 7px; display: flex; align-items: center; justify-content: space-between;
-      font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
-      color: var(--gold); background: var(--bg2);
-      position: sticky; top: 0; z-index: 2;
-      border-bottom: 1px solid var(--border);
+    /* ── Onglets Nouvelles / Lues ───────────────────────────────── */
+    .notif-tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+      background: var(--bg2); flex-shrink: 0;
     }
-    .notif-section-hdr.read {
-      color: var(--dim);
-      border-top: 1px solid var(--border);
+    .notif-tab {
+      flex: 1; padding: 10px 0; background: none; border: none; outline: none;
+      color: var(--dim); font-size: 12px; font-weight: 500; cursor: pointer;
+      font-family: var(--sans); letter-spacing: .03em;
+      position: relative; transition: color .15s;
     }
-    .notif-section-count {
-      background: rgba(184,151,90,.15); color: var(--gold);
-      font-size: 10px; font-weight: 600; letter-spacing: 0;
-      padding: 1px 7px; border-radius: 10px;
+    .notif-tab.active { color: var(--cream); }
+    .notif-tab.active::after {
+      content: ''; position: absolute; bottom: 0; left: 20%; width: 60%;
+      height: 2px; background: var(--gold); border-radius: 2px 2px 0 0;
+    }
+    .notif-tab-count {
+      display: inline-block; background: var(--gold); color: var(--bg);
+      font-size: 10px; font-weight: 700; padding: 0px 5px;
+      border-radius: 8px; margin-left: 5px; vertical-align: middle; line-height: 16px;
     }
 
     /* FAB */
@@ -2146,6 +2150,12 @@
         <button class="notif-close" onclick="closeNotifPanel()" title="Fermer">✕</button>
       </div>
     </div>
+    <div class="notif-tabs">
+      <button class="notif-tab active" id="notif-tab-unread" onclick="switchNotifTab('unread')">
+        Nouvelles <span class="notif-tab-count" id="notif-tab-count" style="display:none"></span>
+      </button>
+      <button class="notif-tab" id="notif-tab-read" onclick="switchNotifTab('read')">Lues</button>
+    </div>
     <div class="notif-list" id="notif-list">
       <div class="notif-loading">Chargement…</div>
     </div>
@@ -3150,6 +3160,7 @@ function logout() {
 let _notifEvents    = [];
 let _notifPanelOpen = false;
 let _notifLoaded    = false;
+let _notifTab       = 'unread'; // 'unread' | 'read'
 
 const NOTIF_LABELS = {
   inscription:       { label: 'Nouvelle inscription',       color: '#5B5BD6', icon: '✦' },
@@ -3207,6 +3218,13 @@ function _updateNotifBadge() {
   // Sous-titre du panneau
   const sub = document.getElementById('notif-panel-sub');
   if (sub) sub.textContent = unseen > 0 ? `${unseen} non lu${unseen > 1 ? 's' : ''}` : '30 derniers jours';
+
+  // Si de nouvelles notifs arrivent alors qu'on est sur l'onglet "lues", repasser sur "nouvelles"
+  if (unseen > 0 && _notifTab === 'read') {
+    _notifTab = 'unread';
+    document.getElementById('notif-tab-unread')?.classList.add('active');
+    document.getElementById('notif-tab-read')?.classList.remove('active');
+  }
 }
 
 function toggleNotifPanel() {
@@ -3238,37 +3256,63 @@ function closeNotifPanel() {
   document.getElementById('notif-fab').classList.remove('panel-open');
 }
 
+function switchNotifTab(tab) {
+  _notifTab = tab;
+  document.getElementById('notif-tab-unread')?.classList.toggle('active', tab === 'unread');
+  document.getElementById('notif-tab-read')?.classList.toggle('active', tab === 'read');
+  _renderNotifList();
+}
+
 function markNotifsRead() {
   localStorage.setItem('last_seen_notifs_at', new Date().toISOString());
+  _notifTab = 'read';
+  document.getElementById('notif-tab-unread')?.classList.remove('active');
+  document.getElementById('notif-tab-read')?.classList.add('active');
   _updateNotifBadge();
   _renderNotifList();
 }
 
 function _renderNotifList() {
-  const list     = document.getElementById('notif-list');
+  const list = document.getElementById('notif-list');
   if (!list) return;
   const lastSeen = localStorage.getItem('last_seen_notifs_at') || '1970-01-01T00:00:00Z';
 
-  if (!_notifEvents.length) {
+  // Filtrer les événements sans lead associé (entrées fantômes sans nom)
+  const validEvents = _notifEvents.filter(ev => ev.lead_id && ev.lead);
+
+  // Mettre à jour le compteur de l'onglet Nouvelles
+  const unreadCount = validEvents.filter(ev => ev.created_at > lastSeen).length;
+  const countEl = document.getElementById('notif-tab-count');
+  if (countEl) {
+    if (unreadCount > 0) {
+      countEl.textContent    = String(unreadCount);
+      countEl.style.display  = '';
+    } else {
+      countEl.style.display  = 'none';
+    }
+  }
+
+  // Filtrer selon l'onglet actif
+  const events = _notifTab === 'unread'
+    ? validEvents.filter(ev => ev.created_at > lastSeen)
+    : validEvents.filter(ev => ev.created_at <= lastSeen);
+
+  if (!events.length) {
+    const isEmpty = !validEvents.length;
     list.innerHTML = `
       <div class="notif-empty">
-        <div class="notif-empty-icon">🔔</div>
-        <div>Aucune activité récente</div>
-        <div style="font-size:11px;margin-top:4px;opacity:.6">Les intérêts sur les projets et réalisations apparaîtront ici</div>
+        <div class="notif-empty-icon">${_notifTab === 'unread' ? '✓' : '🕐'}</div>
+        <div>${isEmpty ? 'Aucune activité récente' : (_notifTab === 'unread' ? 'Tout est à jour' : 'Aucune notification lue')}</div>
+        <div style="font-size:11px;margin-top:4px;opacity:.6">${isEmpty ? 'Les intérêts sur les projets et réalisations apparaîtront ici' : (_notifTab === 'unread' ? 'Aucune nouvelle activité pour le moment' : 'Marquez des notifications comme lues pour les retrouver ici')}</div>
       </div>`;
     return;
   }
 
-  // ── Séparer nouvelles / lues ───────────────────────────────────
-  const unread = _notifEvents.filter(ev => ev.created_at > lastSeen);
-  const read   = _notifEvents.filter(ev => ev.created_at <= lastSeen);
-
-  function _buildItem(ev, isNew) {
-    const meta     = NOTIF_LABELS[ev.type] || { label: ev.type, color: 'var(--dim)', icon: '·' };
-    const lead     = ev.lead;
-    const leadName = lead
-      ? (`${lead.prenom || ''} ${lead.nom || ''}`).trim() || lead.email || 'Lead'
-      : 'Lead inconnu';
+  function _buildItem(ev) {
+    const isNew  = ev.created_at > lastSeen;
+    const meta   = NOTIF_LABELS[ev.type] || { label: 'Activité', color: 'var(--dim)', icon: '·' };
+    const lead   = ev.lead;
+    const leadName = (`${lead.prenom || ''} ${lead.nom || ''}`).trim() || lead.email || 'Lead';
 
     let desc = meta.label;
     try {
@@ -3277,7 +3321,8 @@ function _renderNotifList() {
       else if (ev.type === 'interet_projet'    && c.project_id)    desc = 'Intérêt pour un projet';
       else if (ev.type === 'showroom_interest' && c.item_name)     desc = `Intérêt showroom — ${c.item_name}`;
       else if (ev.type === 'showroom_interest' && c.slug)          desc = `Intérêt showroom — ${c.slug}`;
-      else if (ev.type === 'showroom_cta'      && c.showroom_slug) desc = `CTA showroom — ${c.showroom_slug}`;
+      else if (ev.type === 'showroom_cta'      && c.showroom_slug) desc = `CTA — ${c.showroom_slug}`;
+      else if (ev.type === 'showroom_cta')                         desc = 'CTA showroom';
     } catch {}
 
     return `
@@ -3292,22 +3337,7 @@ function _renderNotifList() {
       </div>`;
   }
 
-  let html = '';
-
-  if (unread.length) {
-    html += `<div class="notif-section-hdr">
-      <span>Nouvelles</span>
-      <span class="notif-section-count">${unread.length}</span>
-    </div>`;
-    html += unread.map(ev => _buildItem(ev, true)).join('');
-  }
-
-  if (read.length) {
-    html += `<div class="notif-section-hdr read"><span>Lues</span></div>`;
-    html += read.map(ev => _buildItem(ev, false)).join('');
-  }
-
-  list.innerHTML = html;
+  list.innerHTML = events.map(_buildItem).join('');
 }
 
 function openLeadFromNotif(leadId) {
