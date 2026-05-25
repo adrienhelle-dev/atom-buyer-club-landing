@@ -1395,50 +1395,139 @@
     /* Lead row layout */
     .int-lead-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
 
-    /* Mobile (≤600px) : flex-wrap sur divs — aucune magie table, fonctionne partout */
-    @media (max-width: 600px) {
-      .int-stats  { grid-template-columns: repeat(2, 1fr); }
-      .int-toolbar { padding: 10px 14px; gap: 7px; flex-wrap: wrap; }
-      .int-filter-sel { font-size: 11px; padding: 6px 22px 6px 9px; }
+    /* Elements masqués sur desktop, visibles sur mobile */
+    .int-btn-label { display: none; }
+    .int-fiche-btn { display: none; }
+    .int-mob-date  { display: none; }
 
-      /* Header masqué sur mobile */
+    /* ── Mobile cards (≤600px) ─────────────────────────────────────── */
+    @media (max-width: 600px) {
+
+      /* ── Stats: 2×2 compact ── */
+      .int-stats  { grid-template-columns: repeat(2, 1fr); }
+      .int-stat   { padding: 12px 16px; }
+      .int-stat-value { font-size: 22px; }
+      .int-stat-label { font-size: 10px; }
+
+      /* ── Toolbar: scroll horizontal, pas de wrap ── */
+      .int-toolbar {
+        padding: 10px 14px; gap: 8px;
+        flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .int-toolbar::-webkit-scrollbar { display: none; }
+      .int-filter-sel { font-size: 12px; flex-shrink: 0; }
+      .int-count-info { margin-left: 0; flex-shrink: 0; white-space: nowrap; }
+
+      /* ── Header masqué ── */
       .int-list-head { display: none; }
 
-      /* Ligne = flex-wrap : ligne 1 toggle+lead+actions, ligne 2 source */
+      /* ── Wrapper ── */
+      .int-list-wrap { padding-bottom: 90px; }
+      .int-list { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; }
+
+      /* ── Card ── */
       .int-list-item {
-        display: flex; flex-wrap: wrap; align-items: center;
-        padding: 12px 14px; gap: 0;
+        display: block;
+        position: relative;
+        background: var(--bg2);
+        border: 1px solid var(--border) !important;
+        border-bottom: 1px solid var(--border) !important;
+        border-radius: 14px;
+        overflow: hidden;
+        transition: border-color .15s;
       }
+      .int-list-item:hover { background: var(--bg2); border-color: rgba(184,151,90,.3) !important; }
+      .int-list-item.is-treated { opacity: .5; }
+      .int-list-item.is-treated::after {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+        width: 3px; background: #4caf7d; border-radius: 14px 0 0 14px;
+      }
+
+      /* ── Reset cols ── */
       .int-col { padding: 0; }
-      .int-col.col-traite {
-        order: 1; width: 38px; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center;
-        padding: 0 4px 0 0;
-      }
-      .int-col.col-lead {
-        order: 2; flex: 1; min-width: 0; padding-right: 8px;
-      }
-      .int-col.col-actions {
-        order: 3; flex-shrink: 0;
-      }
-      .int-col.col-source {
-        order: 4; flex-basis: 100%;
-        padding-left: 42px; /* aligne sous le nom (toggle 38px + gap 4px) */
-        padding-top: 5px;
-      }
       .int-col.col-meta { display: none !important; }
 
-      /* Boutons plus petits sur mobile */
-      .int-action-btn { width: 28px; height: 28px; border-radius: 6px; }
-      .int-actions    { gap: 4px; }
-      .int-lead-row   { flex-wrap: wrap; gap: 4px; }
+      /* ── Toggle : absolu top-right, touch-friendly ── */
+      .int-col.col-traite {
+        position: absolute; top: 0; right: 0; bottom: auto;
+        width: 52px; height: 52px;
+        display: flex; align-items: center; justify-content: center;
+        z-index: 2;
+      }
+
+      /* ── Section lead ── */
+      .int-col.col-lead {
+        padding: 14px 58px 11px 16px;
+        display: block;
+      }
+      .int-lead-row { flex-wrap: nowrap; gap: 6px; align-items: center; }
+      .int-lead-name { font-size: 14px; font-weight: 500; }
+      .int-type-badge { font-size: 10px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0; }
+      .int-lead-meta { margin-top: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .int-lead-meta span { font-size: 11px; }
+      .int-score { font-size: 11px; padding: 2px 7px; }
+      .int-mob-date { display: block; font-size: 10px; color: var(--dim); opacity: .7; }
+      .int-lead-fiche { display: none; }
+
+      /* ── Section source ── */
+      .int-col.col-source {
+        padding: 7px 14px 9px;
+        display: flex; align-items: center; gap: 6px;
+        border-top: 1px solid rgba(255,255,255,.04);
+        background: rgba(255,255,255,.018);
+      }
+      .int-source-name {
+        font-size: 12px; color: var(--dim); font-weight: 400;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: none; flex: 1;
+      }
+      .int-source-link { margin-top: 0; font-size: 11px; flex-shrink: 0; }
+
+      /* ── Barre d'actions ── */
+      .int-col.col-actions {
+        border-top: 1px solid var(--border);
+        padding: 0;
+      }
+      .int-actions { display: flex; width: 100%; gap: 0; }
+      .int-action-btn {
+        flex: 1; height: 46px; width: auto;
+        border-radius: 0; border: none; border-right: 1px solid var(--border);
+        background: transparent; font-size: 12px; font-weight: 500;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+        text-decoration: none; cursor: pointer; font-family: var(--sans);
+        transition: background .12s;
+      }
+      .int-action-btn:last-child { border-right: none; }
+      .int-action-btn:active { background: rgba(255,255,255,.06); }
+
+      /* WA — vert, légèrement plus large */
+      .int-action-btn.wa {
+        background: rgba(37,211,102,.05); color: #25d366;
+        flex: 1.6; border-color: var(--border);
+      }
+      .int-action-btn.wa:hover, .int-action-btn.wa:active { background: rgba(37,211,102,.1); }
+
+      /* Email */
+      .int-action-btn.mail { color: var(--gold); flex: 1; }
+
+      /* Fiche — visible sur mobile seulement */
+      .int-fiche-btn {
+        display: flex; flex: 1.4; color: var(--cream);
+        font-size: 12px; font-weight: 500;
+        align-items: center; justify-content: center; gap: 4px;
+        height: 46px; cursor: pointer;
+        background: none; border: none; border-left: 1px solid var(--border);
+        font-family: var(--sans); transition: background .12s;
+      }
+      .int-fiche-btn:active { background: rgba(255,255,255,.04); }
+
+      /* Supprimer — icône seulement, plus discret */
+      .int-action-btn.del-btn { flex: 0 0 44px; color: var(--red); }
+
+      /* Labels */
+      .int-btn-label { display: inline; }
     }
 
-    @media (max-width: 640px) {
-      .int-stats { grid-template-columns: repeat(2, 1fr); }
-      .int-stat { padding: 12px 14px; }
-      .int-stat-value { font-size: 22px; }
-    }
   </style>
 </head>
 <body>
@@ -5231,13 +5320,19 @@ function _buildInterestRow(ev) {
   const SVG_MAIL   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>`;
   const SVG_WA     = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>`;
 
+  const SVG_TRASH = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+
   return `<div class="int-list-item ${treated ? 'is-treated' : ''}" id="int-row-${esc(ev.id)}">
+
+    <!-- Toggle traité -->
     <div class="int-col col-traite">
       <label class="int-toggle" title="${treated ? 'Marquer non traité' : 'Marquer traité'}">
         <input type="checkbox" ${treated ? 'checked' : ''} onchange="toggleInterestTreated('${esc(ev.id)}', this.checked)">
         <span class="int-toggle-slider"></span>
       </label>
     </div>
+
+    <!-- Lead info -->
     <div class="int-col col-lead">
       <div class="int-lead-row">
         <span class="int-lead-name" onclick="openLeadFromNotif('${esc(lead.id)}')">${esc(leadName)}</span>
@@ -5245,29 +5340,44 @@ function _buildInterestRow(ev) {
       </div>
       <div class="int-lead-meta">
         <span class="int-score ${scoreCls}">${score}</span>
-        ${lead.email ? `<span style="margin-left:6px">${esc(lead.email)}</span>` : ''}
+        ${lead.email ? `<span style="color:var(--dim)">${esc(lead.email)}</span>` : ''}
+        <span class="int-mob-date">${timeAgo(ev.created_at)}</span>
       </div>
       <span class="int-lead-fiche" onclick="openLeadFromNotif('${esc(lead.id)}')">Voir la fiche →</span>
     </div>
+
+    <!-- Source projet/réalisation -->
     <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
       ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank">Voir →</a>` : ''}
     </div>
+
+    <!-- Founder + date (desktop) -->
     <div class="int-col col-meta">
       ${lead.assigned_to
         ? `<span class="founder-badge" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>`
         : ''}
       <div style="font-size:11px;color:var(--dim);margin-top:3px">${timeAgo(ev.created_at)}</div>
     </div>
+
+    <!-- Actions -->
     <div class="int-col col-actions">
       <div class="int-actions">
-        ${lead.email ? `<button class="int-action-btn mail" title="Envoyer un email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom||'')}','${esc(lead.email)}')">${SVG_MAIL}</button>` : ''}
-        ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="WhatsApp">${SVG_WA}</a>` : ''}
-        <button class="int-action-btn" style="color:var(--red);border-color:rgba(217,94,94,.3)" title="Supprimer cet intérêt" onclick="openDelIntModal('${esc(ev.id)}','${esc(leadName)} — ${esc(source.name)}')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="WhatsApp">
+          ${SVG_WA}<span class="int-btn-label">WhatsApp</span>
+        </a>` : ''}
+        ${lead.email ? `<button class="int-action-btn mail" title="Envoyer un email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom||'')}','${esc(lead.email)}')">
+          ${SVG_MAIL}<span class="int-btn-label">Email</span>
+        </button>` : ''}
+        <button class="int-fiche-btn" onclick="openLeadFromNotif('${esc(lead.id)}')">
+          Fiche <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+        <button class="int-action-btn del-btn" title="Supprimer" onclick="openDelIntModal('${esc(ev.id)}','${esc(leadName)} — ${esc(source.name)}')">
+          ${SVG_TRASH}
         </button>
       </div>
     </div>
+
   </div>`;
 }
 
