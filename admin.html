@@ -2218,13 +2218,27 @@ let isViewerMode      = false;   // true pour Thierry & Alexandre → filtre sco
 let scoreMinFilter    = 0;       // 0 = pas de filtre, 8 = leads chauds seulement
 
 /* ── Auth ─────────────────────────────────────────────────── */
+
+// Lit le payload JWT sans vérifier la signature (vérification faite côté serveur).
+// Garantit que le rôle utilisé est toujours celui du token actif,
+// même si un autre compte avait été connecté sur le même navigateur.
+function _jwtPayload(t) {
+  try { return JSON.parse(atob(t.split('.')[1])); } catch { return {}; }
+}
+
 function init() {
   token = localStorage.getItem('abc_admin_token');
-  if (token) showDashboard(
-    localStorage.getItem('abc_admin_email') || '',
-    localStorage.getItem('abc_admin_viewer') === '1',
-    localStorage.getItem('abc_admin_role')  || 'admin'
-  );
+  if (!token) return;
+  const payload  = _jwtPayload(token);
+  // Rôle et email extraits du token (source de vérité)
+  const role     = payload.role  || 'admin';
+  const email    = payload.email || localStorage.getItem('abc_admin_email') || '';
+  // isViewer : flag hot-leads (stocké en localStorage, mis à jour à chaque login)
+  const isViewer = localStorage.getItem('abc_admin_viewer') === '1';
+  // Resynchroniser le localStorage pour les prochaines initialisations
+  localStorage.setItem('abc_admin_role',  role);
+  localStorage.setItem('abc_admin_email', email);
+  showDashboard(email, isViewer, role);
 }
 
 function togglePassVis() {
