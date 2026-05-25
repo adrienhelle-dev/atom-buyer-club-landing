@@ -43,8 +43,8 @@
     .state-sub { color: var(--dim); font-size: 14px; }
 
     /* Main layout */
-    main { max-width: 1100px; margin: 0 auto; padding: 40px 32px; }
-    @media (max-width: 720px) { main { padding: 24px 16px; } }
+    main { max-width: 1100px; margin: 0 auto; padding: 40px 32px 90px; }
+    @media (max-width: 720px) { main { padding: 24px 16px 90px; } }
 
     /* Hero */
     .hero { margin-bottom: 36px; }
@@ -55,28 +55,19 @@
     .hero-meta-item { display: inline-flex; align-items: center; gap: 6px; }
     .hero-meta-item .label { color: var(--dim); }
 
-    /* Gallery */
-    .gallery {
-      display: grid; gap: 8px; margin-bottom: 40px;
-      grid-template-columns: 2fr 1fr 1fr;
-      grid-template-rows: 240px 240px;
-    }
-    .gallery img {
-      width: 100%; height: 100%; object-fit: cover;
-      border-radius: 4px; background: var(--bg2);
-    }
-    .gallery img:first-child { grid-row: span 2; }
-    .gallery-empty {
-      grid-column: 1 / -1; grid-row: 1 / -1;
-      background: linear-gradient(135deg, var(--bg3), var(--bg2));
-      border-radius: 6px; display: flex; align-items: center; justify-content: center;
-      font-size: 72px; opacity: .3; min-height: 400px;
-    }
-    @media (max-width: 720px) {
-      .gallery { grid-template-columns: 1fr; grid-template-rows: 240px; }
-      .gallery img:first-child { grid-row: span 1; }
-      .gallery img:not(:first-child) { display: none; }
-    }
+    /* Gallery new */
+    .gallery-wrap { margin-bottom: 36px; }
+    .ba-toggle { display: inline-flex; margin-bottom: 12px; }
+    .ba-btn { padding: 9px 18px; background: none; border: 1px solid var(--border); color: var(--dim); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
+    .ba-btn:first-child { border-radius: 8px 0 0 8px; border-right: none; }
+    .ba-btn:last-child  { border-radius: 0 8px 8px 0; }
+    .ba-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+    .gallery-main-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; display: block; }
+    .gallery-thumbs { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+    .gallery-thumbs::-webkit-scrollbar { display: none; }
+    .gallery-thumbs img { width: 72px; height: 52px; object-fit: cover; border-radius: 5px; cursor: pointer; opacity: .5; transition: opacity .15s; flex-shrink: 0; border: 2px solid transparent; }
+    .gallery-thumbs img.active { opacity: 1; border-color: var(--gold); }
+    .gallery-empty-ph { width: 100%; aspect-ratio: 4/3; background: var(--bg3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 72px; opacity: .3; }
 
     /* Content grid */
     .content-grid { display: grid; grid-template-columns: 1fr 360px; gap: 40px; }
@@ -126,83 +117,30 @@
     .fin-val-big { color: var(--gold); font-family: var(--serif); font-size: 22px; }
     .fin-disclaimer { font-size: 11px; color: var(--dim); font-style: italic; margin-top: 16px; line-height: 1.5; }
 
-    /* Interest section */
-    .interest-section {
-      margin-top: 50px; padding: 40px 32px 36px;
-      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
-    }
-    @media (max-width: 540px) { .interest-section { padding: 32px 20px 28px; } }
+    /* Sticky bar */
+    .sticky-btn-primary { flex: 1; padding: 15px 20px; background: var(--gold); color: var(--bg); border: none; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: var(--sans); transition: opacity .15s; text-align: center; }
+    .sticky-btn-primary:hover { opacity: .88; }
+    .sticky-btn-wa { flex: 0 0 auto; padding: 14px 16px; background: rgba(37,211,102,.08); border: 1px solid rgba(37,211,102,.28); border-radius: 10px; color: #25D366; text-decoration: none; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: background .15s; }
+    .sticky-btn-wa:hover { background: rgba(37,211,102,.15); }
+    @media(max-width:600px){ .wa-label { display: none; } .sticky-btn-wa { padding: 14px; } }
 
-    .interest-title {
-      font-family: var(--serif); font-size: 28px; font-weight: 300;
-      margin-bottom: 8px; text-align: center; line-height: 1.2;
-    }
-    @media (max-width: 400px) { .interest-title { font-size: 24px; } }
-
-    .interest-sub { color: var(--dim); font-size: 14px; text-align: center; margin-bottom: 28px; }
-
-    /* Bouton WA primaire */
-    .btn-wa-primary {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      width: 100%; max-width: 480px; margin: 0 auto 28px;
-      padding: 16px 24px; background: #25D366; border: none;
-      border-radius: var(--r); color: #fff; font-family: var(--sans);
-      font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none;
-      transition: opacity .15s; box-shadow: 0 4px 20px rgba(37,211,102,.25);
-    }
-    .btn-wa-primary:hover { opacity: .9; }
-
-    /* Séparateur ou */
-    .interest-divider {
-      display: flex; align-items: center; gap: 14px;
-      max-width: 480px; margin: 0 auto 24px; color: var(--dim); font-size: 12px;
-    }
-    .interest-divider::before, .interest-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-
-    /* Formulaire */
-    .interest-form-label { font-size: 13px; color: var(--dim); text-align: center; margin-bottom: 16px; }
-    .interest-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 480px; margin: 0 auto; }
-    @media (max-width: 540px) { .interest-grid { grid-template-columns: 1fr; } }
-    .interest-field { display: flex; flex-direction: column; gap: 6px; }
-    .interest-field.span-2 { grid-column: span 2; }
-    @media (max-width: 540px) { .interest-field.span-2 { grid-column: span 1; } }
-    .interest-field label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
-    .interest-field input {
-      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
-      padding: 12px 14px; color: var(--cream); font-family: var(--sans); font-size: 15px;
-      outline: none; transition: border-color .15s; width: 100%;
-    }
-    .interest-field input:focus { border-color: var(--gold); }
-    .btn-interest {
-      width: 100%; margin-top: 14px; max-width: 480px; margin-left: auto; margin-right: auto;
-      display: block; padding: 14px; background: var(--gold); border: none;
-      border-radius: var(--r); color: var(--bg); font-family: var(--sans);
-      font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .15s;
-    }
-    .btn-interest:hover { opacity: .87; }
-    .btn-interest:disabled { opacity: .5; cursor: not-allowed; }
-    .interest-status {
-      max-width: 480px; margin: 14px auto 0;
-      text-align: center; font-size: 14px; min-height: 22px;
-    }
-    .interest-success { color: var(--green); }
-    .interest-error   { color: var(--red); }
-
-    /* Post-submit WA CTA */
-    .wa-cta-wrap {
-      display: none; max-width: 480px; margin: 24px auto 0; text-align: center;
-    }
-    .wa-cta-wrap p { font-size: 13px; color: var(--dim); margin-bottom: 14px; line-height: 1.6; }
-    .btn-wa {
-      display: inline-flex; align-items: center; gap: 9px;
-      padding: 13px 28px; background: #25D366; border: none;
-      border-radius: var(--r); color: #fff; font-family: var(--sans);
-      font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
-      transition: opacity .15s;
-    }
-    .btn-wa:hover { opacity: .88; }
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: 100%; max-width: 460px; position: relative; max-height: 90vh; overflow-y: auto; }
+    .modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--dim); font-size: 20px; cursor: pointer; }
+    .modal-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--dim); margin-bottom: 20px; line-height: 1.5; }
+    .modal-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .modal-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+    .modal-input { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; color: var(--cream); font-family: var(--sans); font-size: 15px; outline: none; transition: border-color .15s; width: 100%; }
+    .modal-input:focus { border-color: var(--gold); }
+    .btn-submit { width: 100%; padding: 14px; background: var(--gold); border: none; border-radius: var(--r); color: var(--bg); font-family: var(--sans); font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .15s; margin-top: 6px; }
+    .btn-submit:hover { opacity: .88; }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .modal-err { color: var(--red); font-size: 12px; margin-top: 8px; }
+    .modal-wa-post { margin-top: 20px; padding: 16px; background: var(--bg3); border-radius: 10px; text-align: center; }
+    .modal-wa-post p { font-size: 13px; color: var(--dim); margin-bottom: 12px; }
+    .btn-wa-modal { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #25D366; border: none; border-radius: var(--r); color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
 
     /* Icône WA inline */
     .wa-icon { flex-shrink: 0; }
@@ -254,7 +192,17 @@
     <div class="hero-meta" id="hero-meta"></div>
   </section>
 
-  <div class="gallery" id="gallery"></div>
+  <div class="gallery-wrap">
+    <div id="gallery-toggle-wrap" style="display:none">
+      <div class="ba-toggle">
+        <button class="ba-btn active" id="btn-3d" onclick="switchGallery('3d')">Projections 3D</button>
+        <button class="ba-btn" id="btn-photos" onclick="switchGallery('photos')">Photos actuelles</button>
+      </div>
+    </div>
+    <img id="gallery-main" class="gallery-main-img" src="" alt="" style="display:none"/>
+    <div id="gallery-empty-ph" class="gallery-empty-ph">🏠</div>
+    <div class="gallery-thumbs" id="gallery-thumbs"></div>
+  </div>
 
   <div class="content-grid">
     <div>
@@ -293,54 +241,60 @@
     </aside>
   </div>
 
-  <!-- Formulaire d'intérêt -->
-  <section class="interest-section">
-    <h2 class="interest-title">Ce projet vous intéresse&nbsp;?</h2>
-    <p class="interest-sub">Contactez-nous directement ou laissez vos coordonnées.</p>
+</main>
 
-    <!-- CTA WhatsApp primaire (visible si responsible_admin a un téléphone) -->
-    <div id="wa-primary-wrap" style="display:none">
-      <a id="wa-primary-btn" class="btn-wa-primary" href="#" target="_blank">
-        <svg class="wa-icon" width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-        Nous contacter sur WhatsApp
-      </a>
-      <div class="interest-divider">ou</div>
-      <p class="interest-form-label">Laissez vos coordonnées, nous revenons vers vous sous 24h</p>
+<!-- STICKY BAR -->
+<div id="sticky-bar" style="position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--bg2);border-top:1px solid var(--border);box-shadow:0 -8px 32px rgba(0,0,0,.6);padding:14px 20px calc(14px + env(safe-area-inset-bottom))">
+  <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:10px">
+    <a id="sticky-wa" class="sticky-btn-wa" href="#" target="_blank" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <span class="wa-label">Contacter l'équipe Atom</span>
+    </a>
+    <button class="sticky-btn-primary" onclick="openInterestModal()">Je suis intéressé(e) →</button>
+  </div>
+</div>
+
+<!-- MODALE INTÉRÊT -->
+<div id="interest-modal" style="display:none" class="modal-overlay" onclick="if(event.target===this)closeInterestModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeInterestModal()">✕</button>
+    <div id="modal-form-wrap">
+      <h2 class="modal-title" id="modal-title">Je suis intéressé(e)</h2>
+      <p class="modal-sub" id="modal-sub">L'équipe Atom vous recontacte sous 24h.</p>
+      <div class="modal-field">
+        <label class="modal-label">Prénom *</label>
+        <input class="modal-input" id="i-prenom" type="text" placeholder="Votre prénom"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Nom *</label>
+        <input class="modal-input" id="i-nom" type="text" placeholder="Votre nom"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Email *</label>
+        <input class="modal-input" id="i-email" type="email" placeholder="vous@email.com"/>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Téléphone *</label>
+        <input class="modal-input" id="i-tel" type="tel" placeholder="+33 6 ..."/>
+      </div>
+      <button class="btn-submit" id="btn-submit" onclick="submitInterest()">Envoyer →</button>
+      <p class="modal-err" id="modal-err" style="display:none"></p>
     </div>
-
-    <form id="interest-form">
-      <div class="interest-grid">
-        <div class="interest-field">
-          <label for="i-prenom">Prénom</label>
-          <input type="text" id="i-prenom" required/>
-        </div>
-        <div class="interest-field">
-          <label for="i-nom">Nom</label>
-          <input type="text" id="i-nom" required/>
-        </div>
-        <div class="interest-field span-2">
-          <label for="i-email">Email</label>
-          <input type="email" id="i-email" required/>
-        </div>
-        <div class="interest-field span-2">
-          <label for="i-tel">Téléphone</label>
-          <input type="tel" id="i-tel" required/>
+    <div id="modal-success" style="display:none">
+      <div style="text-align:center;padding:16px 0">
+        <div style="font-size:40px;margin-bottom:14px">✓</div>
+        <h3 style="font-family:var(--serif);font-size:20px;font-weight:300;margin-bottom:8px">Intérêt enregistré !</h3>
+        <p style="font-size:13px;color:var(--dim);line-height:1.6;margin-bottom:20px">L'équipe Atom vous recontacte sous 24h.</p>
+        <div id="modal-wa-post" style="display:none">
+          <a id="modal-wa-btn" class="btn-wa-modal" href="#" target="_blank">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Envoyer un message WhatsApp
+          </a>
         </div>
       </div>
-      <button type="submit" class="btn-interest" id="btn-interest">Je suis intéressé(e)</button>
-      <p class="interest-status" id="interest-status"></p>
-    </form>
-
-    <!-- CTA WhatsApp post-submit -->
-    <div class="wa-cta-wrap" id="wa-cta-wrap">
-      <p>Demande bien enregistrée — nous revenons vers vous sous 24h.<br>Pour aller plus vite, envoyez-nous un message directement.</p>
-      <a id="wa-cta-btn" class="btn-wa" href="#" target="_blank">
-        <svg class="wa-icon" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-        Envoyer un message WhatsApp
-      </a>
     </div>
-  </section>
-</main>
+  </div>
+</div>
 
 <footer>
   Atom Buyers Club · Paris · <a href="https://join.atombuyerclub.fr">join.atombuyerclub.fr</a>
@@ -387,20 +341,124 @@ function buildWaUrl(phone, text) {
   return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`;
 }
 
-function initWaLinks() {
+function initStickyBar() {
   const contact = project?.wa_contact;
-  if (!contact?.phone) return;
-  const title = project.title || 'votre projet';
-  const msg = `Bonjour, j'ai vu le projet "${title}" sur Atom Buyers Club et je suis intéressé(e). Pouvez-vous me recontacter ?`;
-  const url = buildWaUrl(contact.phone, msg);
+  if (contact?.phone) {
+    const msg = `Bonjour, j'ai vu le projet "${project.title || ''}" sur Atom Buyers Club et je suis intéressé(e). Pouvez-vous me recontacter ?`;
+    document.getElementById('sticky-wa').href = buildWaUrl(contact.phone, msg);
+    document.getElementById('sticky-wa').style.display = 'flex';
+    // Bouton WA modale post-submit
+    document.getElementById('modal-wa-btn').href = buildWaUrl(contact.phone, msg);
+  }
+}
 
-  // Bouton WA primaire (au-dessus du formulaire)
-  const waPrimary = document.getElementById('wa-primary-btn');
-  if (waPrimary) { waPrimary.href = url; document.getElementById('wa-primary-wrap').style.display = 'block'; }
+let galleryMode = 'photos';
 
-  // Bouton post-submit
-  const waBtn = document.getElementById('wa-cta-btn');
-  if (waBtn) waBtn.href = url;
+function initGallery() {
+  const photos = project.images    || [];
+  const imgs3d = project.images_3d || [];
+  const has3d     = imgs3d.length > 0;
+  const hasPhotos = photos.length > 0;
+
+  const toggleWrap = document.getElementById('gallery-toggle-wrap');
+  if (has3d && hasPhotos) {
+    toggleWrap.style.display = '';
+  } else {
+    toggleWrap.style.display = 'none';
+  }
+
+  if (has3d) {
+    galleryMode = '3d';
+    document.getElementById('btn-3d').classList.add('active');
+    document.getElementById('btn-photos').classList.remove('active');
+    setGalleryImages(imgs3d);
+  } else if (hasPhotos) {
+    galleryMode = 'photos';
+    document.getElementById('btn-photos').classList.add('active');
+    document.getElementById('btn-3d').classList.remove('active');
+    setGalleryImages(photos);
+  } else {
+    setGalleryImages([]);
+  }
+}
+
+function setGalleryImages(imgs) {
+  const mainEl   = document.getElementById('gallery-main');
+  const emptyEl  = document.getElementById('gallery-empty-ph');
+  const thumbsEl = document.getElementById('gallery-thumbs');
+  if (!imgs.length) {
+    mainEl.style.display = 'none'; emptyEl.style.display = '';
+    thumbsEl.innerHTML = ''; return;
+  }
+  emptyEl.style.display = 'none';
+  mainEl.style.display = 'block';
+  mainEl.src = imgs[0]; mainEl.alt = project?.title || '';
+  thumbsEl.innerHTML = imgs.map((u, i) =>
+    `<img src="${escapeHtml(u)}" class="${i === 0 ? 'active' : ''}" onclick="setMainImg(this,'${escapeHtml(u)}')" loading="lazy"/>`
+  ).join('');
+}
+
+function switchGallery(mode) {
+  galleryMode = mode;
+  document.getElementById('btn-3d').classList.toggle('active',     mode === '3d');
+  document.getElementById('btn-photos').classList.toggle('active', mode === 'photos');
+  setGalleryImages(mode === '3d' ? (project.images_3d || []) : (project.images || []));
+}
+
+function setMainImg(el, url) {
+  document.getElementById('gallery-main').src = url;
+  document.querySelectorAll('#gallery-thumbs img').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function openInterestModal() {
+  document.getElementById('interest-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeInterestModal() {
+  document.getElementById('interest-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+async function submitInterest() {
+  const btn = document.getElementById('btn-submit');
+  const errEl = document.getElementById('modal-err');
+  const fields = ['i-prenom','i-nom','i-email','i-tel'];
+  if (fields.some(id => !document.getElementById(id).value.trim())) {
+    errEl.textContent = 'Merci de remplir tous les champs.';
+    errEl.style.display = 'block'; return;
+  }
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  errEl.style.display = 'none';
+
+  const _usp = new URLSearchParams(window.location.search);
+  const getU = k => _usp.get(k) || sessionStorage.getItem('utm_' + k) || null;
+  const payload = {
+    prenom: document.getElementById('i-prenom').value.trim(),
+    nom:    document.getElementById('i-nom').value.trim(),
+    email:  document.getElementById('i-email').value.trim(),
+    tel:    document.getElementById('i-tel').value.trim(),
+    referrer: window.location.href,
+    utm_source:   getU('utm_source')   || 'fiche_projet',
+    utm_medium:   getU('utm_medium'),
+    utm_campaign: getU('utm_campaign'),
+    utm_content:  getU('utm_content')  || project?.slug || null,
+    utm_term:     getU('utm_term'),
+    gclid:        getU('gclid'),
+    fbclid:       getU('fbclid'),
+    project_id:   project?.id || null,
+  };
+  const res = await fetch('/api/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if (res.ok) {
+    document.getElementById('modal-form-wrap').style.display = 'none';
+    document.getElementById('modal-success').style.display = 'block';
+    if (project?.wa_contact?.phone) document.getElementById('modal-wa-post').style.display = 'block';
+  } else {
+    btn.disabled = false; btn.textContent = 'Envoyer →';
+    errEl.textContent = '✗ Une erreur est survenue, réessayez ou contactez-nous directement.';
+    errEl.style.display = 'block';
+  }
 }
 
 function render() {
@@ -418,14 +476,10 @@ function render() {
   if (project.metro_name)     meta.push(`<span class="hero-meta-item"><span class="label">Métro</span> ${project.metro_name}${project.metro_distance ? ` (${project.metro_distance}m)` : ''}</span>`);
   document.getElementById('hero-meta').innerHTML = meta.join('');
 
-  // Gallery (priorité : 3D > images état actuel)
-  const images = [...(project.images_3d || []), ...(project.images || [])];
-  const gallery = document.getElementById('gallery');
-  if (images.length === 0) {
-    gallery.innerHTML = '<div class="gallery-empty">🏠</div>';
-  } else {
-    gallery.innerHTML = images.slice(0, 5).map(src => `<img src="${escapeHtml(src)}" alt="${escapeHtml(project.title)}" loading="lazy"/>`).join('');
-  }
+  // Gallery
+  initGallery();
+  // WhatsApp sticky bar
+  initStickyBar();
 
   // Description
   if (project.description) {
@@ -468,8 +522,6 @@ function render() {
     btn.href = project.pdf_url; btn.style.display = 'inline-flex';
   }
 
-  // WhatsApp contact links (si responsible_admin a un tel)
-  initWaLinks();
 }
 
 function buildDpe() {
@@ -491,55 +543,6 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Formulaire d'intérêt
-document.getElementById('interest-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('btn-interest');
-  const statusEl = document.getElementById('interest-status');
-  btn.disabled = true; btn.textContent = 'Envoi…';
-  statusEl.className = 'interest-status'; statusEl.textContent = '';
-
-  // Lit les UTMs depuis l'URL ou la sessionStorage (pour attribution pub correcte
-  // si un lead arrive via Google/Meta Ads sur une page projet).
-  // Fallback : 'fiche_projet' = arrivée organique directement sur la fiche.
-  const _usp = new URLSearchParams(window.location.search);
-  const getU = k => _usp.get(k) || sessionStorage.getItem('utm_' + k) || null;
-  const payload = {
-    prenom:       document.getElementById('i-prenom').value.trim(),
-    nom:          document.getElementById('i-nom').value.trim(),
-    email:        document.getElementById('i-email').value.trim(),
-    tel:          document.getElementById('i-tel').value.trim(),
-    referrer:     window.location.href,
-    utm_source:   getU('utm_source')   || 'fiche_projet',
-    utm_medium:   getU('utm_medium'),
-    utm_campaign: getU('utm_campaign'),
-    utm_content:  getU('utm_content')  || project?.slug || null,
-    utm_term:     getU('utm_term'),
-    gclid:        getU('gclid'),
-    fbclid:       getU('fbclid'),
-    project_id:   project?.id || null,
-  };
-
-  const res = await fetch('/api/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  if (res.ok) {
-    statusEl.classList.add('interest-success');
-    statusEl.textContent = '✓ Merci ! Nous vous recontactons sous 24h.';
-    document.getElementById('interest-form').style.display = 'none';
-    // Montre le CTA WhatsApp si un contact est disponible
-    if (project?.wa_contact?.phone) {
-      document.getElementById('wa-cta-wrap').style.display = 'block';
-    }
-  } else {
-    btn.disabled = false; btn.textContent = 'Je suis intéressé(e)';
-    statusEl.classList.add('interest-error');
-    statusEl.textContent = '✗ Une erreur est survenue, réessayez ou contactez-nous directement.';
-  }
-});
 </script>
 </body>
 </html>
