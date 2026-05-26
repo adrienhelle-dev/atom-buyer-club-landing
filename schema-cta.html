@@ -157,13 +157,14 @@
     @media(max-width:720px){
       .hd{padding:16px 20px;}
       .hd-sub{display:none;}
-      /* Nav fixée (position:sticky + overflow-x:hidden sur body = bug iOS Safari) */
-      .mobile-nav{position:fixed !important;top:67px;left:0;right:0;z-index:48;}
-      .wrap{padding:68px 20px 60px;flex-direction:column;} /* 68 = nav height ~40 + 28 original */
+      /* Nav fixée — position:sticky + overflow-x:hidden sur body = bug iOS Safari */
+      .mobile-nav{display:block;position:fixed !important;top:67px;left:0;right:0;z-index:48;}
+      /* Header ~67px en flow + nav ~40px fixée → padding-top = 44px pour dégager la nav */
+      .wrap{padding:44px 20px 60px;flex-direction:column;}
       .toc{display:none;}
       .content{gap:44px;}
       .sec{scroll-margin-top:110px;}
-      .sec-title{font-size:24px;}
+      .sec-title{font-size:22px;}
       .g2,.g3,.g4,.sg,.utm-grid{grid-template-columns:1fr;}
       .flow{flex-direction:column;padding:16px;}
       .fstep{min-width:unset;flex:unset;width:100%;}
@@ -180,13 +181,14 @@
       .logo{font-size:18px;}
       .chip{font-size:9px;padding:3px 9px;}
       .back{font-size:11px;padding:5px 10px;}
-      .mobile-nav{top:53px;} /* header ~53px à ≤480px */
-      .wrap{padding:62px 16px 60px;} /* 53px header + 40px nav ≈ 93px, 62 is wrap top padding to clear fixed nav */
-      .content{gap:32px;}
+      /* Header ~53px → nav fixed à top:53px, wrap padding-top = 44px */
+      .mobile-nav{top:53px !important;}
+      .wrap{padding:44px 16px 60px;}
+      .content{gap:28px;}
       .sec{scroll-margin-top:96px;}
       .sec-tag{font-size:9px;}
-      .sec-title{font-size:19px;line-height:1.25;}
-      .sec-desc{font-size:12px;line-height:1.6;margin-bottom:16px;}
+      .sec-title{font-size:18px;line-height:1.3;}
+      .sec-desc{font-size:12px;line-height:1.6;margin-bottom:14px;}
 
       /* Cards */
       .card{padding:14px;}
