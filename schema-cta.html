@@ -134,7 +134,9 @@
     .sep{height:1px;background:var(--border);margin:6px 0;}
 
     /* ── Overflow global fix ─────────────────────────────── */
-    html,body{overflow-x:hidden;}
+    /* NB: overflow-x:hidden sur html bloque TOUT le scroll sur iOS Safari → ne l'utiliser que sur body */
+    body{overflow-x:hidden;max-width:100vw;}
+    .wrap{max-width:min(1200px,100%);}
 
     /* ── Tablette (≤ 960px) ──────────────────────────────── */
     @media(max-width:960px){
