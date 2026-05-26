@@ -1423,22 +1423,23 @@
       .int-list-head { display: none; }
 
       /* ── Wrapper ── */
-      .int-list-wrap { padding-bottom: 90px; }
-      .int-list { display: flex; flex-direction: column; gap: 16px; padding: 14px 14px; }
+      .int-list-wrap { padding-bottom: 90px; background: var(--bg); }
+      .int-list { display: flex; flex-direction: column; gap: 20px; padding: 16px 14px 20px; }
 
       /* ── Card ── */
       .int-list-item {
         display: block;
         position: relative;
         background: var(--bg2);
-        border: 1px solid var(--border) !important;
-        border-bottom: 1px solid var(--border) !important;
+        border: 1px solid rgba(255,255,255,.08) !important;
+        border-bottom: 1px solid rgba(255,255,255,.08) !important;
         border-radius: 14px;
         overflow: hidden;
-        transition: border-color .15s;
+        box-shadow: 0 4px 20px rgba(0,0,0,.45);
+        transition: border-color .15s, box-shadow .15s;
       }
-      .int-list-item:hover { background: var(--bg2); border-color: rgba(184,151,90,.3) !important; }
-      .int-list-item.is-treated { opacity: .5; }
+      .int-list-item:hover { border-color: rgba(184,151,90,.35) !important; box-shadow: 0 4px 24px rgba(0,0,0,.55); }
+      .int-list-item.is-treated { opacity: .55; }
       .int-list-item.is-treated::after {
         content: ''; position: absolute; left: 0; top: 0; bottom: 0;
         width: 3px; background: #4caf7d; border-radius: 14px 0 0 14px;
