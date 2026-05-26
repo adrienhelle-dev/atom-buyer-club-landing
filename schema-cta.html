@@ -157,18 +157,20 @@
     @media(max-width:720px){
       .hd{padding:16px 20px;}
       .hd-sub{display:none;}
-      .wrap{padding:28px 20px 60px;flex-direction:column;}
+      /* Nav fixée (position:sticky + overflow-x:hidden sur body = bug iOS Safari) */
+      .mobile-nav{position:fixed !important;top:67px;left:0;right:0;z-index:48;}
+      .wrap{padding:68px 20px 60px;flex-direction:column;} /* 68 = nav height ~40 + 28 original */
       .toc{display:none;}
       .content{gap:44px;}
       .sec{scroll-margin-top:110px;}
-      .sec-title{font-size:26px;}
+      .sec-title{font-size:24px;}
       .g2,.g3,.g4,.sg,.utm-grid{grid-template-columns:1fr;}
       .flow{flex-direction:column;padding:16px;}
       .fstep{min-width:unset;flex:unset;width:100%;}
       .farrow{display:flex;transform:rotate(90deg);align-self:center;padding:2px 0;}
       .purl{min-width:auto;flex-basis:100%;padding-top:0;}
       .pitem{flex-wrap:wrap;gap:6px;}
-      .rtable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -8px;}
+      .rtable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0;}
       .rtable{min-width:500px;}
     }
 
@@ -178,12 +180,13 @@
       .logo{font-size:18px;}
       .chip{font-size:9px;padding:3px 9px;}
       .back{font-size:11px;padding:5px 10px;}
-      .wrap{padding:20px 16px 60px;}
-      .content{gap:36px;}
+      .mobile-nav{top:53px;} /* header ~53px à ≤480px */
+      .wrap{padding:62px 16px 60px;} /* 53px header + 40px nav ≈ 93px, 62 is wrap top padding to clear fixed nav */
+      .content{gap:32px;}
       .sec{scroll-margin-top:96px;}
       .sec-tag{font-size:9px;}
-      .sec-title{font-size:22px;}
-      .sec-desc{font-size:13px;margin-bottom:18px;}
+      .sec-title{font-size:19px;line-height:1.25;}
+      .sec-desc{font-size:12px;line-height:1.6;margin-bottom:16px;}
 
       /* Cards */
       .card{padding:14px;}
@@ -265,28 +268,22 @@
       .note{font-size:11px;padding:10px 12px;}
     }
 
-    /* ── Nav mobile horizontale (≤ 720px, sticky sous le header) ── */
+    /* ── Nav mobile horizontale ── */
     .mobile-nav{
       display:none;
       background:var(--bg2);border-bottom:1px solid var(--border);
       overflow-x:auto;-webkit-overflow-scrolling:touch;
       scrollbar-width:none;padding:0 16px;
-      position:sticky;top:67px;z-index:49;
+      /* position:fixed défini dans les media queries ci-dessus */
     }
     .mobile-nav::-webkit-scrollbar{display:none;}
     .mobile-nav-inner{display:flex;gap:0;white-space:nowrap;}
     .mobile-nav a{
       display:inline-block;font-size:11px;color:var(--dim);text-decoration:none;
-      padding:10px 12px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
+      padding:10px 14px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
       flex-shrink:0;
     }
     .mobile-nav a:hover,.mobile-nav a.on{color:var(--gold);border-bottom-color:var(--gold);}
-    @media(max-width:720px){
-      .mobile-nav{display:block;}
-    }
-    @media(max-width:480px){
-      .mobile-nav{top:52px;}
-    }
   </style>
 </head>
 <body>
