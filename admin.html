@@ -1424,21 +1424,26 @@
 
       /* ── Wrapper ── */
       .int-list-wrap { padding-bottom: 90px; background: var(--bg); }
-      .int-list { display: flex; flex-direction: column; gap: 20px; padding: 16px 14px 20px; }
+      .int-list { display: flex !important; flex-direction: column !important; gap: 0 !important; padding: 16px 14px 20px; }
 
       /* ── Card ── */
       .int-list-item {
-        display: block;
-        position: relative;
-        background: var(--bg2);
-        border: 1px solid rgba(255,255,255,.08) !important;
-        border-bottom: 1px solid rgba(255,255,255,.08) !important;
-        border-radius: 14px;
-        overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0,0,0,.45);
-        transition: border-color .15s, box-shadow .15s;
+        display: block !important;
+        position: relative !important;
+        background: var(--bg2) !important;
+        border: 1px solid rgba(255,255,255,.1) !important;
+        border-bottom: 1px solid rgba(255,255,255,.1) !important;
+        border-radius: 14px !important;
+        overflow: hidden !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,.35) !important;
+        transition: border-color .15s, box-shadow .15s !important;
+        margin-bottom: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        grid-template-columns: none !important;
       }
-      .int-list-item:hover { border-color: rgba(184,151,90,.35) !important; box-shadow: 0 4px 24px rgba(0,0,0,.55); }
+      .int-list-item:last-child { margin-bottom: 0 !important; }
+      .int-list-item:hover { border-color: rgba(184,151,90,.35) !important; box-shadow: 0 2px 14px rgba(0,0,0,.45) !important; }
       .int-list-item.is-treated { opacity: .55; }
       .int-list-item.is-treated::after {
         content: ''; position: absolute; left: 0; top: 0; bottom: 0;
