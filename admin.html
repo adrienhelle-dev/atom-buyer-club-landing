@@ -5284,13 +5284,13 @@ function _updateInterestsBadge() {
 function _interestSource(ev) {
   const c = ev.content || {};
   if (ev.type === 'interet_projet') {
-    return { name: c.project_title || c.project_name || 'Projet', link: c.project_slug ? '/projets.html#/' + c.project_slug : (c.project_id ? '/projets.html#/' + c.project_id : null) };
+    return { name: c.project_title || c.project_name || 'Projet', link: c.project_slug ? '/projets#/' + c.project_slug : null };
   }
   if (ev.type === 'showroom_interest') {
-    return { name: c.item_name || c.name || c.slug || 'Réalisation', link: c.slug ? '/showroom.html#/' + c.slug : null };
+    return { name: c.item_name || c.name || c.slug || 'Réalisation', link: c.slug ? '/showroom#/' + c.slug : null };
   }
   if (ev.type === 'showroom_cta') {
-    return { name: c.showroom_slug || c.item_name || 'Showroom', link: c.showroom_slug ? '/showroom.html#/' + c.showroom_slug : '/showroom.html' };
+    return { name: c.showroom_slug || c.item_name || 'Showroom', link: c.showroom_slug ? '/showroom#/' + c.showroom_slug : '/showroom' };
   }
   return { name: '—', link: null };
 }
@@ -5398,16 +5398,7 @@ function _buildInterestRow(ev) {
     <!-- Source projet/réalisation -->
     <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
-      ${(() => {
-        const c = ev.content || {};
-        if (ev.type === 'interet_projet' && c.project_id) {
-          return `<button class="int-source-link" onclick="openProject('${esc(c.project_id)}')">Voir le projet ›</button>`;
-        }
-        if (source.link) {
-          return `<a class="int-source-link" href="${esc(source.link)}" target="_blank">Voir ›</a>`;
-        }
-        return '';
-      })()}
+      ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank" rel="noopener">Voir ›</a>` : ''}
     </div>
 
     <!-- Founder + date (desktop) -->
