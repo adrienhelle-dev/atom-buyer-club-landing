@@ -1319,7 +1319,7 @@
       margin-top: 5px; font-size: 12px; font-weight: 600;
       color: var(--gold); text-decoration: none; cursor: pointer;
       border: 1px solid rgba(184,151,90,.38); border-radius: 20px;
-      padding: 5px 16px; background: rgba(184,151,90,.07);
+      padding: 5px 22px; background: rgba(184,151,90,.07);
       transition: background .15s, border-color .15s;
       font-family: inherit; letter-spacing: .02em; white-space: nowrap;
     }
@@ -1485,7 +1485,7 @@
 
       /* ── Section source ── */
       .int-col.col-source {
-        padding: 9px 14px 10px;
+        padding: 9px 10px 10px 14px;
         display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         border-top: 1px solid rgba(255,255,255,.04);
         background: rgba(255,255,255,.018);
@@ -1497,7 +1497,7 @@
       }
       .int-source-link {
         margin-top: 0; flex-shrink: 0;
-        font-size: 12px; padding: 7px 18px; min-height: 34px;
+        font-size: 12px; padding: 7px 24px; min-height: 34px;
         display: inline-flex; align-items: center;
       }
 
@@ -1518,19 +1518,19 @@
       .int-action-btn:last-child { border-right: none; }
       .int-action-btn:active { background: rgba(255,255,255,.06); }
 
-      /* WA — vert, légèrement plus large */
+      /* WA — vert, même largeur */
       .int-action-btn.wa {
         background: rgba(37,211,102,.05); color: #25d366;
-        flex: 1.6; border-color: var(--border);
+        flex: 1; border-color: var(--border);
       }
       .int-action-btn.wa:hover, .int-action-btn.wa:active { background: rgba(37,211,102,.1); }
 
       /* Email */
       .int-action-btn.mail { color: var(--gold); flex: 1; }
 
-      /* Fiche — visible sur mobile seulement */
+      /* Fiche — visible sur mobile seulement, même largeur */
       .int-fiche-btn {
-        display: flex; flex: 1.4; color: var(--cream);
+        display: flex; flex: 1; color: var(--cream);
         font-size: 12px; font-weight: 500;
         align-items: center; justify-content: center; gap: 4px;
         height: 46px; cursor: pointer;
