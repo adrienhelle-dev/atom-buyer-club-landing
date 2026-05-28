@@ -1315,10 +1315,15 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
     }
     .int-source-link {
-      display: inline-block; margin-top: 2px; font-size: 11px; color: var(--gold);
-      text-decoration: none; opacity: .8;
+      display: inline-flex; align-items: center; gap: 3px;
+      margin-top: 5px; font-size: 11px; font-weight: 600;
+      color: var(--gold); text-decoration: none; cursor: pointer;
+      border: 1px solid rgba(184,151,90,.38); border-radius: 20px;
+      padding: 4px 11px; background: rgba(184,151,90,.07);
+      transition: background .15s, border-color .15s;
+      font-family: inherit; letter-spacing: .02em; white-space: nowrap;
     }
-    .int-source-link:hover { opacity: 1; text-decoration: underline; }
+    .int-source-link:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
     .int-lead-fiche { font-size: 11px; color: var(--gold); cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none; }
     .int-lead-fiche:hover { text-decoration: underline; }
     .tag-chips-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
@@ -1487,7 +1492,7 @@
         font-size: 12px; color: var(--dim); font-weight: 400;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: none; flex: 1;
       }
-      .int-source-link { margin-top: 0; font-size: 11px; flex-shrink: 0; }
+      .int-source-link { margin-top: 0; font-size: 11px; flex-shrink: 0; padding: 5px 12px; min-height: 30px; }
 
       /* ── Barre d'actions ── */
       .int-col.col-actions {
@@ -4630,13 +4635,20 @@ const TL_INFO = {
   }},
   interet_projet: { icon: '⭐', label: (c) => {
     try {
-      const d = JSON.parse(c);
-      if (d.project_id) {
-        const proj = projectsCache.find(p => p.id === d.project_id);
-        return proj ? `Intérêt déclaré — ${proj.title}` : 'Intérêt déclaré — projet';
-      }
+      const d = typeof c === 'string' ? JSON.parse(c) : (c || {});
+      const title = d.project_title || d.project_name || (d.project_id && projectsCache.find(p => p.id === d.project_id)?.title);
+      if (title) return `Intérêt déclaré — ${title}`;
+      if (d.project_id) return 'Intérêt déclaré — projet';
     } catch {}
     return 'Intérêt déclaré sur un projet';
+  }},
+  showroom_interest: { icon: '★', label: (c) => {
+    try {
+      const d = typeof c === 'string' ? JSON.parse(c) : (c || {});
+      const name = d.item_name || d.name || d.slug;
+      if (name) return `Intérêt showroom — ${name}`;
+    } catch {}
+    return 'Intérêt showroom déclaré';
   }},
   rdv:           { icon: '📅', label: (c) => c || 'RDV pris' },
   note:          { icon: '💬', label: (c) => c || 'Note' },
@@ -4644,10 +4656,36 @@ const TL_INFO = {
 async function loadTimeline(leadId) {
   const el = document.getElementById('drawer-timeline');
   if (!el) return;
-  const res = await fetch(`/api/events?lead_id=${leadId}`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) { el.innerHTML = `<span style="color:var(--dim);font-size:12px">Impossible de charger la timeline</span>`; return; }
-  const { events } = await res.json();
-  renderTimeline(events, leadId, el);
+
+  // Load interests cache if not yet fetched (needed for timeline merge)
+  const promises = [fetch(`/api/events?lead_id=${leadId}`, { headers: { Authorization: `Bearer ${token}` } })];
+  if (!interestsLoaded) promises.push(fetch('/api/events?interests=1', { headers: { Authorization: `Bearer ${token}` } }));
+
+  const [evRes, intRes] = await Promise.all(promises);
+  if (!evRes.ok) { el.innerHTML = `<span style="color:var(--dim);font-size:12px">Impossible de charger la timeline</span>`; return; }
+  const { events } = await evRes.json();
+
+  if (intRes) {
+    try { const d = await intRes.json(); interestsCache = d.events || []; interestsLoaded = true; } catch {}
+  }
+
+  // Merge interest events for this lead into the timeline
+  const INTEREST_TYPES = new Set(['interet_projet', 'showroom_interest', 'showroom_cta']);
+  const existingIds = new Set(events.map(e => e.id).filter(Boolean));
+  const leadInterests = interestsCache
+    .filter(ev => INTEREST_TYPES.has(ev.type) && (ev.lead?.id === leadId || ev.lead_id === leadId) && !existingIds.has(ev.id))
+    .map(ev => ({
+      id: ev.id,
+      type: ev.type,
+      content: typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content || {}),
+      created_at: ev.created_at,
+      author: null,
+    }));
+
+  const allEvents = [...events, ...leadInterests]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  renderTimeline(allEvents, leadId, el);
 }
 function renderTimeline(events, leadId, el) {
   if (!events.length) {
@@ -5360,7 +5398,16 @@ function _buildInterestRow(ev) {
     <!-- Source projet/réalisation -->
     <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
-      ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank">Voir →</a>` : ''}
+      ${(() => {
+        const c = ev.content || {};
+        if (ev.type === 'interet_projet' && c.project_id) {
+          return `<button class="int-source-link" onclick="openProject('${esc(c.project_id)}')">Voir le projet ›</button>`;
+        }
+        if (source.link) {
+          return `<a class="int-source-link" href="${esc(source.link)}" target="_blank">Voir ›</a>`;
+        }
+        return '';
+      })()}
     </div>
 
     <!-- Founder + date (desktop) -->
