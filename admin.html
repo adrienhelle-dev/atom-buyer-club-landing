@@ -5195,6 +5195,8 @@ function phoneIntl(tel) {
   if (c.startsWith('+')) return c.slice(1);
   if (c.startsWith('00')) return c.slice(2);
   if (c.startsWith('0')) return '33' + c.slice(1);
+  // Numéro FR sans le 0 initial (ex: 699380075 → 33699380075)
+  if (/^[67]\d{8}$/.test(c)) return '33' + c;
   return c;
 }
 
