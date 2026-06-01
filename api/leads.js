@@ -53,6 +53,11 @@ module.exports = async function handler(req, res) {
 
       if (!Object.keys(updates).length) return res.status(400).json({ error: 'Aucun champ valide' });
 
+      // Toute édition de la fiche = une interaction → on horodate.
+      // Ça réinitialise le compteur de la veille "lead chaud négligé +5j"
+      // (le cron compare updated_at à la fenêtre des N derniers jours).
+      updates.updated_at = new Date().toISOString();
+
       const { error } = await supabase.from('leads').update(updates).eq('id', id);
       if (error) {
         console.error('Patch lead DB error:', error);
