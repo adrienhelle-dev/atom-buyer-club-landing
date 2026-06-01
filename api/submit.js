@@ -6,7 +6,7 @@ const { Resend } = require('resend');
 const TIMING = { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' };
 const FIN    = { comptant: 'Comptant', emprunt: 'Emprunt bancaire' };
 const BUDGET = { 'moins-150k': '< 150 k€', '150-250k': '150–250 k€', '250-400k': '250–400 k€', '400-600k': '400–600 k€', '600k-1m': '600 k€–1 M€', 'plus-1m': '> 1 M€' };
-const SOURCE = { google: 'Google Ads', instagram: 'Instagram Ads', facebook: 'Facebook Ads', meta: 'Meta Ads', email: 'Email', organic: 'Organique', showroom: 'Showroom', projet: 'Page projet', fiche_projet: 'Page projet' };
+const SOURCE = { google: 'Google Ads', instagram: 'Instagram Ads', facebook: 'Facebook Ads', meta: 'Meta Ads', tiktok: 'TikTok Ads', linkedin: 'LinkedIn Ads', bing: 'Bing Ads', email: 'Email', organic: 'Organique', showroom: 'Showroom', projet: 'Page projet', fiche_projet: 'Page projet', projets: 'Page projets', landing: 'Landing directe' };
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -30,14 +30,23 @@ module.exports = async function handler(req, res) {
     accord:      b.accord      || null,
     financement: b.financement || null,
     capacite:    b.capacite    || null,
-    utm_source:  b.utm_source  || null,
+    // ── Attribution first-touch (source ads réelle, sinon nom de page) ──
+    utm_source:  b.utm_source  || b.page || null,
     utm_medium:  b.utm_medium  || null,
     utm_campaign:b.utm_campaign|| null,
     utm_content: b.utm_content || null,
     utm_term:    b.utm_term    || null,
     gclid:       b.gclid       || null,
     fbclid:      b.fbclid      || null,
+    ttclid:      b.ttclid      || null,
+    li_fat_id:   b.li_fat_id   || null,
+    msclkid:     b.msclkid     || null,
     referrer:    b.referrer    || null,
+    landing_page:b.landing_page|| null,
+    // ── Attribution last-touch (dernier canal vu avant conversion) ──
+    last_utm_source:   b.last_utm_source   || null,
+    last_utm_medium:   b.last_utm_medium   || null,
+    last_utm_campaign: b.last_utm_campaign || null,
     ip,
   };
 
@@ -51,18 +60,18 @@ module.exports = async function handler(req, res) {
   let leadId   = null;
   let isUpdate = false;
 
-  const isShowroomCta = b.utm_source === 'showroom';
+  const isShowroomCta = b.page === 'showroom' || b.utm_source === 'showroom';
 
   if (existing) {
     // Pour un lead existant :
-    // 1. On ne touche jamais aux UTMs/source d'acquisition originaux
-    // 2. On n'écrase jamais un champ renseigné avec une valeur null
-    //    (évite de perdre le profiling quand le formulaire ne contient pas tous les champs)
-    const UTM_FIELDS = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid','referrer'];
+    // 1. On ne touche jamais à l'acquisition first-touch (source/UTM/click-ids/landing)
+    // 2. Le last-touch (last_utm_*) EST mis à jour si un nouveau canal est vu
+    // 3. On n'écrase jamais un champ renseigné avec une valeur null
+    const FIRST_TOUCH_FIELDS = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid','ttclid','li_fat_id','msclkid','referrer','landing_page'];
     const safeUpdate = { updated_at: new Date().toISOString() };
     Object.entries(leadData).forEach(([k, v]) => {
-      if (UTM_FIELDS.includes(k)) return;   // jamais écraser l'acquisition originale
-      if (v != null)              safeUpdate[k] = v; // seulement si valeur non-null
+      if (FIRST_TOUCH_FIELDS.includes(k)) return; // jamais écraser l'acquisition originale
+      if (v != null)                     safeUpdate[k] = v; // seulement si valeur non-null
     });
 
     const { error } = await supabase
@@ -89,7 +98,7 @@ module.exports = async function handler(req, res) {
     await supabase.from('lead_events').insert([{
       lead_id: leadId,
       type:    'showroom_cta',
-      content: JSON.stringify({ showroom_slug: b.utm_content || null, item_name: b.showroom_item_name || null }),
+      content: JSON.stringify({ showroom_slug: b.showroom_slug || b.utm_content || null, item_name: b.showroom_item_name || null }),
       author:  null,
     }]);
   }

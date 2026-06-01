@@ -402,6 +402,7 @@
   </div>
 </div>
 
+<script src="/track.js"></script>
 <script>
   const _sp  = new URLSearchParams(location.search);
   const leadId = _sp.get('lead_id') || null;
@@ -708,10 +709,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prenom: sl.prenom, nom: sl.nom, email: sl.email, tel: sl.tel,
-          utm_source: 'showroom', utm_content: currentItem?.slug || null,
+          page: 'showroom',
+          showroom_slug: currentItem?.slug || null,
+          showroom_item_name: currentItem?.name || null,
           project_id: (currentItem?.linked_projects?.[0]?.id) || currentItem?.projet_similaire?.id || null,
-          referrer: location.href,
           ...(leadId ? { lead_id_hint: leadId } : {}),
+          ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
         }),
       }).catch(() => {});
       return;
@@ -753,11 +756,11 @@
 
     const payload = {
       prenom, nom, email, tel,
-      utm_source:       'showroom',
-      utm_content:      currentItem?.slug || null,
+      page: 'showroom',
+      showroom_slug: currentItem?.slug || null,
       showroom_item_name: currentItem?.name || null,
-      project_id:       (currentItem?.linked_projects?.[0]?.id) || currentItem?.projet_similaire?.id || null,
-      referrer:    location.href,
+      project_id: (currentItem?.linked_projects?.[0]?.id) || currentItem?.projet_similaire?.id || null,
+      ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
     };
 
     // Si lead existant (url avec lead_id), on met à jour

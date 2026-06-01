@@ -788,6 +788,7 @@
   </main>
 </div>
 
+<script src="/track.js"></script>
 <script>
 /* ── Zones & arrondissements ───────────────────────────────── */
 const zones    = { paris: true, banlieue: false };
@@ -909,16 +910,7 @@ function validate() {
   return ok;
 }
 
-/* ── UTM capture (on load) ─────────────────────────────────── */
-const _utms = {};
-(function() {
-  const p = new URLSearchParams(window.location.search);
-  ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'].forEach(k => {
-    const v = p.get(k);
-    if (v) { _utms[k] = v; sessionStorage.setItem('utm_' + k, v); }
-    else { const s = sessionStorage.getItem('utm_' + k); if (s) _utms[k] = s; }
-  });
-})();
+/* ── Attribution : capture gérée par /track.js (first-touch + last-touch) ── */
 
 /* ── Submit ────────────────────────────────────────────────── */
 document.getElementById('form').addEventListener('submit', async (e) => {
@@ -943,8 +935,8 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     accord:          document.querySelector('input[name="accord"]:checked')?.value || null,
     financement:     document.querySelector('input[name="financement"]:checked')?.value || null,
     capacite:        document.getElementById('capacite').value || null,
-    referrer:        document.referrer || null,
-    ..._utms,
+    page:            'landing',
+    ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
   };
 
   let isUpdate = false;

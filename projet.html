@@ -370,6 +370,7 @@
   Atom Buyers Club · Paris · <a href="https://join.atombuyerclub.fr">join.atombuyerclub.fr</a>
 </footer>
 
+<script src="/track.js"></script>
 <script>
 const params = new URLSearchParams(window.location.search);
 let slug = params.get('slug');
@@ -502,22 +503,14 @@ async function submitInterest() {
   btn.disabled = true; btn.textContent = 'Envoi…';
   errEl.style.display = 'none';
 
-  const _usp = new URLSearchParams(window.location.search);
-  const getU = k => _usp.get(k) || sessionStorage.getItem('utm_' + k) || null;
   const payload = {
     prenom: document.getElementById('i-prenom').value.trim(),
     nom:    document.getElementById('i-nom').value.trim(),
     email:  document.getElementById('i-email').value.trim(),
     tel:    document.getElementById('i-tel').value.trim(),
-    referrer: window.location.href,
-    utm_source:   getU('utm_source')   || 'fiche_projet',
-    utm_medium:   getU('utm_medium'),
-    utm_campaign: getU('utm_campaign'),
-    utm_content:  getU('utm_content')  || project?.slug || null,
-    utm_term:     getU('utm_term'),
-    gclid:        getU('gclid'),
-    fbclid:       getU('fbclid'),
-    project_id:   project?.id || null,
+    page: 'fiche_projet',
+    project_id: project?.id || null,
+    ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
   };
   const res = await fetch('/api/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
   if (res.ok) {

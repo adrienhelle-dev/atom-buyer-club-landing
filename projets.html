@@ -464,6 +464,7 @@
   </div>
 </div>
 
+<script src="/track.js"></script>
 <script>
   const _sp    = new URLSearchParams(location.search);
   const leadId = _sp.get('lead_id') || null;
@@ -891,10 +892,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prenom: sl.prenom, nom: sl.nom, email: sl.email, tel: sl.tel,
-          utm_source: 'projets',
-          utm_content: currentProj?.slug || null,
-          project_id:  currentProj?.id   || null,
-          referrer: location.href,
+          page: 'projets',
+          project_id: currentProj?.id || null,
+          ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
         }),
       }).catch(() => {});
       return;
@@ -936,10 +936,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prenom, nom, email, tel,
-          utm_source:  'projets',
-          utm_content: currentProj?.slug || null,
-          project_id:  currentProj?.id   || null,
-          referrer: location.href,
+          page: 'projets',
+          project_id: currentProj?.id || null,
+          ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
