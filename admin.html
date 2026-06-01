@@ -4298,6 +4298,23 @@ function openDrawer(lead) {
   const score = computeScore(lead);
   const sc = score >= 8 ? '#4caf7d' : score >= 5 ? '#B8975A' : '#7a7874';
 
+  /* ── Attribution : click IDs présents + last-touch (si différent du first-touch) ── */
+  const _clickIds = [
+    ['Google (gclid)',   lead.gclid],
+    ['Meta (fbclid)',    lead.fbclid],
+    ['TikTok (ttclid)',  lead.ttclid],
+    ['LinkedIn (li_fat_id)', lead.li_fat_id],
+    ['Bing (msclkid)',   lead.msclkid],
+  ].filter(([, v]) => v);
+  const _clickIdRows = _clickIds.map(([k, v]) =>
+    `<div class="drawer-row"><span class="drawer-key">${k}</span><span class="drawer-val" style="font-size:11px;word-break:break-all">${esc(v)}</span></div>`
+  ).join('');
+  const _lastSrc = lead.last_utm_source ? (SRC_LABELS[lead.last_utm_source.toLowerCase()] || lead.last_utm_source) : null;
+  const _lastTouchDiffers = _lastSrc && (
+    (lead.last_utm_source || '') !== (lead.utm_source || '') ||
+    (lead.last_utm_campaign || '') !== (lead.utm_campaign || '')
+  );
+
   document.getElementById('drawer-content').innerHTML = `
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px">
       <h3 class="drawer-title" style="margin:0">${esc(lead.prenom)} ${esc(lead.nom)}</h3>
@@ -4370,13 +4387,24 @@ function openDrawer(lead) {
 
     <div class="drawer-section">
       <p class="drawer-section-label">Tracking campagne</p>
+      <div class="drawer-row" style="align-items:baseline">
+        <span class="drawer-key">Campagne</span>
+        <span class="drawer-val" style="font-weight:600;color:${lead.utm_campaign ? 'var(--gold)' : 'var(--dim)'}">${esc(lead.utm_campaign) || '— (non renseignée)'}</span>
+      </div>
       <div class="drawer-row"><span class="drawer-key">Source</span><span class="drawer-val">${src}</span></div>
       <div class="drawer-row"><span class="drawer-key">Medium</span><span class="drawer-val">${esc(lead.utm_medium) || '—'}</span></div>
-      <div class="drawer-row"><span class="drawer-key">Campagne</span><span class="drawer-val">${esc(lead.utm_campaign) || '—'}</span></div>
       <div class="drawer-row"><span class="drawer-key">Contenu</span><span class="drawer-val">${esc(lead.utm_content) || '—'}</span></div>
-      ${lead.gclid  ? `<div class="drawer-row"><span class="drawer-key">GCLID</span><span class="drawer-val">${esc(lead.gclid)}</span></div>` : ''}
-      ${lead.fbclid ? `<div class="drawer-row"><span class="drawer-key">FBCLID</span><span class="drawer-val">${esc(lead.fbclid)}</span></div>` : ''}
-      <div class="drawer-row"><span class="drawer-key">Référent</span><span class="drawer-val">${esc(lead.referrer) || '—'}</span></div>
+      ${lead.utm_term ? `<div class="drawer-row"><span class="drawer-key">Terme</span><span class="drawer-val">${esc(lead.utm_term)}</span></div>` : ''}
+      ${lead.landing_page ? `<div class="drawer-row"><span class="drawer-key">Page d'entrée</span><span class="drawer-val" style="font-size:11px;word-break:break-all">${esc(lead.landing_page)}</span></div>` : ''}
+      ${_clickIdRows}
+      <div class="drawer-row"><span class="drawer-key">Référent</span><span class="drawer-val" style="font-size:11px;word-break:break-all">${esc(lead.referrer) || '—'}</span></div>
+      ${_lastTouchDiffers ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(184,151,90,.25)">
+        <p style="margin:0 0 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Dernier canal avant conversion</p>
+        <div class="drawer-row"><span class="drawer-key">Source</span><span class="drawer-val">${esc(_lastSrc)}</span></div>
+        ${lead.last_utm_medium   ? `<div class="drawer-row"><span class="drawer-key">Medium</span><span class="drawer-val">${esc(lead.last_utm_medium)}</span></div>` : ''}
+        ${lead.last_utm_campaign ? `<div class="drawer-row"><span class="drawer-key">Campagne</span><span class="drawer-val">${esc(lead.last_utm_campaign)}</span></div>` : ''}
+      </div>` : ''}
     </div>
 
     <div class="drawer-section">
