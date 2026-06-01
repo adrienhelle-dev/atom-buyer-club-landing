@@ -19,11 +19,48 @@ module.exports = async function handler(req, res) {
 
     // ─── GET public — liste ou item unique (pas d'auth requise) ────
     if (req.method === 'GET') {
-      const { slug, id, admin, projet_id } = req.query;
+      const { slug, id, admin, projet_id, bridge } = req.query;
 
       // Auth optionnelle : si token valide → tous les items, sinon publiés seulement
       const payload = verifyToken(tokenFromReq(req));
       const isAdmin = !!payload;
+
+      // ── Pont (admin) : asset lié + leads intéressés pour une réalisation ──
+      // bridge = id du showroom_item ; slug requis pour retrouver les leads intéressés.
+      if (bridge) {
+        if (!isAdmin) return res.status(401).json({ error: 'Non autorisé' });
+
+        // Asset(s) issu(s) de cette réalisation (table assets, base partagée)
+        const { data: assets } = await supabase
+          .from('assets')
+          .select('id, nickname, address, status, monthly_rent, segment')
+          .eq('showroom_item_id', bridge);
+
+        // Leads qui se sont déclarés intéressés par cette réalisation
+        let interested = [];
+        if (slug) {
+          const { data: evs } = await supabase
+            .from('lead_events')
+            .select('lead_id, type, created_at')
+            .in('type', ['showroom_interest', 'showroom_cta'])
+            .ilike('content', `%"${slug}"%`)
+            .order('created_at', { ascending: false });
+          const leadIds = [...new Set((evs || []).map(e => e.lead_id).filter(Boolean))];
+          if (leadIds.length) {
+            const { data: leads } = await supabase
+              .from('leads')
+              .select('id, prenom, nom, email, tel, status')
+              .in('id', leadIds);
+            interested = leads || [];
+          }
+        }
+
+        return res.status(200).json({
+          asset: (assets && assets[0]) || null,
+          assets: assets || [],
+          interested_leads: interested,
+        });
+      }
 
       // ── Reverse-lookup : showroom items liés à un projet ──────────
       if (projet_id) {

@@ -2390,6 +2390,9 @@
           <p style="margin:0 0 8px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)">Aperçu couverture</p>
           <img id="sr-cover-img" src="" alt="cover"/>
         </div>
+
+        <!-- Pont : asset lié + leads intéressés (réalisation existante uniquement) -->
+        <div id="sr-bridge" style="display:none;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)"></div>
       </aside>
     </div>
   </div>
@@ -5909,6 +5912,7 @@ function resetShowroomForm() {
   });
   _srLinkedProjectIds = [];
   _srRenderLinkedChips();
+  { const b = document.getElementById('sr-bridge'); if (b) { b.style.display = 'none'; b.innerHTML = ''; } }
   srAfterImages = []; srBeforeImages = [];
   renderSrImageGrid('after'); renderSrImageGrid('before');
   // Réinitialiser le champ cover en mode "auto"
@@ -5988,6 +5992,70 @@ function populateShowroomForm(item) {
   recalcSr();
   updateSrCoverPreview();
   setSrBtnDirty(false);
+  loadShowroomBridge(item);
+}
+
+// Ouvre le drawer d'un lead à partir de son id (cache si dispo, sinon fetch).
+async function openLeadById(id) {
+  if (!id) return;
+  const cached = leadsCache.find(l => l.id === id);
+  if (cached) { openDrawer(cached); return; }
+  try {
+    const res = await fetch(`/api/leads?id=${encodeURIComponent(id)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('http');
+    const d = await res.json();
+    if (d.lead) openDrawer(d.lead);
+  } catch {
+    alert('Impossible de charger ce lead.');
+  }
+}
+
+// ── Pont : charge l'asset lié + les leads intéressés et rend l'encart ──────────
+const ASSETS_ADMIN_BASE = 'https://atombuyersclub.fr/admin/assets';
+async function loadShowroomBridge(item) {
+  const box = document.getElementById('sr-bridge');
+  if (!box) return;
+  if (!item?.id) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = `<p style="margin:0;font-size:12px;color:var(--dim)">Chargement du pont…</p>`;
+  try {
+    const res = await fetch(`/api/showroom?bridge=${encodeURIComponent(item.id)}&slug=${encodeURIComponent(item.slug || '')}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('http');
+    const d = await res.json();
+    const asset = d.asset;
+    const leads = d.interested_leads || [];
+
+    const assetBlock = asset
+      ? `<a href="${ASSETS_ADMIN_BASE}/${esc(asset.id)}" target="_blank" rel="noopener noreferrer"
+            style="display:block;padding:10px 12px;border-radius:4px;text-decoration:none;
+                   background:rgba(76,175,125,.1);border:1px solid rgba(76,175,125,.3)">
+           <span style="font-size:11px;color:#4caf7d;font-weight:600">● Devenu un asset</span><br>
+           <span style="font-size:13px;color:var(--cream)">${esc(asset.nickname || asset.address || 'Voir les perfs')} →</span>
+         </a>`
+      : `<p style="margin:0;font-size:12px;color:var(--dim)">Pas encore lié à un asset. Le lien se fait depuis l'app Assets.</p>`;
+
+    const leadsBlock = leads.length
+      ? `<p style="margin:14px 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold)">
+           ${leads.length} lead${leads.length > 1 ? 's' : ''} intéressé${leads.length > 1 ? 's' : ''}</p>
+         <div style="display:flex;flex-direction:column;gap:4px">
+           ${leads.slice(0, 8).map(l =>
+             `<button type="button" onclick="openLeadById('${esc(l.id)}')"
+                style="text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:4px;
+                       padding:7px 10px;cursor:pointer;color:var(--cream);font-size:12px">
+                ${esc(l.prenom || '')} ${esc(l.nom || '')}
+              </button>`).join('')}
+         </div>
+         ${leads.length > 8 ? `<p style="margin:6px 0 0;font-size:11px;color:var(--dim)">+ ${leads.length - 8} autre(s)</p>` : ''}`
+      : `<p style="margin:14px 0 0;font-size:12px;color:var(--dim)">Aucun lead n'a encore déclaré d'intérêt pour cette réalisation.</p>`;
+
+    box.innerHTML = `<p style="margin:0 0 10px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)">Pont</p>${assetBlock}${leadsBlock}`;
+  } catch {
+    box.innerHTML = `<p style="margin:0;font-size:12px;color:var(--red)">Pont indisponible</p>`;
+  }
 }
 
 let _srLinkedProjectIds = [];
