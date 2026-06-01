@@ -45,11 +45,11 @@ module.exports = async function handler(req, res) {
       }
 
       // Issue du deal : si on renseigne l'issue sans date, on date la signature à maintenant.
+      // Toute signature rapporte une commission (managed OU commission), donc on
+      // ne nettoie jamais le montant : un deal "géré par Atom" a aussi sa commission.
       if ('deal_outcome' in updates && !('deal_closed_at' in updates)) {
         updates.deal_closed_at = new Date().toISOString();
       }
-      // Une commission n'a de sens que pour l'issue 'commission' ; sinon on nettoie le montant.
-      if (updates.deal_outcome === 'managed') updates.commission_amount = null;
 
       if (!Object.keys(updates).length) return res.status(400).json({ error: 'Aucun champ valide' });
 
@@ -104,19 +104,19 @@ module.exports = async function handler(req, res) {
       const map = {};
       (data || []).forEach(l => {
         const key = (l.utm_campaign && String(l.utm_campaign).trim()) || '(sans campagne)';
-        if (!map[key]) map[key] = { campaign: key, leads: 0, commission: 0, commission_amount: 0, managed: 0 };
+        if (!map[key]) map[key] = { campaign: key, leads: 0, commission_only: 0, managed: 0, commission_amount: 0 };
         const m = map[key];
         m.leads++;
-        if (l.deal_outcome === 'commission') {
-          m.commission++;
+        // Toute signature (managed OU commission) rapporte une commission → on somme le €.
+        if (l.deal_outcome === 'commission' || l.deal_outcome === 'managed') {
           m.commission_amount += Number(l.commission_amount) || 0;
-        } else if (l.deal_outcome === 'managed') {
-          m.managed++;
+          if (l.deal_outcome === 'managed') m.managed++;
+          else m.commission_only++;
         }
       });
-      // Tri : campagnes avec conversions d'abord, puis par volume de leads.
+      // Tri : campagnes avec signatures d'abord, puis par volume de leads.
       const rows = Object.values(map).sort((a, b) =>
-        (b.commission + b.managed) - (a.commission + a.managed) || b.leads - a.leads);
+        (b.commission_only + b.managed) - (a.commission_only + a.managed) || b.leads - a.leads);
       return res.status(200).json({ campaigns: rows });
     }
 

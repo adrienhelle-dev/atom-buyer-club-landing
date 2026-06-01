@@ -4496,7 +4496,9 @@ function dealOutcomeBody(lead) {
   };
   const amount = (lead.commission_amount != null && lead.commission_amount !== '')
     ? lead.commission_amount : DEAL_COMMISSION_DEFAULT;
-  const commissionField = out === 'commission'
+  // La commission existe dans LES DEUX cas (géré par Atom OU commission seule) :
+  // toute signature rapporte une commission. Le champ s'affiche dès qu'une issue est choisie.
+  const commissionField = out
     ? `<div style="margin-top:10px;display:flex;align-items:center;gap:8px">
          <span style="font-size:13px;color:var(--dim);white-space:nowrap">Commission</span>
          <input type="number" id="commission-input" value="${esc(String(amount))}" min="0" step="100"
@@ -4504,9 +4506,10 @@ function dealOutcomeBody(lead) {
            style="flex:1;padding:8px 10px;border-radius:2px;border:1px solid rgba(255,255,255,.14);
                   background:rgba(255,255,255,.04);color:var(--cream);font-size:13px">
          <span style="font-size:13px;color:var(--dim)">€</span>
-       </div>`
+       </div>
+       ${out === 'managed' ? `<p style="margin:6px 0 0;font-size:11px;color:#4caf7d">+ Gestion Atom → suivi des loyers dans l'app Assets</p>` : ''}`
     : '';
-  return `<div style="display:flex;gap:8px">${btn('managed', 'Géré par Atom')}${btn('commission', 'Commission')}</div>${commissionField}`;
+  return `<div style="display:flex;gap:8px">${btn('managed', 'Géré par Atom')}${btn('commission', 'Commission seule')}</div>${commissionField}`;
 }
 
 // Bascule l'affichage de la section selon le statut courant.
@@ -4516,11 +4519,12 @@ function toggleDealOutcomeSection(status) {
 }
 
 async function setDealOutcome(id, outcome) {
+  // Toute signature rapporte une commission : on initialise le montant par défaut
+  // si absent, quel que soit le type d'issue (géré par Atom OU commission seule).
   const body = { deal_outcome: outcome };
-  if (outcome === 'commission') {
-    const lead = leadsCache.find(l => l.id === id);
-    if (lead?.commission_amount == null) body.commission_amount = DEAL_COMMISSION_DEFAULT;
-  }
+  const existing = leadsCache.find(l => l.id === id);
+  if (existing?.commission_amount == null) body.commission_amount = DEAL_COMMISSION_DEFAULT;
+
   const res = await fetch(`/api/leads?id=${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -4532,8 +4536,7 @@ async function setDealOutcome(id, outcome) {
   const lead = leadsCache.find(l => l.id === id);
   if (lead) {
     lead.deal_outcome = outcome;
-    if (outcome === 'managed') lead.commission_amount = null;
-    else if (lead.commission_amount == null) lead.commission_amount = DEAL_COMMISSION_DEFAULT;
+    if (lead.commission_amount == null) lead.commission_amount = DEAL_COMMISSION_DEFAULT;
   }
   if (currentLead?.id === id) {
     currentLead.deal_outcome = lead ? lead.deal_outcome : outcome;
@@ -4806,8 +4809,9 @@ const TL_INFO = {
   resoumission:  { icon: '🔄', label: ()  => 'Dossier mis à jour' },
   status_change: { icon: '🏷', label: (c) => { try { const d=JSON.parse(c); return 'Statut → '+(STATUS_OPTS.find(o=>o.v===d.status)?.l||d.status); } catch { return 'Changement de statut'; } } },
   deal_outcome:  { icon: '🤝', label: (c) => { try { const d=JSON.parse(c);
-    if (d.outcome === 'commission') return `Issue → Commission${d.commission_amount != null ? ' ('+Number(d.commission_amount).toLocaleString('fr-FR')+' €)' : ''}`;
-    if (d.outcome === 'managed')    return 'Issue → Géré par Atom';
+    const eur = d.commission_amount != null ? ' ('+Number(d.commission_amount).toLocaleString('fr-FR')+' €)' : '';
+    if (d.outcome === 'commission') return `Issue → Commission seule${eur}`;
+    if (d.outcome === 'managed')    return `Issue → Géré par Atom${eur}`;
     return 'Issue du deal'; } catch { return 'Issue du deal'; } } },
   fiche_envoyee: { icon: '📄', label: (c) => { try { const d=JSON.parse(c); return 'Fiche envoyée — '+(d.title||d.titre||'projet'); } catch { return 'Fiche envoyée'; } } },
   appel:         { icon: '📞', label: () => 'Appel téléphonique' },
@@ -5472,12 +5476,12 @@ async function loadCampaignStats() {
     const res = await fetch('/api/leads?stats=campaigns', { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error('http');
     const d = await res.json();
-    const rows = (d.campaigns || []).filter(c => c.commission > 0 || c.managed > 0);
+    const rows = (d.campaigns || []).filter(c => c.commission_only > 0 || c.managed > 0);
     if (!rows.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
 
-    const totCom   = rows.reduce((s, c) => s + c.commission, 0);
-    const totEur   = rows.reduce((s, c) => s + c.commission_amount, 0);
-    const totMan   = rows.reduce((s, c) => s + c.managed, 0);
+    const totSigned = rows.reduce((s, c) => s + c.commission_only + c.managed, 0);
+    const totEur    = rows.reduce((s, c) => s + c.commission_amount, 0);
+    const totMan    = rows.reduce((s, c) => s + c.managed, 0);
     const eur = n => new Intl.NumberFormat('fr-FR').format(Math.round(n || 0)) + ' €';
 
     box.style.display = 'block';
@@ -5486,18 +5490,19 @@ async function loadCampaignStats() {
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border)">
           <span style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)">Conversions par campagne</span>
           <span style="font-size:12px;color:var(--cream)">
-            <strong style="color:var(--gold)">${totCom}</strong> commission${totCom > 1 ? 's' : ''} (${eur(totEur)})
-            · <strong style="color:#4caf7d">${totMan}</strong> asset${totMan > 1 ? 's' : ''} géré${totMan > 1 ? 's' : ''}
+            <strong style="color:var(--gold)">${totSigned}</strong> signé${totSigned > 1 ? 's' : ''} · <strong style="color:var(--gold)">${eur(totEur)}</strong> de commissions
+            · dont <strong style="color:#4caf7d">${totMan}</strong> géré${totMan > 1 ? 's' : ''} par Atom
           </span>
         </div>
         <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;min-width:480px;font-size:13px">
+          <table style="width:100%;border-collapse:collapse;min-width:560px;font-size:13px">
             <thead>
               <tr style="background:var(--bg3)">
                 <th style="text-align:left;padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)">Campagne</th>
                 <th style="text-align:right;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)">Leads</th>
-                <th style="text-align:right;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)">Commissions</th>
-                <th style="text-align:right;padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#4caf7d">Assets</th>
+                <th style="text-align:right;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)">Commission seule</th>
+                <th style="text-align:right;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#4caf7d">Gérés Atom</th>
+                <th style="text-align:right;padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)">Commissions €</th>
               </tr>
             </thead>
             <tbody>
@@ -5505,8 +5510,9 @@ async function loadCampaignStats() {
                 <tr style="border-top:1px solid var(--border)">
                   <td style="padding:9px 16px;color:var(--cream)">${esc(c.campaign)}</td>
                   <td style="padding:9px 12px;text-align:right;color:var(--dim)">${c.leads}</td>
-                  <td style="padding:9px 12px;text-align:right;color:var(--gold)">${c.commission ? `${c.commission} · ${eur(c.commission_amount)}` : '—'}</td>
-                  <td style="padding:9px 16px;text-align:right;color:#4caf7d">${c.managed || '—'}</td>
+                  <td style="padding:9px 12px;text-align:right;color:var(--cream)">${c.commission_only || '—'}</td>
+                  <td style="padding:9px 12px;text-align:right;color:#4caf7d">${c.managed || '—'}</td>
+                  <td style="padding:9px 16px;text-align:right;color:var(--gold)">${eur(c.commission_amount)}</td>
                 </tr>`).join('')}
             </tbody>
           </table>
