@@ -1,5 +1,6 @@
 const { supabase } = require('../lib/supabase');
 const { getFounder } = require('../lib/founders');
+const { notifyInterest } = require('../lib/notify');
 
 // Champs exposés publiquement (jamais d'infos internes)
 // responsible_admin est chargé côté serveur uniquement pour dériver wa_contact
@@ -48,6 +49,13 @@ module.exports = async function handler(req, res) {
         content: JSON.stringify({ project_id, project_title: project_title || null }),
         author:  null,
       }]);
+
+      // Notif Telegram — fail-safe (charge le lead pour avoir nom + tél)
+      try {
+        const { data: lead } = await supabase
+          .from('leads').select('prenom, nom, tel').eq('id', lead_id).maybeSingle();
+        if (lead) await notifyInterest(lead, `Projet — ${project_title || 'projet'}`);
+      } catch (e) { console.error('Telegram intérêt (projets_page) erreur:', e?.message || e); }
 
       return res.status(200).json({ ok: true });
     }
