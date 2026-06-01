@@ -712,7 +712,8 @@
           page: 'showroom',
           showroom_slug: currentItem?.slug || null,
           showroom_item_name: currentItem?.name || null,
-          project_id: (currentItem?.linked_projects?.[0]?.id) || currentItem?.projet_similaire?.id || null,
+          // Pas de project_id : une demande sur une réalisation reste attribuée
+          // à la réalisation (showroom_cta), jamais au projet équivalent.
           ...(leadId ? { lead_id_hint: leadId } : {}),
           ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
         }),
@@ -759,7 +760,8 @@
       page: 'showroom',
       showroom_slug: currentItem?.slug || null,
       showroom_item_name: currentItem?.name || null,
-      project_id: (currentItem?.linked_projects?.[0]?.id) || currentItem?.projet_similaire?.id || null,
+      // Pas de project_id : une demande sur une réalisation reste attribuée
+      // à la réalisation (showroom_cta), jamais au projet équivalent.
       ...(window.AtomTrack ? window.AtomTrack.payload() : {}),
     };
 

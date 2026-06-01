@@ -5550,7 +5550,7 @@ async function loadCampaignStats() {
 }
 
 function _updateInterestsBadge() {
-  const untreated = _visibleInterests().filter(ev => ev.lead && !ev.content?.treated).length;
+  const untreated = interestsCache.filter(ev => ev.lead && !ev.content?.treated).length;
   const badge = document.getElementById('interets-tab-badge');
   if (!badge) return;
   if (untreated > 0) {
@@ -5579,41 +5579,12 @@ function _interestSource(ev) {
   return { name: '—', link: null };
 }
 
-// Dans l'onglet Intérêts : un clic sur une réalisation liée à un projet crée
-// 2 events (showroom_cta + interet_projet). On masque l'intérêt réalisation
-// quand il est jumelé à un intérêt projet du même lead (même soumission) → on
-// ne garde QUE l'intérêt projet. Le lien réalisation→projet, la timeline et la
-// donnée restent intacts ; c'est purement l'affichage de cet onglet.
-function _pairedShowroomInterestIds() {
-  const projTimes = {}; // lead_id -> [timestamps des interet_projet]
-  interestsCache.forEach(ev => {
-    if (ev.type === 'interet_projet') {
-      const lid = ev.lead_id || ev.lead?.id;
-      if (lid) (projTimes[lid] = projTimes[lid] || []).push(new Date(ev.created_at).getTime());
-    }
-  });
-  const paired = new Set();
-  interestsCache.forEach(ev => {
-    if (ev.type === 'showroom_cta' || ev.type === 'showroom_interest') {
-      const lid = ev.lead_id || ev.lead?.id;
-      if (!lid) return;
-      const t = new Date(ev.created_at).getTime();
-      if ((projTimes[lid] || []).some(pt => Math.abs(pt - t) <= 60000)) paired.add(ev.id);
-    }
-  });
-  return paired;
-}
-function _visibleInterests() {
-  const paired = _pairedShowroomInterestIds();
-  return interestsCache.filter(ev => !paired.has(ev.id));
-}
-
 function _filteredInterests() {
   const typeF    = document.getElementById('int-type-filter')?.value    || '';
   const statusF  = document.getElementById('int-status-filter')?.value  || '';
   const founderF = document.getElementById('int-founder-filter')?.value || '';
 
-  return _visibleInterests().filter(ev => {
+  return interestsCache.filter(ev => {
     if (!ev.lead) return false; // masquer les fantômes sans lead
     if (typeF && ev.type !== typeF) return false;
     const treated = !!(ev.content?.treated);
@@ -5628,12 +5599,11 @@ function _filteredInterests() {
 function renderInterestsTable() {
   const items = _filteredInterests();
 
-  // Stats — sur la base dédupliquée (mêmes règles que la liste)
-  const visible   = _visibleInterests();
-  const total     = visible.filter(ev => ev.lead).length;
-  const untreated = visible.filter(ev => ev.lead && !ev.content?.treated).length;
-  const projetCt  = visible.filter(ev => ev.lead && ev.type === 'interet_projet').length;
-  const srCt      = visible.filter(ev => ev.lead && (ev.type === 'showroom_interest' || ev.type === 'showroom_cta')).length;
+  // Stats
+  const total     = interestsCache.filter(ev => ev.lead).length;
+  const untreated = interestsCache.filter(ev => ev.lead && !ev.content?.treated).length;
+  const projetCt  = interestsCache.filter(ev => ev.lead && ev.type === 'interet_projet').length;
+  const srCt      = interestsCache.filter(ev => ev.lead && (ev.type === 'showroom_interest' || ev.type === 'showroom_cta')).length;
   const setS = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   setS('int-s-total', total);
   setS('int-s-untreated', untreated);
