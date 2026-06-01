@@ -1,6 +1,7 @@
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq, ADMIN_EMAILS } = require('../lib/auth');
 const { getFounder } = require('../lib/founders');
+const { notifyInterest } = require('../lib/notify');
 const { Resend } = require('resend');
 
 const WRITE_FIELDS = [
@@ -206,6 +207,10 @@ module.exports = async function handler(req, res) {
             }
           }
         }
+
+        // Notif Telegram (indépendante de l'email) — fail-safe
+        try { await notifyInterest(lead, `Réalisation — ${item_name || slug || 'showroom'}`); }
+        catch (e) { console.error('Telegram showroom interest erreur:', e?.message || e); }
 
         return res.status(200).json({ ok: true });
       }

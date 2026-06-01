@@ -13,6 +13,9 @@
       "maxDuration": 30
     }
   },
+  "crons": [
+    { "path": "/api/cron/stale-hot-leads", "schedule": "0 7 * * *" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

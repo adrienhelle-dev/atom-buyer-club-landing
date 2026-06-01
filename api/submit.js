@@ -1,6 +1,8 @@
 const { supabase } = require('../lib/supabase');
 const { ADMIN_EMAILS } = require('../lib/auth');
 const { getFounder } = require('../lib/founders');
+const { computeScore } = require('../lib/scoring');
+const { notifyHotLead, notifyInterest } = require('../lib/notify');
 const { Resend } = require('resend');
 
 const TIMING = { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' };
@@ -157,6 +159,10 @@ module.exports = async function handler(req, res) {
         }
       }
     }
+
+    // Notif Telegram (indépendante de l'email) — fail-safe
+    try { await notifyInterest(leadData, `Projet — ${proj?.title || 'projet'}`); }
+    catch (e) { console.error('Telegram intérêt erreur:', e?.message || e); }
   }
 
   // ── Email hot lead (nouveau lead comptant + asap) ──────────────
@@ -181,6 +187,16 @@ module.exports = async function handler(req, res) {
       } catch (e) {
         console.error('Hot lead email erreur:', e?.message || e);
       }
+    }
+  }
+
+  // ── Notif Telegram lead chaud (score ≥ 8, nouveau lead hors intérêt projet) ──
+  // L'intérêt projet a déjà sa propre notif ci-dessus → on évite le doublon.
+  if (!isUpdate && !projectId) {
+    const score = computeScore(leadData);
+    if (score >= 8) {
+      try { await notifyHotLead(leadData, score); }
+      catch (e) { console.error('Telegram hot lead erreur:', e?.message || e); }
     }
   }
 
