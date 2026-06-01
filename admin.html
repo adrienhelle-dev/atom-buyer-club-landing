@@ -1650,11 +1650,11 @@
     <div class="toolbar-filters">
       <!-- Vue viewer : sélecteur en 1ère position pour être visible en premier sur mobile -->
       <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
-        <option value="hot">🔥 Leads chauds</option>
-        <option value="all">Tous les leads</option>
+        <option value="hot">🔥 Chauds</option>
+        <option value="all">Tous</option>
       </select>
       <select class="filter-select" id="src-filter" onchange="loadLeads(1)">
-        <option value="">Toutes les sources</option>
+        <option value="">Source</option>
         <option value="google">Google Ads</option>
         <option value="instagram">Instagram</option>
         <option value="facebook">Facebook</option>
@@ -1665,7 +1665,7 @@
         <option value="organic">Organique</option>
       </select>
       <select class="filter-select" id="status-filter" onchange="loadLeads(1)">
-        <option value="">Tous les statuts</option>
+        <option value="">Statut</option>
         <option value="nouveau">Nouveau</option>
         <option value="contacte">Contacté</option>
         <option value="en_cours">En cours</option>
@@ -1674,7 +1674,7 @@
         <option value="perdu">Non retenu</option>
       </select>
       <select class="filter-select" id="founder-filter" onchange="applyFounderFilter()">
-        <option value="">Tous responsables</option>
+        <option value="">Responsable</option>
         <option value="adrien.helle@atom-capital.fr">Adrien</option>
         <option value="alexandre.kiman@atom-capital.fr">Alexandre</option>
         <option value="thierry.vignal@atom-capital.fr">Thierry</option>
