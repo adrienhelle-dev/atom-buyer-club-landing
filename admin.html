@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Admin · Atom Buyers Club</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -2959,12 +2959,27 @@ async function loadProjects() {
   const params = new URLSearchParams();
   const search = document.getElementById('projects-search')?.value.trim() || '';
   if (search) params.set('search', search);
-  const res = await fetch(`/api/projects?${params}`, { headers: { Authorization: `Bearer ${token}` } });
-  if (res.status === 401) { logout(); return; }
-  const { projects } = await res.json();
-  projectsCache = projects || [];
-  updateProjectTabCounts();
-  renderProjectsFiltered();
+
+  container.innerHTML = `<div class="projects-empty"><div class="projects-empty-sub">Chargement des projets…</div></div>`;
+
+  try {
+    const res = await fetch(`/api/projects?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { projects } = await res.json();
+    projectsCache = projects || [];
+    updateProjectTabCounts();
+    renderProjectsFiltered();
+  } catch (err) {
+    console.error('loadProjects error', err);
+    container.innerHTML = `
+      <div class="projects-empty">
+        <div class="projects-empty-icon">⚠️</div>
+        <div class="projects-empty-title" style="color:var(--red)">Impossible de charger les projets</div>
+        <div class="projects-empty-sub">${esc(err.message || 'erreur réseau')}</div>
+        <button class="btn-new-project" onclick="loadProjects()">Réessayer</button>
+      </div>`;
+  }
 }
 
 function setProjectTab(status) {
@@ -4119,22 +4134,37 @@ async function loadLeads(page) {
   const source = document.getElementById('src-filter').value;
   const status = document.getElementById('status-filter').value;
 
-  const params = new URLSearchParams({ page, pageSize: 500 });
+  const params = new URLSearchParams({ page, pageSize: 1000 });
   if (search) params.set('search', search);
   if (source) params.set('source', source);
   if (status) params.set('status', status);
 
-  const res = await fetch(`/api/leads?${params}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  // État de chargement
+  const tbody = document.getElementById('leads-body');
+  tbody.innerHTML = `<tr><td colspan="12" class="table-msg">Chargement des leads…</td></tr>`;
 
-  if (res.status === 401) { logout(); return; }
-  const { leads, total } = await res.json();
+  try {
+    const res = await fetch(`/api/leads?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  totalLeads = total;
-  renderStats(leads, total);
-  renderTable(leads);
-  renderPagination(page, total, 500);
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const { leads, total } = await res.json();
+
+    totalLeads = total;
+    renderStats(leads, total);
+    renderTable(leads);
+    renderPagination(page, total, leads ? leads.length : 0);
+  } catch (err) {
+    console.error('loadLeads error', err);
+    tbody.innerHTML = `<tr><td colspan="12" class="table-msg" style="color:var(--red)">
+      Impossible de charger les leads (${esc(err.message || 'erreur réseau')}).
+      <button onclick="loadLeads(${page})" style="margin-left:10px;background:rgba(184,151,90,.15);color:var(--gold);border:1px solid rgba(184,151,90,.3);border-radius:6px;padding:4px 12px;cursor:pointer">Réessayer</button>
+    </td></tr>`;
+    document.getElementById('page-info').textContent = '';
+  }
 }
 
 function renderStats(leads, total) {
@@ -4209,9 +4239,15 @@ function renderTable(leads) {
   });
 }
 
-function renderPagination(page, total, pageSize) {
-  // Affiche juste le total, pas de boutons de pagination
-  document.getElementById('page-info').textContent = `${total} lead${total > 1 ? 's' : ''}`;
+function renderPagination(page, total, shown) {
+  // Pas de boutons de pagination : on charge tout (jusqu'à 1000).
+  // Garde-fou : si on en affiche moins que le total, on alerte (limite atteinte).
+  const info = document.getElementById('page-info');
+  if (shown < total) {
+    info.innerHTML = `<span style="color:var(--gold)">⚠ ${shown} affichés sur ${total}</span> — limite atteinte, pagination à activer`;
+  } else {
+    info.textContent = `${total} lead${total > 1 ? 's' : ''}`;
+  }
   document.getElementById('page-btns').innerHTML = '';
 }
 
@@ -5635,12 +5671,21 @@ let srBeforeImages = [];  // [{url:..., path:...}]
 async function loadShowroom() {
   const grid = document.getElementById('showroom-grid');
   grid.innerHTML = '<p style="color:var(--dim);padding:20px">Chargement…</p>';
-  const res  = await fetch('/api/showroom', { headers: { Authorization: `Bearer ${token}` } });
-  if (res.status === 401) { logout(); return; }
-  const { items } = await res.json();
-  showroomCache = items || [];
-  renderShowroomGrid();
-  await loadAvailableProjects(); // pour le dropdown matching
+  try {
+    const res  = await fetch('/api/showroom', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { items } = await res.json();
+    showroomCache = items || [];
+    renderShowroomGrid();
+    await loadAvailableProjects(); // pour le dropdown matching
+  } catch (err) {
+    console.error('loadShowroom error', err);
+    grid.innerHTML = `<p style="color:var(--red);padding:20px">
+      Impossible de charger le showroom (${esc(err.message || 'erreur réseau')}).
+      <button onclick="loadShowroom()" style="margin-left:8px;background:rgba(184,151,90,.15);color:var(--gold);border:1px solid rgba(184,151,90,.3);border-radius:6px;padding:4px 12px;cursor:pointer">Réessayer</button>
+    </p>`;
+  }
 }
 
 let srActiveTab = '';

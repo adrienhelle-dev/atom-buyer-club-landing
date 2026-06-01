@@ -77,7 +77,9 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ lead: data });
     }
     const page     = Math.max(1, parseInt(req.query.page)     || 1);
-    const pageSize = Math.min(100, parseInt(req.query.pageSize) || 50);
+    // Plafond relevé à 1000 : l'admin charge tout d'un coup (tri/score côté client).
+    // Au-delà, il faudra une vraie pagination + tri serveur.
+    const pageSize = Math.min(1000, parseInt(req.query.pageSize) || 50);
     const source   = req.query.source   || null;
     const search   = req.query.search   || null;
     const status   = req.query.status   || null;
