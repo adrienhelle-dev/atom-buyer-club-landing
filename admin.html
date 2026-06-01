@@ -1673,6 +1673,13 @@
         <option value="signe">Signé</option>
         <option value="perdu">Non retenu</option>
       </select>
+      <select class="filter-select" id="founder-filter" onchange="applyFounderFilter()">
+        <option value="">Tous responsables</option>
+        <option value="adrien.helle@atom-capital.fr">Adrien</option>
+        <option value="alexandre.kiman@atom-capital.fr">Alexandre</option>
+        <option value="thierry.vignal@atom-capital.fr">Thierry</option>
+        <option value="_none">Non assigné</option>
+      </select>
     </div>
   </div>
 
@@ -2796,6 +2803,7 @@ let currentLead       = null;
 let editingProjectId  = null;
 let isViewerMode      = false;   // true pour Thierry & Alexandre → filtre score ≥ 8 par défaut
 let scoreMinFilter    = 0;       // 0 = pas de filtre, 8 = leads chauds seulement
+let founderFilter     = '';      // '' = tous, email = responsable, '_none' = non assigné
 
 /* ── Auth ─────────────────────────────────────────────────── */
 
@@ -2902,6 +2910,11 @@ function showDashboard(email, isViewer, role = 'admin') {
 function applyScoreViewFilter() {
   const sel = document.getElementById('score-view-filter');
   scoreMinFilter = sel?.value === 'hot' ? 8 : 0;
+  renderTable(leadsCache);
+}
+
+function applyFounderFilter() {
+  founderFilter = document.getElementById('founder-filter')?.value || '';
   renderTable(leadsCache);
 }
 
@@ -4199,15 +4212,20 @@ function renderTable(leads) {
   let filtered = scoreMinFilter > 0
     ? leads.filter(l => computeScore(l) >= scoreMinFilter)
     : leads;
+  // Filtre responsable (assigned_to). '_none' = leads sans responsable.
+  if (founderFilter === '_none')      filtered = filtered.filter(l => !l.assigned_to);
+  else if (founderFilter)             filtered = filtered.filter(l => l.assigned_to === founderFilter);
   // Tri par score si activé
   const sorted = sortByScore
     ? [...filtered].sort((a, b) => sortScoreDir === 'desc' ? computeScore(b) - computeScore(a) : computeScore(a) - computeScore(b))
     : filtered;
   const tbody = document.getElementById('leads-body');
   if (!sorted.length) {
-    const msg = scoreMinFilter > 0
-      ? `Aucun lead avec un score ≥ ${scoreMinFilter} pour l'instant.`
-      : 'Aucun lead trouvé';
+    const msg = founderFilter
+      ? 'Aucun lead pour ce responsable.'
+      : scoreMinFilter > 0
+        ? `Aucun lead avec un score ≥ ${scoreMinFilter} pour l'instant.`
+        : 'Aucun lead trouvé';
     tbody.innerHTML = `<tr><td colspan="12" class="table-msg">${msg}</td></tr>`;
     return;
   }
