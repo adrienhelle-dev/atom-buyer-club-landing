@@ -4374,6 +4374,11 @@ function openDrawer(lead) {
       </div>
     </div>
 
+    <div class="drawer-section" id="deal-outcome-section" style="${(lead.status === 'signe') ? '' : 'display:none'}">
+      <p class="drawer-section-label">Issue du deal</p>
+      <div id="deal-outcome-body">${dealOutcomeBody(lead)}</div>
+    </div>
+
     <div class="drawer-section">
       <p class="drawer-section-label">Responsable</p>
       <div id="drawer-assigned">${founderBlock(lead.assigned_to)}</div>
@@ -4468,6 +4473,85 @@ function closeDrawer(e) {
   }
 }
 
+/* ── Issue du deal ──────────────────────────────────────────── */
+const DEAL_COMMISSION_DEFAULT = 8900;
+
+// Rend le contenu de la section "Issue du deal" pour un lead donné.
+function dealOutcomeBody(lead) {
+  const out = lead.deal_outcome || null;
+  const id  = esc(lead.id);
+  const btn = (val, label) => {
+    const active = out === val;
+    return `<button type="button" onclick="setDealOutcome('${id}','${val}')"
+      style="flex:1;padding:9px 10px;border-radius:2px;cursor:pointer;font-size:13px;font-weight:500;
+             border:1px solid ${active ? 'var(--gold)' : 'rgba(255,255,255,.14)'};
+             background:${active ? 'rgba(184,151,90,.16)' : 'transparent'};
+             color:${active ? 'var(--gold)' : 'var(--dim)'}">${label}</button>`;
+  };
+  const amount = (lead.commission_amount != null && lead.commission_amount !== '')
+    ? lead.commission_amount : DEAL_COMMISSION_DEFAULT;
+  const commissionField = out === 'commission'
+    ? `<div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+         <span style="font-size:13px;color:var(--dim);white-space:nowrap">Commission</span>
+         <input type="number" id="commission-input" value="${esc(String(amount))}" min="0" step="100"
+           onchange="saveCommissionAmount('${id}', this.value)"
+           style="flex:1;padding:8px 10px;border-radius:2px;border:1px solid rgba(255,255,255,.14);
+                  background:rgba(255,255,255,.04);color:var(--cream);font-size:13px">
+         <span style="font-size:13px;color:var(--dim)">€</span>
+       </div>`
+    : '';
+  return `<div style="display:flex;gap:8px">${btn('managed', 'Géré par Atom')}${btn('commission', 'Commission')}</div>${commissionField}`;
+}
+
+// Bascule l'affichage de la section selon le statut courant.
+function toggleDealOutcomeSection(status) {
+  const sec = document.getElementById('deal-outcome-section');
+  if (sec) sec.style.display = (status === 'signe') ? '' : 'none';
+}
+
+async function setDealOutcome(id, outcome) {
+  const body = { deal_outcome: outcome };
+  if (outcome === 'commission') {
+    const lead = leadsCache.find(l => l.id === id);
+    if (lead?.commission_amount == null) body.commission_amount = DEAL_COMMISSION_DEFAULT;
+  }
+  const res = await fetch(`/api/leads?id=${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) { logout(); return; }
+  if (!res.ok) { alert("Impossible d'enregistrer l'issue du deal."); return; }
+
+  const lead = leadsCache.find(l => l.id === id);
+  if (lead) {
+    lead.deal_outcome = outcome;
+    if (outcome === 'managed') lead.commission_amount = null;
+    else if (lead.commission_amount == null) lead.commission_amount = DEAL_COMMISSION_DEFAULT;
+  }
+  if (currentLead?.id === id) {
+    currentLead.deal_outcome = lead ? lead.deal_outcome : outcome;
+    currentLead.commission_amount = lead ? lead.commission_amount : null;
+    const bodyEl = document.getElementById('deal-outcome-body');
+    if (bodyEl) bodyEl.innerHTML = dealOutcomeBody(currentLead);
+    loadTimeline(id);
+  }
+}
+
+async function saveCommissionAmount(id, value) {
+  const amount = parseFloat(value);
+  const res = await fetch(`/api/leads?id=${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ commission_amount: isNaN(amount) ? null : amount }),
+  });
+  if (res.status === 401) { logout(); return; }
+  if (!res.ok) { alert('Impossible d\'enregistrer le montant.'); return; }
+  const lead = leadsCache.find(l => l.id === id);
+  if (lead) lead.commission_amount = isNaN(amount) ? null : amount;
+  if (currentLead?.id === id) currentLead.commission_amount = isNaN(amount) ? null : amount;
+}
+
 /* ── Status & Notes ─────────────────────────────────────────── */
 async function updateLeadStatus(id, status) {
   const res = await fetch(`/api/leads?id=${id}`, {
@@ -4506,6 +4590,14 @@ async function updateLeadStatus(id, status) {
     lead.status = status;
     if (assignedEmail) lead.assigned_to = assignedEmail;
     renderTable(leadsCache);
+  }
+
+  // Affiche/masque la section "Issue du deal" (visible seulement si statut = Signé)
+  if (currentLead?.id === id) {
+    currentLead.status = status;
+    toggleDealOutcomeSection(status);
+    const bodyEl = document.getElementById('deal-outcome-body');
+    if (bodyEl && status === 'signe') bodyEl.innerHTML = dealOutcomeBody(currentLead);
   }
 }
 
@@ -4707,6 +4799,10 @@ const TL_INFO = {
   inscription:   { icon: '📝', label: ()  => 'Formulaire soumis' },
   resoumission:  { icon: '🔄', label: ()  => 'Dossier mis à jour' },
   status_change: { icon: '🏷', label: (c) => { try { const d=JSON.parse(c); return 'Statut → '+(STATUS_OPTS.find(o=>o.v===d.status)?.l||d.status); } catch { return 'Changement de statut'; } } },
+  deal_outcome:  { icon: '🤝', label: (c) => { try { const d=JSON.parse(c);
+    if (d.outcome === 'commission') return `Issue → Commission${d.commission_amount != null ? ' ('+Number(d.commission_amount).toLocaleString('fr-FR')+' €)' : ''}`;
+    if (d.outcome === 'managed')    return 'Issue → Géré par Atom';
+    return 'Issue du deal'; } catch { return 'Issue du deal'; } } },
   fiche_envoyee: { icon: '📄', label: (c) => { try { const d=JSON.parse(c); return 'Fiche envoyée — '+(d.title||d.titre||'projet'); } catch { return 'Fiche envoyée'; } } },
   appel:         { icon: '📞', label: () => 'Appel téléphonique' },
   whatsapp:      { icon: '💬', label: (c) => {

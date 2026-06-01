@@ -5,6 +5,9 @@ const PATCH_ALLOWED = [
   'status', 'notes',
   // Champs modifiables manuellement depuis l'admin (après un appel, pour corriger le profil)
   'timing', 'accord', 'financement', 'capacite', 'arrondissements', 'assigned_to',
+  // Issue du deal (rempli quand status='signe') : 'managed' (géré par Atom → asset)
+  // ou 'commission' (vente Microsurfaces). + montant de commission + date de signature.
+  'deal_outcome', 'commission_amount', 'deal_closed_at',
 ];
 
 module.exports = async function handler(req, res) {
@@ -41,6 +44,13 @@ module.exports = async function handler(req, res) {
         updates.assigned_to = payload.email;
       }
 
+      // Issue du deal : si on renseigne l'issue sans date, on date la signature à maintenant.
+      if ('deal_outcome' in updates && !('deal_closed_at' in updates)) {
+        updates.deal_closed_at = new Date().toISOString();
+      }
+      // Une commission n'a de sens que pour l'issue 'commission' ; sinon on nettoie le montant.
+      if (updates.deal_outcome === 'managed') updates.commission_amount = null;
+
       if (!Object.keys(updates).length) return res.status(400).json({ error: 'Aucun champ valide' });
 
       const { error } = await supabase.from('leads').update(updates).eq('id', id);
@@ -55,6 +65,19 @@ module.exports = async function handler(req, res) {
           lead_id: id,
           type:    'status_change',
           content: JSON.stringify({ status: updates.status }),
+          author:  payload.email,
+        }]);
+      }
+
+      // Log timeline pour l'issue du deal (fire & forget)
+      if ('deal_outcome' in updates) {
+        supabase.from('lead_events').insert([{
+          lead_id: id,
+          type:    'deal_outcome',
+          content: JSON.stringify({
+            outcome: updates.deal_outcome,
+            commission_amount: updates.commission_amount ?? null,
+          }),
           author:  payload.email,
         }]);
       }
