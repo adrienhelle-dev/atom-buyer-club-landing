@@ -92,6 +92,34 @@ module.exports = async function handler(req, res) {
 
   // ─── GET — liste paginée avec filtres  OU  lead unique par id ──
   if (req.method === 'GET') {
+    // ── Stats conversions par campagne ───────────────────────────
+    // Agrège côté serveur (toute la base, pas limité par la pagination) :
+    // par utm_campaign → total leads, commissions (+ €), assets gérés.
+    if (req.query.stats === 'campaigns') {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('utm_campaign, deal_outcome, commission_amount');
+      if (error) return res.status(500).json({ error: 'db_error' });
+
+      const map = {};
+      (data || []).forEach(l => {
+        const key = (l.utm_campaign && String(l.utm_campaign).trim()) || '(sans campagne)';
+        if (!map[key]) map[key] = { campaign: key, leads: 0, commission: 0, commission_amount: 0, managed: 0 };
+        const m = map[key];
+        m.leads++;
+        if (l.deal_outcome === 'commission') {
+          m.commission++;
+          m.commission_amount += Number(l.commission_amount) || 0;
+        } else if (l.deal_outcome === 'managed') {
+          m.managed++;
+        }
+      });
+      // Tri : campagnes avec conversions d'abord, puis par volume de leads.
+      const rows = Object.values(map).sort((a, b) =>
+        (b.commission + b.managed) - (a.commission + a.managed) || b.leads - a.leads);
+      return res.status(200).json({ campaigns: rows });
+    }
+
     // ── Lead unique ──────────────────────────────────────────────
     if (req.query.id && !req.query.page) {
       const { data, error } = await supabase.from('leads').select('*').eq('id', req.query.id).maybeSingle();

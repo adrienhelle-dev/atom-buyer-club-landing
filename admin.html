@@ -2653,6 +2653,9 @@
     </div>
   </div>
 
+  <!-- Conversions par campagne (ROI pub) -->
+  <div id="campaign-stats" style="margin:0 0 4px"></div>
+
   <!-- Toolbar / Filtres -->
   <div class="int-toolbar">
     <select class="int-filter-sel" id="int-type-filter" onchange="renderInterestsTable()">
@@ -5454,9 +5457,63 @@ async function loadInterests(force = false) {
     interestsLoaded = true;
     renderInterestsTable();
     _updateInterestsBadge();
+    loadCampaignStats();
   } catch (e) {
     console.warn('loadInterests error:', e);
     if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--dim)">Erreur de chargement</td></tr>';
+  }
+}
+
+// ── Conversions par campagne : commissions (+ €) vs assets gérés ───────────────
+async function loadCampaignStats() {
+  const box = document.getElementById('campaign-stats');
+  if (!box) return;
+  try {
+    const res = await fetch('/api/leads?stats=campaigns', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error('http');
+    const d = await res.json();
+    const rows = (d.campaigns || []).filter(c => c.commission > 0 || c.managed > 0);
+    if (!rows.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+    const totCom   = rows.reduce((s, c) => s + c.commission, 0);
+    const totEur   = rows.reduce((s, c) => s + c.commission_amount, 0);
+    const totMan   = rows.reduce((s, c) => s + c.managed, 0);
+    const eur = n => new Intl.NumberFormat('fr-FR').format(Math.round(n || 0)) + ' €';
+
+    box.style.display = 'block';
+    box.innerHTML = `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border)">
+          <span style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)">Conversions par campagne</span>
+          <span style="font-size:12px;color:var(--cream)">
+            <strong style="color:var(--gold)">${totCom}</strong> commission${totCom > 1 ? 's' : ''} (${eur(totEur)})
+            · <strong style="color:#4caf7d">${totMan}</strong> asset${totMan > 1 ? 's' : ''} géré${totMan > 1 ? 's' : ''}
+          </span>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:480px;font-size:13px">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <th style="text-align:left;padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)">Campagne</th>
+                <th style="text-align:right;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)">Leads</th>
+                <th style="text-align:right;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)">Commissions</th>
+                <th style="text-align:right;padding:8px 16px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#4caf7d">Assets</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(c => `
+                <tr style="border-top:1px solid var(--border)">
+                  <td style="padding:9px 16px;color:var(--cream)">${esc(c.campaign)}</td>
+                  <td style="padding:9px 12px;text-align:right;color:var(--dim)">${c.leads}</td>
+                  <td style="padding:9px 12px;text-align:right;color:var(--gold)">${c.commission ? `${c.commission} · ${eur(c.commission_amount)}` : '—'}</td>
+                  <td style="padding:9px 16px;text-align:right;color:#4caf7d">${c.managed || '—'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  } catch {
+    box.style.display = 'none';
   }
 }
 
