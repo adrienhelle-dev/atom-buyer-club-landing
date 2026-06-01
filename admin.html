@@ -4849,18 +4849,26 @@ const TL_INFO = {
     try {
       const d = typeof c === 'string' ? JSON.parse(c) : (c || {});
       const title = d.project_title || d.project_name || (d.project_id && projectsCache.find(p => p.id === d.project_id)?.title);
-      if (title) return `Intérêt déclaré — ${title}`;
-      if (d.project_id) return 'Intérêt déclaré — projet';
+      if (title) return `Intérêt projet — ${title}`;
+      if (d.project_id) return 'Intérêt projet';
     } catch {}
-    return 'Intérêt déclaré sur un projet';
+    return 'Intérêt projet déclaré';
   }},
   showroom_interest: { icon: '★', label: (c) => {
     try {
       const d = typeof c === 'string' ? JSON.parse(c) : (c || {});
       const name = d.item_name || d.name || d.slug;
-      if (name) return `Intérêt showroom — ${name}`;
+      if (name) return `Intérêt réalisation — ${name}`;
     } catch {}
-    return 'Intérêt showroom déclaré';
+    return 'Intérêt réalisation déclaré';
+  }},
+  showroom_cta: { icon: '◎', label: (c) => {
+    try {
+      const d = typeof c === 'string' ? JSON.parse(c) : (c || {});
+      const name = d.item_name || d.showroom_slug || d.slug;
+      if (name) return `Intérêt réalisation — ${name}`;
+    } catch {}
+    return 'Intérêt réalisation (showroom)';
   }},
   rdv:           { icon: '📅', label: (c) => c || 'RDV pris' },
   note:          { icon: '💬', label: (c) => c || 'Note' },
