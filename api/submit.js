@@ -97,12 +97,17 @@ module.exports = async function handler(req, res) {
 
   // ── Log showroom CTA dans la timeline du lead ──────────────────
   if (isShowroomCta && leadId) {
+    const ctaItem = b.showroom_item_name || b.showroom_slug || b.utm_content || 'showroom';
     await supabase.from('lead_events').insert([{
       lead_id: leadId,
       type:    'showroom_cta',
       content: JSON.stringify({ showroom_slug: b.showroom_slug || b.utm_content || null, item_name: b.showroom_item_name || null }),
       author:  null,
     }]);
+
+    // Notif Telegram — un CTA sur une réalisation est un signal d'intérêt fort
+    try { await notifyInterest({ prenom: leadData.prenom, nom: leadData.nom, tel: leadData.tel }, `Réalisation (CTA) — ${ctaItem}`); }
+    catch (e) { console.error('Telegram showroom CTA erreur:', e?.message || e); }
   }
 
   // ── Intérêt projet ─────────────────────────────────────────────
