@@ -95,6 +95,10 @@ module.exports = async function handler(req, res) {
     supabase.from('lead_events').insert([{ lead_id: leadId, type: 'inscription', content: null, author: null }]);
   }
 
+  // Les libellés d'intérêt s'accumulent ici pour n'envoyer QU'UNE notif Telegram
+  // par soumission (une page réalisation envoie souvent CTA showroom + projet lié).
+  const interestParts = [];
+
   // ── Log showroom CTA dans la timeline du lead ──────────────────
   if (isShowroomCta && leadId) {
     const ctaItem = b.showroom_item_name || b.showroom_slug || b.utm_content || 'showroom';
@@ -104,10 +108,7 @@ module.exports = async function handler(req, res) {
       content: JSON.stringify({ showroom_slug: b.showroom_slug || b.utm_content || null, item_name: b.showroom_item_name || null }),
       author:  null,
     }]);
-
-    // Notif Telegram — un CTA sur une réalisation est un signal d'intérêt fort
-    try { await notifyInterest({ prenom: leadData.prenom, nom: leadData.nom, tel: leadData.tel }, `Réalisation (CTA) — ${ctaItem}`); }
-    catch (e) { console.error('Telegram showroom CTA erreur:', e?.message || e); }
+    interestParts.push(`Réalisation ${ctaItem}`);
   }
 
   // ── Intérêt projet ─────────────────────────────────────────────
@@ -165,8 +166,12 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Notif Telegram (indépendante de l'email) — fail-safe
-    try { await notifyInterest(leadData, `Projet — ${proj?.title || 'projet'}`); }
+    interestParts.push(`Projet ${proj?.title || 'projet'}`);
+  }
+
+  // ── Notif Telegram intérêt — une seule, même si CTA réalisation + projet lié ──
+  if (interestParts.length) {
+    try { await notifyInterest(leadData, interestParts.join(' · ')); }
     catch (e) { console.error('Telegram intérêt erreur:', e?.message || e); }
   }
 
