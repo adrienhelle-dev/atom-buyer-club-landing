@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
     if (auth !== `Bearer ${secret}`) return res.status(401).json({ error: 'unauthorized' });
   }
 
-  const days = parseInt(process.env.STALE_DAYS, 10) || 5;
+  const days = parseInt(process.env.STALE_DAYS, 10) || 15;
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
   try {
