@@ -249,6 +249,7 @@
     .modal-confirm-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 8px; }
     .modal-confirm-sub { font-size: 13px; color: var(--dim); }
   </style>
+  <script src="/meta-pixel.js"></script>
 </head>
 <body>
 
@@ -688,6 +689,7 @@
           item_name: currentItem?.name || null,
         }),
       }).catch(() => {});
+      window.atomTrackLead && window.atomTrackLead(); // Meta Pixel : conversion Lead
       return;
     }
 
@@ -775,6 +777,7 @@
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
+      window.atomTrackLead && window.atomTrackLead(); // Meta Pixel : conversion Lead
       document.getElementById('cta-form-wrap').style.display = 'none';
       document.getElementById('cta-confirm').style.display   = 'block';
       // Personnaliser avec le prénom saisi

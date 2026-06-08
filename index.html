@@ -499,6 +499,7 @@
       .arr-btn { font-size: 11px; padding: 9px 3px; }
     }
   </style>
+  <script src="/meta-pixel.js"></script>
 </head>
 <body>
 
@@ -949,6 +950,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error('server_error');
     const data = await res.json();
     isUpdate = !!data.updated;
+    window.atomTrackLead && window.atomTrackLead(); // Meta Pixel : conversion Lead
     if (data.lead_id) payload._leadId = data.lead_id;
   } catch {
     btn.disabled = false;

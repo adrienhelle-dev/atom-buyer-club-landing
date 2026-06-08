@@ -220,6 +220,7 @@
       color: var(--dim); font-size: 12px;
     }
   </style>
+  <script src="/meta-pixel.js"></script>
 </head>
 <body>
 
@@ -514,6 +515,7 @@ async function submitInterest() {
   };
   const res = await fetch('/api/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
   if (res.ok) {
+    window.atomTrackLead && window.atomTrackLead(); // Meta Pixel : conversion Lead
     document.getElementById('modal-form-wrap').style.display = 'none';
     document.getElementById('modal-success').style.display = 'block';
     if (project?.wa_contact?.phone) document.getElementById('modal-wa-post').style.display = 'block';

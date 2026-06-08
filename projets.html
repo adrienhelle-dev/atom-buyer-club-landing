@@ -291,6 +291,7 @@
     .modal-confirm-sub { font-size: 13px; color: var(--dim); line-height: 1.6; }
     .modal-confirm-close { margin-top: 22px; padding: 11px 28px; background: var(--violet); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--sans); }
   </style>
+  <script src="/meta-pixel.js"></script>
 </head>
 <body>
 
@@ -950,6 +951,7 @@
         return;
       }
       // Succès
+      window.atomTrackLead && window.atomTrackLead(); // Meta Pixel : conversion Lead
       document.getElementById('cta-form-wrap').style.display = 'none';
       const conf = document.getElementById('cta-confirm');
       conf.style.display = 'block';
