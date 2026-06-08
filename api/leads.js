@@ -10,6 +10,25 @@ const PATCH_ALLOWED = [
   'deal_outcome', 'commission_amount', 'deal_closed_at',
 ];
 
+// ── Export CSV (fusionné depuis l'ancien api/export.js pour rester ≤ 12 fonctions)
+const CSV_COLS = [
+  'created_at','prenom','nom','email','tel',
+  'arrondissements','timing','accord','financement','capacite',
+  'utm_source','utm_medium','utm_campaign','utm_content','utm_term',
+  'gclid','fbclid','referrer','ip',
+];
+const CSV_HEADERS_FR = [
+  'Date','Prénom','Nom','Email','Téléphone',
+  'Arrondissements','Horizon','Accord bancaire','Financement','Budget emprunt',
+  'Source','Medium','Campagne','Contenu','Terme',
+  'GCLID','FBCLID','Référent','IP',
+];
+function csvCell(val) {
+  if (val === null || val === undefined) return '';
+  const s = String(val);
+  return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -97,6 +116,20 @@ module.exports = async function handler(req, res) {
 
   // ─── GET — liste paginée avec filtres  OU  lead unique par id ──
   if (req.method === 'GET') {
+    // ── Export CSV (?export=csv) ─────────────────────────────────
+    if (req.query.export === 'csv') {
+      const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
+      if (error) return res.status(500).json({ error: 'db_error' });
+      const lines = [
+        CSV_HEADERS_FR.join(','),
+        ...(data || []).map(l => CSV_COLS.map(c => csvCell(l[c])).join(',')),
+      ];
+      const date = new Date().toISOString().slice(0, 10);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="leads_abc_${date}.csv"`);
+      return res.status(200).send('﻿' + lines.join('\n')); // BOM → Excel friendly
+    }
+
     // ── Stats conversions par campagne ───────────────────────────
     // Agrège côté serveur (toute la base, pas limité par la pagination) :
     // par utm_campaign → total leads, commissions (+ €), assets gérés.
