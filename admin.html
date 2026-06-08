@@ -3161,12 +3161,24 @@ function projectCard(p) {
       </div>
       <div class="project-card-actions" onclick="event.stopPropagation()">
         ${slug ? `<a class="pc-action${p.public_visible ? '' : ' pc-voir-draft'}" href="/projet/${esc(slug)}" target="_blank" title="${p.public_visible ? 'Voir →' : 'Aperçu'}">↗</a>` : ''}
+        ${slug ? `<button class="pc-action pc-copy" onclick="copyProjectLink('${esc(slug)}', this)" title="Copier le lien partageable">🔗</button>` : ''}
         ${matchCount > 0 ? `<button class="pc-action pc-send" onclick="openSendToLeadsModal('${esc(p.id)}')" title="Envoyer aux leads compatibles">✉ ${matchCount}</button>` : ''}
         <button class="pc-action pc-wa" onclick="openSendToLeadsModal('${esc(p.id)}', 'whatsapp')" title="WhatsApp">💬</button>
         <button class="pc-action pc-pdf" onclick="downloadPdf('${esc(p.id)}', this)" title="Fiche PDF">📄</button>
         <button class="pc-action pc-del" onclick="openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
       </div>
     </div>`;
+}
+
+async function copyProjectLink(slug, btn) {
+  const url = `${location.origin}/projet/${slug}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    const o = btn.innerHTML; btn.innerHTML = '✓'; btn.title = 'Lien copié !';
+    setTimeout(() => { btn.innerHTML = o; btn.title = 'Copier le lien partageable'; }, 1500);
+  } catch {
+    window.prompt('Copier le lien partageable :', url);
+  }
 }
 
 async function downloadPdf(projectId, btn) {
