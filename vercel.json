@@ -6,7 +6,6 @@
   ],
   "functions": {
     "api/generate-pdf.js": {
-      "memory": 1024,
       "maxDuration": 60
     },
     "api/send-fiche.js": {
