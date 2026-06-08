@@ -537,11 +537,10 @@
 
     // Pas de sticky CTA sur la vue liste — affiché uniquement sur la page projet (detail-sticky-bar)
 
-    // Détail depuis hash
+    // Ancien lien #/slug → on redirige vers la page projet propre /projet/<slug>
     if (location.hash.startsWith('#/')) {
       const slug = location.hash.slice(2);
-      const proj = allProjects.find(p => p.slug === slug);
-      if (proj) showDetail(proj);
+      if (slug) { location.replace('/projet/' + slug); return; }
     }
   }
 
@@ -595,7 +594,7 @@
       const rdt   = p.rendement_brut ? p.rendement_brut + ' %' : '—';
 
       return `
-        <div class="proj-card" onclick="openDetail('${esc(p.id)}')">
+        <div class="proj-card" onclick="location.href='/projet/${esc(p.slug || p.id)}'">
           ${img
             ? `<img class="proj-card-img" src="${esc(img)}" alt="${esc(p.title)}" loading="lazy"/>`
             : `<div class="proj-card-img-ph">🏠</div>`}

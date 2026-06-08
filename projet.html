@@ -253,7 +253,6 @@
     <div class="hero-eyebrow" id="hero-eyebrow">Projet</div>
     <h1 class="hero-title" id="hero-title">—</h1>
     <div class="hero-meta" id="hero-meta"></div>
-    <button id="btn-share" onclick="copyProjectLink(this)" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:transparent;border:1px solid var(--gold,#B8975A);color:var(--gold,#B8975A);border-radius:4px;font-family:inherit;font-size:13px;letter-spacing:.04em;cursor:pointer;transition:background .2s,color .2s" onmouseenter="this.style.background='var(--gold,#B8975A)';this.style.color='#1a1208'" onmouseleave="this.style.background='transparent';this.style.color='var(--gold,#B8975A)'">🔗 Copier le lien</button>
   </section>
 
   <div class="gallery-wrap">
@@ -381,17 +380,6 @@ const params = new URLSearchParams(window.location.search);
 let slug = params.get('slug');
 const id   = params.get('id');
 let project = null;
-
-function copyProjectLink(btn) {
-  const s = (project && project.slug) || slug;
-  const url = s ? `${location.origin}/projet/${s}` : location.href;
-  const done = () => { const o = btn.textContent; btn.textContent = '✓ Lien copié'; setTimeout(() => { btn.textContent = o; }, 1600); };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(done).catch(() => window.prompt('Copier le lien partageable :', url));
-  } else {
-    window.prompt('Copier le lien partageable :', url);
-  }
-}
 
 // Vercel rewrite is server-side — browser URL stays /projet/my-slug
 // so window.location.search is empty. Parse slug from path as fallback.
