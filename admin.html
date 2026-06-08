@@ -4346,7 +4346,7 @@ function openDrawer(lead) {
   const _adminRaw   = (localStorage.getItem('abc_admin_email') || '').split('@')[0].split(/[.\-_]/)[0];
   const _adminPrenom = _adminRaw.charAt(0).toUpperCase() + _adminRaw.slice(1);
   const waText = encodeURIComponent(
-    `Hello ${lead.prenom}, c'est ${_adminPrenom} d'Atom. Tu as vu des projets qui peuvent t'intéresser ?\n\n👉 https://join.atombuyerclub.fr/projets`
+    `Hello ${lead.prenom}, c'est ${_adminPrenom} d'Atom. Tu as vu des projets qui peuvent t'intéresser ?\n\nhttps://join.atombuyerclub.fr/projets`
   );
   const mailSubject = encodeURIComponent(`Atom Buyers Club — Vos opportunités immobilières à Paris`);
   const mailBody = encodeURIComponent(
