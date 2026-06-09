@@ -1,6 +1,7 @@
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
 const { getFounder } = require('../lib/founders');
+const { esc } = require('../lib/html');
 const { Resend } = require('resend');
 
 module.exports = async function handler(req, res) {
@@ -147,9 +148,6 @@ module.exports = async function handler(req, res) {
 };
 
 // ─── Helpers ────────────────────────────────────────────────────
-function esc(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 function fmtPrice(v) {
   const n = parseFloat(v);
