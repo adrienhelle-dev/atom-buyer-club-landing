@@ -1,0 +1,108 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atom — Relance Danton</title>
+<style>
+:root{--gold:#B8975A;--cream:#F5F2ED}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#14100b;color:var(--cream);padding:0 0 70px}
+header{background:#0f0e0c;padding:20px 22px;border-bottom:1px solid #2a241a;position:sticky;top:0;z-index:5}
+h1{margin:0 0 3px;font-size:17px;font-weight:600}
+.sub{font-size:12.5px;color:#9a9488;margin:0;line-height:1.45}
+.wrap{max-width:900px;margin:22px auto;padding:0 14px}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin:30px 0 10px}
+.count{color:#9a9488;font-weight:400;text-transform:none;letter-spacing:0;font-size:13px}
+table{width:100%;border-collapse:collapse}
+td,th{padding:11px 8px;border-bottom:1px solid #241f15;font-size:14px;text-align:left;vertical-align:middle}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#7d7768;font-weight:600}
+.nm{font-weight:600}
+.btn{display:inline-block;padding:9px 15px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;border:none;cursor:pointer}
+.wa{background:#25D366;color:#04210f}
+.em{background:var(--gold);color:#1a1408}
+tr.done{opacity:.42}
+tr.taken td .tag{color:#e0a13a}
+.tag{display:block;font-size:11px;margin-top:3px;color:#6fcf97}
+.note{background:#1d1810;border:1px solid #3a3322;border-radius:10px;padding:13px 15px;font-size:12.5px;color:#cfc8ba;margin-top:6px;line-height:1.5}
+.chooser{max-width:520px;margin:80px auto;text-align:center;padding:0 20px}
+.chooser h1{font-size:22px;margin-bottom:8px}
+.chooser p{color:#9a9488;margin-bottom:28px}
+.who{display:block;margin:12px auto;max-width:320px;padding:16px;border-radius:12px;background:var(--gold);color:#1a1408;font-size:16px;font-weight:700;text-decoration:none}
+</style></head><body>
+<div id="app"></div>
+<script>
+var DATA  = [{"prenom": "gohari", "nom": "Gohari", "email": "nahid.gohari7@gmail.com", "phone": "33750388322"}, {"prenom": "Romane", "nom": "Seydoux", "email": "romane.seydoux@gmail.com", "phone": "33695582484"}, {"prenom": "Paulo", "nom": "Garcia", "email": "pgarcia.immo@gmail.com", "phone": "33781511551"}, {"prenom": "Chafaa", "nom": "Ben", "email": "chafaach15@gmail.com", "phone": "33663268522"}, {"prenom": "estelle", "nom": "qudiet", "email": "estellequidet18@gmail.com", "phone": "33618953507"}, {"prenom": "Christophe", "nom": "CHERON", "email": "ccheron3@gmail.com", "phone": "33649591839"}, {"prenom": "Sebastian", "nom": "Walls", "email": "sebastianwallsaustin@hotmail.com", "phone": "33781769065"}, {"prenom": "Nadia", "nom": "Usaï", "email": "nadia.usai@gmail.com", "phone": "33649554308"}, {"prenom": "Fabienne", "nom": "Ricard", "email": "fabienne.ricard@bbox.fr", "phone": "33662375202"}, {"prenom": "Enora", "nom": "D'herbais", "email": "enoradherbais@gmail.com", "phone": "33640522406"}, {"prenom": "Domingos", "nom": "Brito", "email": "brito.domingos.db@gmail.com", "phone": null}, {"prenom": "Marielle", "nom": "Davoudian", "email": "davoudianmarielle@gmail.com", "phone": "33744273026"}, {"prenom": "Teodor", "nom": "Krassimir", "email": "raspailcabinet@gmail.com", "phone": "33633971687"}, {"prenom": "Pauline", "nom": "Dufourq", "email": "pauline.dufourq@gmail.com", "phone": "33672833352"}, {"prenom": "Yang", "nom": "Yang", "email": "hanzhang937323@gmail.com", "phone": null}, {"prenom": "Inès", "nom": "Corcia", "email": "ijcorcia@hotmail.fr", "phone": "33672137476"}, {"prenom": "nicolas", "nom": "chiffoleau", "email": "nicolaschiffoleauparis@gmail.com", "phone": "33686459133"}, {"prenom": "Xavier", "nom": "Harlay", "email": "xharlay@gmail.com", "phone": "33660315509"}, {"prenom": "Jérôme", "nom": "CAILBOURDIN", "email": "jeromecailbourdin@gmail.com", "phone": "33619011307"}, {"prenom": "Davinder", "nom": "Singh", "email": "sabiparis@live.fr", "phone": "33637623476"}, {"prenom": "Mohat", "nom": "Ouakdi", "email": "mohamed.elouakdi@gmail.com", "phone": "33684624480"}, {"prenom": "Victor", "nom": "Fabius", "email": "vfabius@gmail.com", "phone": "33686529888"}, {"prenom": "wenhui", "nom": "li", "email": "wenhui8365@gmail.com", "phone": "33614876142"}, {"prenom": "Eric", "nom": "Natalini", "email": "eric.natalini@gmail.com", "phone": "33687333039"}, {"prenom": "Amelie", "nom": "Trinh", "email": "trinhamelie@gmail.com", "phone": "33625180772"}, {"prenom": "Hadrien", "nom": "martin", "email": "hadrien.martin@gmail.com", "phone": "33624257794"}, {"prenom": "Lionel", "nom": "Silva", "email": "silvamoreira1@yahoo.fr", "phone": "33684529539"}, {"prenom": "Jeremy", "nom": "benattar", "email": "jeremy.bena@hotmail.fr", "phone": "33618957905"}, {"prenom": "Benoit", "nom": "Benoit Hamar", "email": "benoit.hamar@yahoo.fr", "phone": null}, {"prenom": "Aurélie", "nom": "Chauvel", "email": "aureliechauvel361@gmail.com", "phone": "33677137324"}, {"prenom": "PIERRE", "nom": "TRANG", "email": "pierre.trang@yahoo.fr", "phone": "33618382908"}, {"prenom": "Mathis", "nom": "Charteau", "email": "mathis.charteau@icloud.com", "phone": "33788691375"}, {"prenom": "David", "nom": "REGENT", "email": "jdrr@me.com", "phone": "33661212131"}, {"prenom": "Luis", "nom": "Costa", "email": "luisconnection@gmail.com", "phone": "33662384749"}, {"prenom": "dirk", "nom": "hermanns", "email": "dhermanns@gmx.de", "phone": "33613665599"}, {"prenom": "Laurent", "nom": "LECLERC", "email": "laurent_leclerc@hotmail.com", "phone": "33625197890"}, {"prenom": "Armelle", "nom": "Le pezennec", "email": "armellelepezennec@yahoo.fr", "phone": "33608025544"}, {"prenom": "Audrey", "nom": "benmoha", "email": "audreybenmoha70@gmail.com", "phone": "33651727486"}, {"prenom": "Sanae", "nom": "Sabbak", "email": "sannae@sanaerituals.com", "phone": "33680268198"}, {"prenom": "Anne", "nom": "Struve", "email": "annecharlottestruve@gmail.com", "phone": "33688484657"}, {"prenom": "Nathalie", "nom": "Parapel", "email": "parapel.nathalie@gmail.com", "phone": "33622534756"}, {"prenom": "FIKA", "nom": "DELFOSSE", "email": "andalousial@live.fr", "phone": "33652667695"}, {"prenom": "Ariane", "nom": "Colas", "email": "colasariane@gmail.com", "phone": null}, {"prenom": "Tanguy", "nom": "Courtois", "email": "courtois.t@gmail.com", "phone": null}, {"prenom": "Elias", "nom": "Nikolaidis", "email": "elias_nikolaidis@msn.com", "phone": "85292122678"}, {"prenom": "Neriman", "nom": "Beddiaf", "email": "neryikken05@icloud.com", "phone": "33677816041"}, {"prenom": "Nam", "nom": "TRAN", "email": "namvuong1808dt@gmail.com", "phone": "33651416503"}, {"prenom": "Pascal", "nom": "Le Dimna", "email": "ledimna@gmail.com", "phone": null}, {"prenom": "Ronan", "nom": "Pichon", "email": "pichonronan12@gmail.com", "phone": "33617637563"}, {"prenom": "Lyn", "nom": "Su", "email": "vivreaparis@hotmail.com", "phone": "33628622180"}, {"prenom": "Eli", "nom": "Ben sadoun", "email": "ebs@ap-surelevation.com", "phone": "33760527110"}, {"prenom": "Damien", "nom": "Hascoet", "email": "dbhascoet@hotmail.fr", "phone": "33658005239"}, {"prenom": "Arno", "nom": "De Condinguy", "email": "arno.bttf@outlook.fr", "phone": "33623393498"}, {"prenom": "YOLANDE", "nom": "LEBRETON", "email": "yolebreton@yahoo.fr", "phone": "33666877672"}, {"prenom": "aymeric", "nom": "chauve", "email": "supernabot@yahoo.com", "phone": "33661146839"}, {"prenom": "Hubert", "nom": "Lefevre", "email": "hbrtlefevre@gmail.com", "phone": "33637310647"}, {"prenom": "Edouard", "nom": "de La Poëze", "email": "edouarddelapoeze@hotmail.fr", "phone": "33669017309"}, {"prenom": "Valerie", "nom": "Dehem", "email": "valnet2001@yahoo.fr", "phone": "33615078242"}, {"prenom": "Romaric", "nom": "d'Amico", "email": "romaric.damico@gmail.com", "phone": "33677158355"}, {"prenom": "Pauline", "nom": "Archier", "email": "pauline.archier@gmail.com", "phone": "33621211246"}, {"prenom": "Nissrine", "nom": "El malki", "email": "nisstare@hotmail.com", "phone": "33627694843"}, {"prenom": "François", "nom": "Morin", "email": "francoismorin34@me.com", "phone": "33675714018"}, {"prenom": "Ella", "nom": "Galstyan", "email": "ellady@ymail.com", "phone": "33652679706"}, {"prenom": "Aude", "nom": "Auffret", "email": "audeauffret@hotmail.fr", "phone": "33687240544"}, {"prenom": "stéphanie", "nom": "COHEN CHAPTAL", "email": "stephaniecohenchaptal@gmail.com", "phone": "33609901868"}, {"prenom": "Masson", "nom": "Thibaud", "email": "tmchevaleraud@gmail.com", "phone": "33666103062"}, {"prenom": "Anne", "nom": "Herpin", "email": "t7fp6rck9q@privaterelay.appleid.com", "phone": "33787411562"}, {"prenom": "Nawal", "nom": "Bensassi Maillols", "email": "nawal.bensassi@gmail.com", "phone": null}, {"prenom": "Michel", "nom": "LOPES", "email": "lopesmichel71@hotmail.fr", "phone": null}, {"prenom": "Francois", "nom": "Pernier", "email": "raviglione@hotmail.fr", "phone": "33624388362"}, {"prenom": "vincent", "nom": "bonamy", "email": "bonamyv@gmail.com", "phone": "33647085863"}, {"prenom": "Olivier", "nom": "DERLY", "email": "olivier.derly@gmail.com", "phone": "33665807965"}, {"prenom": "Elie", "nom": "Zaquine", "email": "ezaquine@hotmail.fr", "phone": "33627411081"}, {"prenom": "AB", "nom": "AB", "email": "dzconseils26@gmail.com", "phone": "33651727486"}, {"prenom": "charlène", "nom": "Hu", "email": "xiangyanh@yahoo.fr", "phone": "33630080988"}, {"prenom": "Chlomi", "nom": "cohen Solal", "email": "chlomicohensolal@gmail.com", "phone": "33749387756"}, {"prenom": "Thomas", "nom": "MIMI", "email": "thomas@kaizohabitat.fr", "phone": "33686229093"}, {"prenom": "Geraldine", "nom": "Zanzouri", "email": "g_zanzouri@yahoo.fr", "phone": "33627000223"}, {"prenom": "Irina", "nom": "Presnyakova", "email": "irinabordier@yahoo.com", "phone": "33603344862"}, {"prenom": "Hélène", "nom": "Henrion", "email": "henrion.hel@gmail.com", "phone": null}, {"prenom": "Pierre", "nom": "Laget", "email": "pierre@tingaspa.com", "phone": "33658202180"}, {"prenom": "Benjamin", "nom": "Ugolini", "email": "bugolini10@gmail.com", "phone": "33618320479"}, {"prenom": "Marie", "nom": "christine Gounod", "email": "m.antoine72@hotmail.fr", "phone": "33611700867"}, {"prenom": "Daniela", "nom": "Bogdan", "email": "danielaramona31@gmail.com", "phone": null}, {"prenom": "bruno", "nom": "gaye", "email": "bruno.gaye@gmail.com", "phone": "33617205869"}, {"prenom": "Samy", "nom": "Chebbah", "email": "chebbahl100@gmail.com", "phone": "33788107020"}, {"prenom": "SABRINA", "nom": "ANTONIAZZI", "email": "sabrina.antoniazzi.1967@gmail.com", "phone": "33631429958"}, {"prenom": "Jeanne", "nom": "GEX", "email": "jeanne.gex@gmail.com", "phone": "33783983948"}, {"prenom": "Michel", "nom": "Savoye", "email": "savoyem@gmail.com", "phone": "33649321334"}, {"prenom": "Malika", "nom": "Bakiri", "email": "bakmalika@aol.fr", "phone": "34630466595"}, {"prenom": "Louison", "nom": "CORDIER LALLOUET", "email": "lcordierlallouet@gmail.com", "phone": "33695529793"}, {"prenom": "Yu", "nom": "Dai", "email": "daimuraille@gmail.com", "phone": "33652100896"}];
+var TPL   = "Hello {{P}},\n\nMerci de votre intérêt pour le studio du 3 rue Danton (Paris 6e) — il vient d'être vendu.\n\nNous avons d'autres studios similaires, clé en main, à découvrir ici : https://join.atombuyerclub.fr/projet/studio-danton-vlev\n\nN'hésitez pas si vous avez la moindre question.\n\n{{S}}";
+var TOKEN = "danton-relance";
+var SUBJECT = "Studio 3 rue Danton (Paris 6e) — d'autres opportunites Atom";
+var WHO = { adrien:"Adrien", alexandre:"Alexandre", thierry:"Thierry" };
+
+function q(name){ return new URLSearchParams(location.search).get(name); }
+function esc(s){return (s||'').replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);});}
+function MSG(prenom, sender){ return TPL.replace('{{P}}', prenom).replace('{{S}}', sender); }
+
+var who = (q('who')||'').toLowerCase();
+var app = document.getElementById('app');
+
+if(!WHO[who]){
+  app.innerHTML =
+   '<div class="chooser"><h1>Relance leads Danton</h1>'+
+   '<p>Qui es-tu ? (le message sera signé de ton prénom et les leads te seront attribués)</p>'+
+   '<a class="who" href="?who=alexandre">Je suis Alexandre</a>'+
+   '<a class="who" href="?who=thierry">Je suis Thierry</a>'+
+   '<a class="who" href="?who=adrien">Je suis Adrien</a></div>';
+} else {
+  var sender = WHO[who];
+  var KEY = 'danton-sent-'+who;
+  var sent = {};
+  try { sent = JSON.parse(localStorage.getItem(KEY)||'{}'); } catch(e){}
+
+  var wa = DATA.filter(function(d){return d.phone;});
+  var ml = DATA.filter(function(d){return !d.phone;});
+
+  function rowWa(r){
+    var url = 'https://wa.me/'+r.phone+'?text='+encodeURIComponent(MSG(r.prenom, sender));
+    return '<tr data-email="'+esc(r.email)+'" class="'+(sent[r.email]?'done':'')+'">'+
+      '<td class="nm">'+esc(r.prenom)+' '+esc(r.nom)+'<span class="tag"></span></td>'+
+      '<td style="color:#9a9488;font-variant-numeric:tabular-nums">+'+r.phone+'</td>'+
+      '<td><a class="btn wa" target="_blank" rel="noopener" href="'+url+'" '+
+      'onclick="claim(this,\''+esc(r.email)+'\')">Envoyer WhatsApp ↗</a></td></tr>';
+  }
+  function rowMail(r){
+    var url = 'mailto:'+r.email+'?subject='+encodeURIComponent(SUBJECT)+'&body='+encodeURIComponent(MSG(r.prenom, sender));
+    return '<tr data-email="'+esc(r.email)+'" class="'+(sent[r.email]?'done':'')+'">'+
+      '<td class="nm">'+esc(r.prenom)+' '+esc(r.nom)+'<span class="tag"></span></td>'+
+      '<td style="color:#9a9488">'+esc(r.email)+'</td>'+
+      '<td><a class="btn em" href="'+url+'" onclick="claim(this,\''+esc(r.email)+'\')">Écrire un email ↗</a></td></tr>';
+  }
+
+  app.innerHTML =
+   '<header><h1>Bonjour '+esc(sender)+' 👋</h1>'+
+   '<p class="sub">Clique sur le bouton : WhatsApp (ou l\'email) s\'ouvre avec le message déjà rempli, signé de ton prénom. '+
+   'Au clic, le lead t\'est <b>automatiquement attribué</b> dans le CRM. Envoie, puis passe au suivant.</p></header>'+
+   '<div class="wrap">'+
+   '<h2>WhatsApp <span class="count">('+wa.length+')</span></h2>'+
+   '<table><thead><tr><th>Lead</th><th>Téléphone</th><th></th></tr></thead><tbody>'+wa.map(rowWa).join('')+'</tbody></table>'+
+   '<h2>À contacter par email <span class="count">('+ml.length+')</span></h2>'+
+   '<div class="note">Numéros illisibles dans l\'export SeLoger (tronqués par Excel) → on passe par email.</div>'+
+   '<table><thead><tr><th>Lead</th><th>Email</th><th></th></tr></thead><tbody>'+ml.map(rowMail).join('')+'</tbody></table>'+
+   '</div>';
+
+  window.claim = function(a, email){
+    var tr = a.closest('tr');
+    sent[email] = 1;
+    try { localStorage.setItem(KEY, JSON.stringify(sent)); } catch(e){}
+    tr.classList.add('done');
+    fetch('/api/submit?assign=1', { method:'POST', keepalive:true,
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ who:who, email:email, token:TOKEN }) })
+      .then(function(r){return r.json();})
+      .then(function(j){
+        var tag = tr.querySelector('.tag');
+        if(j && j.ok){
+          if(j.mine){ tag.textContent='✓ attribué à toi'; }
+          else { tr.classList.add('taken'); tag.textContent='⚠️ déjà à '+(j.assigned_to||'un collègue'); }
+        }
+      }).catch(function(){});
+    return true; // laisse le lien ouvrir WhatsApp/mail
+  };
+}
+</script></body></html>
