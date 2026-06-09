@@ -23,14 +23,19 @@ function deriveWaContact(responsible_admin) {
   return { name: founder.name, phone };
 }
 
-// ── Aperçu de lien (Open Graph) dynamique pour /projet/<slug> ────────────────
-// Sert la page projet (SPA) avec og:image = 1er visuel 3D du projet, pour un
-// bel aperçu sur Telegram/WhatsApp/Meta/iMessage. Branché via rewrite vercel.json.
+// ── Aperçu de lien (Open Graph) dynamique pour /projet/:slug ─────────────────
+// Sert la page projet (SPA) avec og:image = 1er visuel 3D du projet.
+// IMPORTANT : on construit les balises via String.fromCharCode pour qu'AUCUN
+// littéral HTML n'apparaisse dans la source. Sinon Vercel classe ce .js comme
+// fichier HTML statique et ne le compile pas en fonction serverless (→ 404).
+const LT = String.fromCharCode(60); // caractere <
+const GT = String.fromCharCode(62); // caractere >
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    .split(LT).join('&lt;').split(GT).join('&gt;');
 }
+function metaTag(attrs) { return LT + 'meta ' + attrs + '/' + GT; }
 let TPL = null;
 async function getTemplate(base) {
   if (TPL) return TPL;
@@ -57,19 +62,20 @@ async function servePageWithOG(req, res, slug) {
       || `${base}/og-default.jpg`;
     const url = `${base}/projet/${(project && project.slug) || slug || ''}`;
     const og = [
-      `<meta property="og:type" content="website"/>`,
-      `<meta property="og:site_name" content="Atom Buyers Club"/>`,
-      `<meta property="og:title" content="${esc(title)}"/>`,
-      `<meta property="og:description" content="${esc(desc)}"/>`,
-      `<meta property="og:image" content="${esc(img)}"/>`,
-      `<meta property="og:url" content="${esc(url)}"/>`,
-      `<meta name="twitter:card" content="summary_large_image"/>`,
-      `<meta name="twitter:title" content="${esc(title)}"/>`,
-      `<meta name="twitter:description" content="${esc(desc)}"/>`,
-      `<meta name="twitter:image" content="${esc(img)}"/>`,
+      metaTag('property="og:type" content="website"'),
+      metaTag('property="og:site_name" content="Atom Buyers Club"'),
+      metaTag(`property="og:title" content="${esc(title)}"`),
+      metaTag(`property="og:description" content="${esc(desc)}"`),
+      metaTag(`property="og:image" content="${esc(img)}"`),
+      metaTag(`property="og:url" content="${esc(url)}"`),
+      metaTag('name="twitter:card" content="summary_large_image"'),
+      metaTag(`name="twitter:title" content="${esc(title)}"`),
+      metaTag(`name="twitter:description" content="${esc(desc)}"`),
+      metaTag(`name="twitter:image" content="${esc(img)}"`),
     ].join('\n  ');
-    html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(title)}</title>`);
-    html = html.replace('</head>', `  ${og}\n</head>`);
+    const tO = LT + 'title' + GT, tC = LT + '/title' + GT, hC = LT + '/head' + GT;
+    html = html.replace(new RegExp(tO + '[\\s\\S]*?' + tC, 'i'), tO + esc(title) + tC);
+    html = html.replace(hC, '  ' + og + '\n' + hC);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=86400');
     return res.status(200).send(html);
@@ -85,7 +91,7 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // Page projet avec OG dynamique (rewrite /projet/<slug>)
+    // Page projet avec OG dynamique (rewrite /projet/:slug)
     if (req.method === 'GET' && req.query.ogpage) {
       return servePageWithOG(req, res, req.query.ogpage);
     }

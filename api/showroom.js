@@ -14,14 +14,19 @@ const WRITE_FIELDS = [
   'responsible_admin',
 ];
 
-// ── Aperçu de lien (Open Graph) dynamique pour /realisation/<slug> ──────────
-// Sert la page showroom (SPA) avec og:image = photo de la réalisation, pour un
-// bel aperçu sur Telegram/WhatsApp/Meta. Branché via rewrite vercel.json.
+// ── Aperçu de lien (Open Graph) dynamique pour /realisation/:slug ───────────
+// Sert la page showroom (SPA) avec og:image = photo de la réalisation.
+// IMPORTANT : balises construites via String.fromCharCode pour qu'aucun littéral
+// HTML n'apparaisse en tête de fichier — sinon Vercel le classe comme HTML
+// statique et ne le compile pas en fonction serverless (→ 404).
+const OGLT = String.fromCharCode(60); // caractere <
+const OGGT = String.fromCharCode(62); // caractere >
 function ogEsc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    .split(OGLT).join('&lt;').split(OGGT).join('&gt;');
 }
+function ogMeta(attrs) { return OGLT + 'meta ' + attrs + '/' + OGGT; }
 let SHOWROOM_TPL = null;
 async function getShowroomTemplate(base) {
   if (SHOWROOM_TPL) return SHOWROOM_TPL;
@@ -48,19 +53,20 @@ async function serveShowroomPageWithOG(req, res, slug) {
       || `${base}/og-default.jpg`;
     const url = `${base}/realisation/${(item && item.slug) || slug || ''}`;
     const og = [
-      `<meta property="og:type" content="website"/>`,
-      `<meta property="og:site_name" content="Atom Buyers Club"/>`,
-      `<meta property="og:title" content="${ogEsc(title)}"/>`,
-      `<meta property="og:description" content="${ogEsc(desc)}"/>`,
-      `<meta property="og:image" content="${ogEsc(img)}"/>`,
-      `<meta property="og:url" content="${ogEsc(url)}"/>`,
-      `<meta name="twitter:card" content="summary_large_image"/>`,
-      `<meta name="twitter:title" content="${ogEsc(title)}"/>`,
-      `<meta name="twitter:description" content="${ogEsc(desc)}"/>`,
-      `<meta name="twitter:image" content="${ogEsc(img)}"/>`,
+      ogMeta('property="og:type" content="website"'),
+      ogMeta('property="og:site_name" content="Atom Buyers Club"'),
+      ogMeta(`property="og:title" content="${ogEsc(title)}"`),
+      ogMeta(`property="og:description" content="${ogEsc(desc)}"`),
+      ogMeta(`property="og:image" content="${ogEsc(img)}"`),
+      ogMeta(`property="og:url" content="${ogEsc(url)}"`),
+      ogMeta('name="twitter:card" content="summary_large_image"'),
+      ogMeta(`name="twitter:title" content="${ogEsc(title)}"`),
+      ogMeta(`name="twitter:description" content="${ogEsc(desc)}"`),
+      ogMeta(`name="twitter:image" content="${ogEsc(img)}"`),
     ].join('\n  ');
-    html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${ogEsc(title)}</title>`);
-    html = html.replace('</head>', `  ${og}\n</head>`);
+    const tO = OGLT + 'title' + OGGT, tC = OGLT + '/title' + OGGT, hC = OGLT + '/head' + OGGT;
+    html = html.replace(new RegExp(tO + '[\\s\\S]*?' + tC, 'i'), tO + ogEsc(title) + tC);
+    html = html.replace(hC, '  ' + og + '\n' + hC);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=86400');
     return res.status(200).send(html);
@@ -75,7 +81,7 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // Page réalisation avec OG dynamique (rewrite /realisation/<slug>)
+    // Page réalisation avec OG dynamique (rewrite /realisation/:slug)
     if (req.method === 'GET' && req.query.ogpage) {
       return serveShowroomPageWithOG(req, res, req.query.ogpage);
     }
