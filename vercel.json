@@ -12,6 +12,9 @@
     },
     "api/send-fiche.js": {
       "maxDuration": 30
+    },
+    "api/submit.js": {
+      "maxDuration": 30
     }
   },
   "crons": [

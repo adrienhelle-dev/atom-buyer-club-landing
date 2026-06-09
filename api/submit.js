@@ -3,6 +3,7 @@ const { ADMIN_EMAILS } = require('../lib/auth');
 const { getFounder } = require('../lib/founders');
 const { computeScore } = require('../lib/scoring');
 const { notifyHotLead, notifyInterest } = require('../lib/notify');
+const { handleTelegramUpdate } = require('../lib/telegram-ingest');
 const { Resend } = require('resend');
 
 const TIMING = { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' };
@@ -12,6 +13,9 @@ const SOURCE = { google: 'Google Ads', instagram: 'Instagram Ads', facebook: 'Fa
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
+  // Webhook Telegram (ingestion de leads manuels via screenshot) — pas de
+  // nouvelle fonction serverless : greffé ici via ?tg=1 (cf. lib/telegram-ingest).
+  if (req.query.tg) return handleTelegramUpdate(req, res);
   if (req.method !== 'POST') return res.status(405).end();
 
   const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
