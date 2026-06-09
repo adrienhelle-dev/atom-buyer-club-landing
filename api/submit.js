@@ -229,6 +229,17 @@ const ASSIGN_WHO = {
 const ASSIGN_TOKEN = 'danton-relance'; // garde simple contre les appels au hasard
 
 async function handleAssign(req, res) {
+  // GET ?assign=status&token=... → état d'attribution des leads Danton (vue partagée)
+  if (req.method === 'GET') {
+    if (req.query.token !== ASSIGN_TOKEN) return res.status(403).json({ error: 'forbidden' });
+    const { data } = await supabase
+      .from('leads').select('email, assigned_to')
+      .eq('utm_source', 'seloger-petit-danton');
+    const taken = (data || [])
+      .filter(l => l.assigned_to)
+      .map(l => ({ email: (l.email || '').toLowerCase(), who: (getFounder(l.assigned_to).name || '').split(' ')[0] }));
+    return res.status(200).json({ taken });
+  }
   if (req.method !== 'POST') return res.status(405).end();
   let b = {};
   try { b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch {}

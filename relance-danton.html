@@ -104,5 +104,26 @@ if(!WHO[who]){
       }).catch(function(){});
     return true; // laisse le lien ouvrir WhatsApp/mail
   };
+
+  // Vue PARTAGÉE : au chargement (et toutes les 60s), marque les leads déjà pris
+  // par n'importe qui — pour que Thierry/Alex voient ce qu'Adrien a déjà fait, etc.
+  function syncStatus(){
+    fetch('/api/submit?assign=status&token='+encodeURIComponent(TOKEN))
+      .then(function(r){return r.json();})
+      .then(function(j){
+        var map={}; (j.taken||[]).forEach(function(t){ map[(t.email||'').toLowerCase()]=t.who; });
+        Array.prototype.forEach.call(document.querySelectorAll('tr[data-email]'), function(tr){
+          var e=tr.getAttribute('data-email').toLowerCase();
+          if(map[e]){
+            tr.classList.add('done');
+            var tag=tr.querySelector('.tag');
+            if(map[e]===sender){ if(tag) tag.textContent='✓ déjà envoyé (toi)'; }
+            else { tr.classList.add('taken'); if(tag) tag.textContent='⚠️ déjà pris — '+map[e]; }
+          }
+        });
+      }).catch(function(){});
+  }
+  syncStatus();
+  setInterval(syncStatus, 60000);
 }
 </script></body></html>
