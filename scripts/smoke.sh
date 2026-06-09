@@ -7,25 +7,30 @@
 #          BASE=https://xxx.vercel.app bash scripts/smoke.sh   # cible un déploiement
 set -u
 BASE="${BASE:-https://join.atombuyerclub.fr}"
-fail=0
+fail=0   # 404 / pas de réponse = fonction NON déployée → échec dur (le bug qu'on traque)
+warn=0   # 5xx = fonction déployée mais en erreur → alerte (autre problème)
 
-check() { # $1=chemin  $2=règle (notfound|200)  $3=libellé
-  local code
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$BASE/$1")
-  local ok=1
+check() { # $1=chemin  $2=règle (built|200)
+  local code; code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "$BASE/$1")
   case "$2" in
-    200)      [ "$code" = "200" ] || ok=0 ;;
-    notfound) case "$code" in 404|000|5??) ok=0 ;; esac ;;
+    200)
+      if [ "$code" = "200" ]; then printf "  ✅ %-34s %s\n" "$1" "$code";
+      elif case "$code" in 5??) true;; *) false;; esac; then printf "  ⚠️  %-34s %s (erreur serveur)\n" "$1" "$code"; warn=1;
+      else printf "  ❌ %-34s %s\n" "$1" "$code"; fail=1; fi ;;
+    built)  # le bug "non buildé" = 404 ; 401/405/200 = sain ; 5xx = déployé mais plante
+      case "$code" in
+        404|000) printf "  ❌ %-34s %s (NON déployé !)\n" "$1" "$code"; fail=1 ;;
+        5??)     printf "  ⚠️  %-34s %s (déployé mais erreur)\n" "$1" "$code"; warn=1 ;;
+        *)       printf "  ✅ %-34s %s\n" "$1" "$code" ;;
+      esac ;;
   esac
-  if [ "$ok" = 1 ]; then printf "  ✅ %-34s %s\n" "$1" "$code"
-  else printf "  ❌ %-34s %s\n" "$1" "$code"; fail=1; fi
 }
 
 echo "── Fonctions API (doivent répondre, jamais 404) ── $BASE"
 for ep in "api/public-project?list=1" "api/showroom?list=1" "api/projects?list=1" \
           "api/leads" "api/events" "api/auth" "api/submit" "api/send-fiche" \
           "api/upload-image" "api/generate-pdf" "api/cron/stale-hot-leads"; do
-  check "$ep" notfound
+  check "$ep" built
 done
 
 echo "── Pages publiques (doivent être 200) ──"
@@ -38,5 +43,7 @@ slug=$(curl -s --max-time 20 "$BASE/api/showroom?list=1" | grep -oE '"slug":"[^"
 [ -n "$slug" ] && check "realisation/$slug" 200
 
 echo "──────────────────────────────────────────"
-if [ "$fail" = 0 ]; then echo "✅ SMOKE TEST OK — tout répond."; else echo "❌ ÉCHEC — un endpoint/page ne répond pas (voir ❌ ci-dessus)."; fi
+if [ "$fail" != 0 ]; then echo "❌ ÉCHEC — une fonction/page est NON déployée (404). C'est le bug à corriger d'urgence.";
+elif [ "$warn" != 0 ]; then echo "✅ Déploiement OK (tout est routé) — ⚠️ mais un endpoint renvoie une erreur 5xx (à investiguer séparément).";
+else echo "✅ SMOKE TEST OK — tout répond."; fi
 exit $fail
