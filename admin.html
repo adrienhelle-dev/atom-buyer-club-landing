@@ -5573,10 +5573,10 @@ function _interestSource(ev) {
     return { name, link: slug ? '/projets#/' + slug : null };
   }
   if (ev.type === 'showroom_interest') {
-    return { name: c.item_name || c.name || c.slug || 'Réalisation', link: c.slug ? '/showroom#/' + c.slug : null };
+    return { name: c.item_name || c.name || c.slug || 'Réalisation', link: c.slug ? '/realisation/' +c.slug : null };
   }
   if (ev.type === 'showroom_cta') {
-    return { name: c.showroom_slug || c.item_name || 'Showroom', link: c.showroom_slug ? '/showroom#/' + c.showroom_slug : '/showroom' };
+    return { name: c.showroom_slug || c.item_name || 'Showroom', link: c.showroom_slug ? '/realisation/' +c.showroom_slug : '/showroom' };
   }
   return { name: '—', link: null };
 }
@@ -6597,7 +6597,7 @@ function _buildDestUrl() {
   if (_utmDest === 'projets')       return `${BASE_URL}/projets`;
   if (_utmDest === 'showroom')      return `${BASE_URL}/showroom`;
   if (_utmDest === 'projet-item')   return slug ? `${BASE_URL}/projet/${slug}` : null;
-  if (_utmDest === 'showroom-item') return slug ? `${BASE_URL}/showroom#/${slug}` : null;
+  if (_utmDest === 'showroom-item') return slug ? `${BASE_URL}/realisation/${slug}` : null;
   return null;
 }
 

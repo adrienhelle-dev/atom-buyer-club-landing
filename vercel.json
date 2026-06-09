@@ -3,7 +3,8 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/projet/:slug", "destination": "/api/public-project?ogpage=:slug" },
-    { "source": "/projets/:slug", "destination": "/api/public-project?ogpage=:slug" }
+    { "source": "/projets/:slug", "destination": "/api/public-project?ogpage=:slug" },
+    { "source": "/realisation/:slug", "destination": "/api/showroom?ogpage=:slug" }
   ],
   "functions": {
     "api/generate-pdf.js": {

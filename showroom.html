@@ -454,11 +454,20 @@
       if (pill) applyFilter(pill);
     }
 
-    // Détail depuis hash
+    // Ancien lien #/slug → redirige vers l'URL propre /realisation/<slug>
     if (location.hash.startsWith('#/')) {
       const slug = location.hash.slice(2);
-      const item = allItems.find(i => i.slug === slug);
-      if (item) showDetail(item);
+      if (slug) { location.replace('/realisation/' + slug); return; }
+    }
+    // Détail depuis le chemin propre /realisation/<slug>
+    {
+      const parts = location.pathname.split('/').filter(Boolean);
+      const idx = parts.indexOf('realisation');
+      const pathSlug = idx !== -1 ? parts[idx + 1] : null;
+      if (pathSlug) {
+        const item = allItems.find(i => i.slug === pathSlug);
+        if (item) showDetail(item);
+      }
     }
   }
 
@@ -502,7 +511,7 @@
       return;
     }
     grid.innerHTML = items.map(item => `
-      <a class="card" href="#/${esc(item.slug)}" onclick="showDetail(allItems.find(i=>i.slug==='${esc(item.slug)}'));return false">
+      <a class="card" href="/realisation/${esc(item.slug)}">
         ${item.image_cover
           ? `<img class="card-img" src="${esc(item.image_cover)}" alt="${esc(item.name)}" loading="lazy"/>`
           : `<div class="card-img-placeholder">🏠</div>`}
@@ -526,7 +535,7 @@
     if (!item) return;
     document.getElementById('detail-sticky-bar').style.display = '';
     currentItem = item;
-    history.pushState(null, '', '#/' + item.slug);
+    history.replaceState(null, '', '/realisation/' + item.slug);
     document.getElementById('page-list').style.display   = 'none';
     document.getElementById('page-detail').style.display = 'block';
     window.scrollTo(0, 0);
@@ -664,7 +673,7 @@
     document.getElementById('page-list').style.display     = '';
     document.getElementById('detail-sticky-bar').style.display = 'none';
     document.title = 'Nos réalisations — Atom Buyers Club';
-    history.pushState(null, '', location.pathname + (leadId ? '?lead_id=' + leadId : ''));
+    history.pushState(null, '', '/showroom' + (leadId ? '?lead_id=' + leadId : ''));
     window.scrollTo(0, 0);
   }
 
@@ -799,13 +808,14 @@
   function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   window.addEventListener('popstate', () => {
-    if (location.hash.startsWith('#/')) {
-      const slug = location.hash.slice(2);
-      const item = allItems.find(i => i.slug === slug);
-      if (item) showDetail(item);
-    } else {
-      showList();
+    const parts = location.pathname.split('/').filter(Boolean);
+    const idx = parts.indexOf('realisation');
+    const pathSlug = idx !== -1 ? parts[idx + 1] : null;
+    if (pathSlug) {
+      const item = allItems.find(i => i.slug === pathSlug);
+      if (item) { showDetail(item); return; }
     }
+    showList();
   });
 
   init();

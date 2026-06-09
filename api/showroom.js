@@ -14,9 +14,71 @@ const WRITE_FIELDS = [
   'responsible_admin',
 ];
 
+// ── Aperçu de lien (Open Graph) dynamique pour /realisation/<slug> ──────────
+// Sert la page showroom (SPA) avec og:image = photo de la réalisation, pour un
+// bel aperçu sur Telegram/WhatsApp/Meta. Branché via rewrite vercel.json.
+function ogEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+let SHOWROOM_TPL = null;
+async function getShowroomTemplate(base) {
+  if (SHOWROOM_TPL) return SHOWROOM_TPL;
+  SHOWROOM_TPL = await (await fetch(`${base}/showroom`)).text();
+  return SHOWROOM_TPL;
+}
+async function serveShowroomPageWithOG(req, res, slug) {
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'join.atombuyerclub.fr';
+  const base = `https://${host}`;
+  try {
+    let html = await getShowroomTemplate(base);
+    const { data: item } = await supabase
+      .from('showroom_items')
+      .select('name, description_courte, image_cover, images_after, quartier, arrondissement, slug')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    const title = item ? `${item.name || 'Réalisation'} — Atom Buyers Club` : 'Nos réalisations — Atom Buyers Club';
+    const desc = (item && item.description_courte)
+      ? String(item.description_courte).replace(/\s+/g, ' ').trim().slice(0, 200)
+      : 'Découvrez nos réalisations : studios parisiens rénovés, clé en main, par Atom Buyers Club.';
+    const img = (item && item.image_cover)
+      || (item && item.images_after && item.images_after[0])
+      || `${base}/og-default.jpg`;
+    const url = `${base}/realisation/${(item && item.slug) || slug || ''}`;
+    const og = [
+      `<meta property="og:type" content="website"/>`,
+      `<meta property="og:site_name" content="Atom Buyers Club"/>`,
+      `<meta property="og:title" content="${ogEsc(title)}"/>`,
+      `<meta property="og:description" content="${ogEsc(desc)}"/>`,
+      `<meta property="og:image" content="${ogEsc(img)}"/>`,
+      `<meta property="og:url" content="${ogEsc(url)}"/>`,
+      `<meta name="twitter:card" content="summary_large_image"/>`,
+      `<meta name="twitter:title" content="${ogEsc(title)}"/>`,
+      `<meta name="twitter:description" content="${ogEsc(desc)}"/>`,
+      `<meta name="twitter:image" content="${ogEsc(img)}"/>`,
+    ].join('\n  ');
+    html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${ogEsc(title)}</title>`);
+    html = html.replace('</head>', `  ${og}\n</head>`);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=86400');
+    return res.status(200).send(html);
+  } catch (e) {
+    console.error('serveShowroomPageWithOG error:', e?.message || e);
+    res.setHeader('Location', `/showroom`); // repli sûr (évite toute boucle de redirection)
+    return res.status(302).end();
+  }
+}
+
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // Page réalisation avec OG dynamique (rewrite /realisation/<slug>)
+    if (req.method === 'GET' && req.query.ogpage) {
+      return serveShowroomPageWithOG(req, res, req.query.ogpage);
+    }
 
     // ─── GET public — liste ou item unique (pas d'auth requise) ────
     if (req.method === 'GET') {

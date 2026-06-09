@@ -643,7 +643,7 @@ async function loadRealisationSimilaire() {
         } catch {}
       }
       const meta = [item.quartier, item.arrondissement ? `Paris ${item.arrondissement}` : null].filter(Boolean).join(' · ');
-      const href = item.slug ? `/showroom#/${item.slug}` : '/showroom';
+      const href = item.slug ? `/realisation/${item.slug}` : '/showroom';
       const sep = i > 0 ? 'border-top:1px solid rgba(184,151,90,.15);padding-top:14px;margin-top:14px;' : '';
       return `<div style="${sep}">
         ${imgUrl ? `<img class="real-card-img" src="${escapeHtml(imgUrl)}" alt="${escapeHtml(item.name||'')}"/>` : ''}
