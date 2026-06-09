@@ -15,6 +15,12 @@
     },
     "api/submit.js": {
       "maxDuration": 30
+    },
+    "api/public-project.js": {
+      "maxDuration": 10
+    },
+    "api/showroom.js": {
+      "maxDuration": 10
     }
   },
   "crons": [
