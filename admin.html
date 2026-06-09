@@ -1665,6 +1665,7 @@
         <option value="email">Email</option>
         <option value="showroom">Showroom</option>
         <option value="fiche_projet">Page projet</option>
+        <option value="seloger-petit-danton">SeLoger · Petit Danton</option>
         <option value="organic">Organique</option>
       </select>
       <select class="filter-select" id="status-filter" onchange="loadLeads(1)">
@@ -2768,6 +2769,8 @@ const SRC_LABELS = {
   fiche_projet: 'Page projet',  // lead venu d'une page projet sans UTM payant
   projet:       'Page projet',  // alias court
   showroom:     'Showroom',
+  seloger:      'SeLoger',
+  'seloger-petit-danton': 'SeLoger · Petit Danton',
 };
 const SRC_CLASS  = {
   google:       'badge-google',
@@ -2779,6 +2782,8 @@ const SRC_CLASS  = {
   fiche_projet: 'badge-projet',
   projet:       'badge-projet',
   showroom:     'badge-showroom',
+  seloger:      'badge-default',
+  'seloger-petit-danton': 'badge-default',
 };
 // Ensemble des sources groupées sous "Organique" dans les stats (pas dans l'affichage)
 const ORGANIC_SRC_KEYS = new Set(['organic']);
