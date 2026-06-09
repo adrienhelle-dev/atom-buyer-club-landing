@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atom Buyers Club — Mémo qualification leads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#B8975A; --cream:#F5F2ED; --ink:#1A1A1A; --dim:#6b6760;
+    --green:#4caf7d; --blue:#5C6BC0; --line:#e3ddd2; --bg-soft:#faf8f4;
+    --serif:'Cormorant Garamond',Georgia,serif;
+    --sans:'DM Sans',-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#d8d3c8;}
+  body{font-family:var(--sans);color:var(--ink);font-weight:300;line-height:1.4;-webkit-font-smoothing:antialiased;padding:24px;}
+
+  .page{width:210mm;min-height:297mm;margin:0 auto;background:var(--cream);padding:15mm 15mm;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+
+  .head{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--gold);padding-bottom:9px;margin-bottom:10px;}
+  .brand .logo{font-family:var(--serif);font-size:27px;font-weight:400;letter-spacing:.5px;line-height:1;}
+  .brand .logo b{font-weight:500;}
+  .brand .sub{font-size:8.5px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-top:3px;}
+  .head .title{text-align:right;font-family:var(--serif);font-size:18px;font-weight:400;}
+  .head .title small{display:block;font-size:8.5px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:3px;}
+
+  h2{font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin:14px 0 7px;display:flex;align-items:center;gap:7px;}
+  h2::before{content:'';flex:0 0 14px;height:1px;background:var(--gold);}
+
+  /* Deux profils */
+  .profils{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .profil{border:1px solid var(--line);border-radius:2px;padding:10px 12px;background:var(--bg-soft);}
+  .profil .tag{display:inline-block;font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;border-radius:3px;padding:2px 7px;font-weight:500;margin-bottom:5px;}
+  .profil.a .tag{background:rgba(76,175,125,.15);color:#2f7d56;}
+  .profil.b .tag{background:rgba(92,107,192,.15);color:#3f4aa0;}
+  .profil .nm{font-size:11.5px;font-weight:500;margin-bottom:3px;}
+  .profil p{font-size:10.5px;color:#333;}
+  .profil .goal{font-size:10px;color:var(--dim);margin-top:5px;border-top:1px solid var(--line);padding-top:5px;}
+  .profil .goal b{color:var(--ink);}
+
+  /* Infos à recueillir */
+  .info{break-inside:avoid;margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid var(--line);}
+  .info .lab{font-size:9px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);}
+  .info .ask{font-size:10.5px;color:#222;margin-top:2px;}
+  .info .rec{font-size:9.5px;color:var(--dim);margin-top:2px;}
+  .info .rec b{color:#333;font-weight:500;}
+
+  /* Script + fallback cards */
+  .card{border:1px solid var(--line);border-radius:2px;padding:10px 13px;background:var(--bg-soft);margin-top:4px;}
+  .card.script{border-left:3px solid var(--blue);}
+  .card.fallback{border-left:3px solid var(--gold);}
+  .card p{font-size:10.5px;color:#222;margin:3px 0;}
+  .card .say{font-style:italic;color:#333;}
+  .card .say b{font-style:normal;}
+  .step{font-size:10.5px;color:#333;padding:2px 0 2px 16px;position:relative;}
+  .step::before{content:'→';position:absolute;left:3px;color:var(--gold);}
+
+  .reflex{margin-top:10px;background:var(--ink);color:var(--cream);border-radius:2px;padding:9px 14px;}
+  .reflex h3{font-size:9.5px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+  .reflex ul{list-style:none;}
+  .reflex li{font-size:10.5px;color:var(--cream);padding:1.5px 0 1.5px 15px;position:relative;}
+  .reflex li::before{content:'•';position:absolute;left:3px;color:var(--gold);}
+  b,strong{font-weight:500;}
+
+  .foot{margin-top:11px;border-top:1px solid var(--line);padding-top:8px;display:flex;justify-content:space-between;font-size:8.5px;color:var(--dim);}
+
+  .print-hint{max-width:210mm;margin:0 auto 14px;text-align:center;font-size:12px;color:#555;}
+  .print-hint b{color:#000;}
+
+  @media print{
+    html,body{background:#fff;padding:0;}
+    .print-hint{display:none;}
+    .page{box-shadow:none;width:auto;min-height:auto;margin:0;padding:11mm 11mm;}
+    @page{size:A4;margin:0;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="print-hint">📄 Pour le PDF : <b>Cmd/Ctrl + P</b> → Destination <b>« Enregistrer au format PDF »</b> → Enregistrer.</div>
+
+  <div class="page">
+
+    <div class="head">
+      <div class="brand">
+        <div class="logo">atom <b>buyers club</b></div>
+        <div class="sub">Mémo appels équipe</div>
+      </div>
+      <div class="title">Qualification des leads<small>Recueil d'infos · mise à jour fiche</small></div>
+    </div>
+
+    <!-- D'où viennent les leads -->
+    <h2>D'où viennent les leads — 2 profils</h2>
+    <div class="profils">
+      <div class="profil a">
+        <span class="tag">Profil A · WhatsApp</span>
+        <div class="nm">Groupe WhatsApp Atom Buyers Club</div>
+        <p>Déjà curieux, connaissent un peu Atom. Plus ouverts à la discussion.</p>
+        <div class="goal"><b>But :</b> qualifier à fond (les 4 infos ci-dessous) et faire avancer.</div>
+      </div>
+      <div class="profil b">
+        <span class="tag">Profil B · Intérêt projet</span>
+        <div class="nm">Marque d'intérêt sur un projet (score 0)</div>
+        <p>A juste laissé ses coordonnées sur un projet. On ne sait rien d'autre.</p>
+        <div class="goal"><b>But :</b> récupérer <b>horizon + financement</b>, mettre la fiche à jour, annoncer qu'un membre Atom le recontacte vite sur le projet.</div>
+      </div>
+    </div>
+
+    <!-- Infos à recueillir -->
+    <h2>Les 4 infos à recueillir (et à noter dans la fiche)</h2>
+
+    <div class="info">
+      <div class="lab">① Horizon d'investissement</div>
+      <div class="ask">« Vous envisagez d'investir dans quel délai — prochaines semaines, quelques mois, ou plutôt au stade de la réflexion ? »</div>
+      <div class="rec">→ Noter <b>Horizon</b> : <b>Dès que possible</b> · Quelques mois · En réflexion</div>
+    </div>
+
+    <div class="info">
+      <div class="lab">② Financement</div>
+      <div class="ask">« Vous financeriez plutôt à crédit, avec un apport, ou comptant ? Vous avez déjà échangé avec votre banque ? »</div>
+      <div class="rec">→ Noter <b>Financement</b> (crédit / apport / cash) + <b>Accord de principe banque</b> (oui / non)</div>
+    </div>
+
+    <div class="info">
+      <div class="lab">③ Capacité / budget</div>
+      <div class="ask">« Vous avez une idée du budget ou de votre capacité d'emprunt ? Pas de souci si c'est encore flou. »</div>
+      <div class="rec">→ Noter <b>Capacité / Budget</b></div>
+    </div>
+
+    <div class="info">
+      <div class="lab">④ Zone visée</div>
+      <div class="ask">« Des arrondissements ou quartiers de Paris qui vous intéressent en particulier ? »</div>
+      <div class="rec">→ Noter <b>Arrondissements</b> · puis passer le <b>Statut → Contacté</b></div>
+    </div>
+
+    <!-- Script profil B -->
+    <h2>Script express — Profil B (intérêt projet, score 0)</h2>
+    <div class="card script">
+      <p class="say">« Bonjour <b>[prénom]</b>, <b>Agathe d'Atom Buyers Club</b>. Vous avez marqué votre intérêt pour <b>[projet]</b> — je vous appelle juste pour compléter votre dossier avant qu'un membre de l'équipe vous recontacte. Deux-trois questions rapides, vous avez un instant ? »</p>
+      <div class="step">Poser ① Horizon et ② Financement (le minimum vital).</div>
+      <div class="step">Mettre la fiche à jour pendant l'appel.</div>
+      <p class="say">« Parfait, je note tout ça. Un membre de l'équipe Atom vous rappelle <b>très vite</b> au sujet de <b>[projet]</b>. Belle journée ! »</p>
+    </div>
+
+    <!-- Fallback RDV -->
+    <h2>Si pas de réponse aux questions / lead hésitant</h2>
+    <div class="card fallback">
+      <p class="say">« Le plus simple, c'est d'en parler directement avec un de nos cofondateurs. Je vous bloque un créneau téléphonique dans son agenda — vous préférez plutôt en début ou en fin de semaine ? »</p>
+      <div class="step">Proposer 2 créneaux et réserver le RDV téléphonique dans l'agenda du cofondateur (Thierry · Alexandre · Adrien).</div>
+      <div class="step">Confirmer par message le créneau + le projet concerné.</div>
+    </div>
+
+    <!-- Réflexes -->
+    <div class="reflex">
+      <h3>Réflexes</h3>
+      <ul>
+        <li><b>Mettre à jour la fiche pendant l'appel</b> (horizon, financement, statut → Contacté).</li>
+        <li><b>Toujours rappeler le projet d'intérêt</b> et annoncer le recontact d'un membre Atom.</li>
+        <li>Pas de réponse claire ? <b>Booker un RDV cofondateur</b> plutôt que d'insister.</li>
+        <li><b>Jamais de chiffre de rendement non validé</b> — « je vérifie et l'équipe vous revient ».</li>
+      </ul>
+    </div>
+
+    <div class="foot">
+      <span>join.atombuyerclub.fr · atombuyersclub.fr</span>
+      <span>Doc interne — ne pas diffuser aux prospects</span>
+    </div>
+
+  </div>
+
+</body>
+</html>

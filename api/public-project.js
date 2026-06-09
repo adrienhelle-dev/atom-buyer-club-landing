@@ -1,6 +1,7 @@
 const { supabase } = require('../lib/supabase');
 const { getFounder } = require('../lib/founders');
 const { notifyInterest } = require('../lib/notify');
+const { renderProjectOG } = require('../lib/og-render');
 
 // Champs exposés publiquement (jamais d'infos internes)
 // responsible_admin est chargé côté serveur uniquement pour dériver wa_contact
@@ -23,77 +24,14 @@ function deriveWaContact(responsible_admin) {
   return { name: founder.name, phone };
 }
 
-// ── Aperçu de lien (Open Graph) dynamique pour /projet/:slug ─────────────────
-// Sert la page projet (SPA) avec og:image = 1er visuel 3D du projet.
-// IMPORTANT : on construit les balises via String.fromCharCode pour qu'AUCUN
-// littéral HTML n'apparaisse dans la source. Sinon Vercel classe ce .js comme
-// fichier HTML statique et ne le compile pas en fonction serverless (→ 404).
-const LT = String.fromCharCode(60); // caractere <
-const GT = String.fromCharCode(62); // caractere >
-function esc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-    .split(LT).join('&lt;').split(GT).join('&gt;');
-}
-function metaTag(attrs) { return LT + 'meta ' + attrs + '/' + GT; }
-let TPL = null;
-async function getTemplate(base) {
-  if (TPL) return TPL;
-  TPL = await (await fetch(`${base}/projet`)).text();
-  return TPL;
-}
-async function servePageWithOG(req, res, slug) {
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'join.atombuyerclub.fr';
-  const base = `https://${host}`;
-  try {
-    let html = await getTemplate(base);
-    const { data: project } = await supabase
-      .from('projects')
-      .select('title, description, images, images_3d, slug')
-      .eq('slug', slug)
-      .maybeSingle();
-
-    const title = project ? `${project.title || 'Projet'} — Atom Buyers Club` : 'Projet — Atom Buyers Club';
-    const desc = (project && project.description)
-      ? String(project.description).replace(/\s+/g, ' ').trim().slice(0, 200)
-      : 'Studio rénové, clé en main, à Paris — investissement locatif avec Atom Buyers Club.';
-    const img = (project && project.images_3d && project.images_3d[0])
-      || (project && project.images && project.images[0])
-      || `${base}/og-default.jpg`;
-    const url = `${base}/projet/${(project && project.slug) || slug || ''}`;
-    const og = [
-      metaTag('property="og:type" content="website"'),
-      metaTag('property="og:site_name" content="Atom Buyers Club"'),
-      metaTag(`property="og:title" content="${esc(title)}"`),
-      metaTag(`property="og:description" content="${esc(desc)}"`),
-      metaTag(`property="og:image" content="${esc(img)}"`),
-      metaTag(`property="og:url" content="${esc(url)}"`),
-      metaTag('name="twitter:card" content="summary_large_image"'),
-      metaTag(`name="twitter:title" content="${esc(title)}"`),
-      metaTag(`name="twitter:description" content="${esc(desc)}"`),
-      metaTag(`name="twitter:image" content="${esc(img)}"`),
-    ].join('\n  ');
-    const tO = LT + 'title' + GT, tC = LT + '/title' + GT, hC = LT + '/head' + GT;
-    html = html.replace(new RegExp(tO + '[\\s\\S]*?' + tC, 'i'), tO + esc(title) + tC);
-    html = html.replace(hC, '  ' + og + '\n' + hC);
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=86400');
-    return res.status(200).send(html);
-  } catch (e) {
-    console.error('servePageWithOG error:', e?.message || e);
-    res.setHeader('Location', `/projet?slug=${encodeURIComponent(slug || '')}`);
-    return res.status(302).end();
-  }
-}
-
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   try {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // Page projet avec OG dynamique (rewrite /projet/:slug)
+    // Page projet avec OG dynamique (rewrite /projet/:slug) — rendu délégué à lib/og-render
     if (req.method === 'GET' && req.query.ogpage) {
-      return servePageWithOG(req, res, req.query.ogpage);
+      return renderProjectOG(req, res, req.query.ogpage);
     }
 
     // ── POST /api/public-project?action=interest ─────────────────
