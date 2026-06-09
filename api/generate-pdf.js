@@ -1,7 +1,8 @@
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
-const chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
+// puppeteer-core@25 et @sparticuz/chromium@148 sont des ES Modules : on NE peut
+// PAS les require() depuis ce fichier CommonJS (ERR_REQUIRE_ESM → crash au chargement).
+// On les charge donc en import() dynamique dans le handler (cf. plus bas).
 
 module.exports = async function handler(req, res) {
   let browser = null;
@@ -24,7 +25,9 @@ module.exports = async function handler(req, res) {
     // Génère le HTML
     const html = buildFicheHtml(project);
 
-    // Lance Puppeteer + Chromium
+    // Lance Puppeteer + Chromium (import dynamique : modules ESM)
+    const { default: puppeteer } = await import('puppeteer-core');
+    const { default: chromium }  = await import('@sparticuz/chromium');
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: { width: 794, height: 1123 }, // A4 @ 96dpi
