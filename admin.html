@@ -3353,6 +3353,7 @@ let notaireTouched = false;
 // ── Gestion photos upload Supabase Storage ───────────────────
 let npImages      = []; // [{ url, path }]  — photos principales
 let np3dImages    = []; // [{ url, path }]  — projections 3D
+let npDragSrc     = null; // index source pour le drag-and-drop des images projet
 let npPlan2dFiles = []; // [{ url, path, name }]  — plans 2D (multi)
 
 async function handleImageDrop(event) {
@@ -3508,8 +3509,13 @@ function render3dPreviews() {
   const grid = document.getElementById('np-3d-grid');
   if (!grid) return;
   grid.innerHTML = np3dImages.map((img, i) => `
-    <div class="img-grid-item">
-      <img src="${esc(img.url)}" alt="3D ${i+1}" style="width:100%;height:100%;object-fit:cover"/>
+    <div class="img-grid-item" draggable="true"
+      ondragstart="npDragSrc=${i};this.style.opacity='.4'"
+      ondragend="this.style.opacity='1'"
+      ondragover="event.preventDefault()"
+      ondrop="event.preventDefault();moveNpImage('3d',npDragSrc,${i});npDragSrc=null"
+      style="cursor:grab">
+      <img src="${esc(img.url)}" alt="3D ${i+1}" style="width:100%;height:100%;object-fit:cover;pointer-events:none"/>
       <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removeImage3d(${i})" style="background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
       ${i === 0
         ? `<div style="position:absolute;bottom:4px;left:4px;background:rgba(184,151,90,.9);color:#0f0e0c;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;pointer-events:none;letter-spacing:.04em">⭐ Vedette</div>`
@@ -3523,6 +3529,26 @@ function setFeatured3d(index) {
   const [img] = np3dImages.splice(index, 1);
   np3dImages.unshift(img);
   render3dPreviews();
+  setSaveBtnDirty(true);
+}
+
+// Drag-and-drop : réordonner les images projet (kind='3d' ou 'img')
+function moveNpImage(kind, from, to) {
+  if (from === null || from === to) return;
+  const arr = kind === '3d' ? np3dImages : npImages;
+  if (!arr[from]) return;
+  const [it] = arr.splice(from, 1);
+  arr.splice(to, 0, it);
+  if (kind === '3d') render3dPreviews(); else renderImagePreviews();
+  setSaveBtnDirty(true);
+}
+
+// Mettre une photo en vedette (1re position = cover si pas de visuel 3D)
+function setFeaturedImg(index) {
+  if (!npImages[index]) return;
+  const [img] = npImages.splice(index, 1);
+  npImages.unshift(img);
+  renderImagePreviews();
   setSaveBtnDirty(true);
 }
 
@@ -3589,9 +3615,18 @@ function renderImagePreviews() {
     return;
   }
   grid.innerHTML = npImages.map((img, i) => `
-    <div class="img-grid-item">
-      <img src="${esc(img.url)}" alt="Photo ${i+1}" style="width:100%;height:100%;object-fit:cover"/>
+    <div class="img-grid-item" draggable="true"
+      ondragstart="npDragSrc=${i};this.style.opacity='.4'"
+      ondragend="this.style.opacity='1'"
+      ondragover="event.preventDefault()"
+      ondrop="event.preventDefault();moveNpImage('img',npDragSrc,${i});npDragSrc=null"
+      style="cursor:grab">
+      <img src="${esc(img.url)}" alt="Photo ${i+1}" style="width:100%;height:100%;object-fit:cover;pointer-events:none"/>
       <button class="img-grid-item-del btn-icon" title="Supprimer" onclick="removeImage(${i})" style="background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center">✕</button>
+      ${i === 0
+        ? `<div style="position:absolute;bottom:4px;left:4px;background:rgba(184,151,90,.9);color:#0f0e0c;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;pointer-events:none;letter-spacing:.04em">⭐ Vedette</div>`
+        : `<button title="Mettre en vedette" onclick="setFeaturedImg(${i})" style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;color:rgba(255,255,255,.7);font-size:10px" onmouseenter="this.style.color='#B8975A'" onmouseleave="this.style.color='rgba(255,255,255,.7)'">⭐</button>`
+      }
     </div>`).join('');
 }
 
