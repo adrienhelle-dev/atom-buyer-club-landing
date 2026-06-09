@@ -2,6 +2,7 @@ const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq, ADMIN_EMAILS } = require('../lib/auth');
 const { getFounder } = require('../lib/founders');
 const { notifyInterest } = require('../lib/notify');
+const { renderShowroomOG } = require('../lib/og-render');
 const { Resend } = require('resend');
 
 const WRITE_FIELDS = [
@@ -14,76 +15,13 @@ const WRITE_FIELDS = [
   'responsible_admin',
 ];
 
-// ── Aperçu de lien (Open Graph) dynamique pour /realisation/:slug ───────────
-// Sert la page showroom (SPA) avec og:image = photo de la réalisation.
-// IMPORTANT : balises construites via String.fromCharCode pour qu'aucun littéral
-// HTML n'apparaisse en tête de fichier — sinon Vercel le classe comme HTML
-// statique et ne le compile pas en fonction serverless (→ 404).
-const OGLT = String.fromCharCode(60); // caractere <
-const OGGT = String.fromCharCode(62); // caractere >
-function ogEsc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-    .split(OGLT).join('&lt;').split(OGGT).join('&gt;');
-}
-function ogMeta(attrs) { return OGLT + 'meta ' + attrs + '/' + OGGT; }
-let SHOWROOM_TPL = null;
-async function getShowroomTemplate(base) {
-  if (SHOWROOM_TPL) return SHOWROOM_TPL;
-  SHOWROOM_TPL = await (await fetch(`${base}/showroom`)).text();
-  return SHOWROOM_TPL;
-}
-async function serveShowroomPageWithOG(req, res, slug) {
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'join.atombuyerclub.fr';
-  const base = `https://${host}`;
-  try {
-    let html = await getShowroomTemplate(base);
-    const { data: item } = await supabase
-      .from('showroom_items')
-      .select('name, description_courte, image_cover, images_after, quartier, arrondissement, slug')
-      .eq('slug', slug)
-      .maybeSingle();
-
-    const title = item ? `${item.name || 'Réalisation'} — Atom Buyers Club` : 'Nos réalisations — Atom Buyers Club';
-    const desc = (item && item.description_courte)
-      ? String(item.description_courte).replace(/\s+/g, ' ').trim().slice(0, 200)
-      : 'Découvrez nos réalisations : studios parisiens rénovés, clé en main, par Atom Buyers Club.';
-    const img = (item && item.image_cover)
-      || (item && item.images_after && item.images_after[0])
-      || `${base}/og-default.jpg`;
-    const url = `${base}/realisation/${(item && item.slug) || slug || ''}`;
-    const og = [
-      ogMeta('property="og:type" content="website"'),
-      ogMeta('property="og:site_name" content="Atom Buyers Club"'),
-      ogMeta(`property="og:title" content="${ogEsc(title)}"`),
-      ogMeta(`property="og:description" content="${ogEsc(desc)}"`),
-      ogMeta(`property="og:image" content="${ogEsc(img)}"`),
-      ogMeta(`property="og:url" content="${ogEsc(url)}"`),
-      ogMeta('name="twitter:card" content="summary_large_image"'),
-      ogMeta(`name="twitter:title" content="${ogEsc(title)}"`),
-      ogMeta(`name="twitter:description" content="${ogEsc(desc)}"`),
-      ogMeta(`name="twitter:image" content="${ogEsc(img)}"`),
-    ].join('\n  ');
-    const tO = OGLT + 'title' + OGGT, tC = OGLT + '/title' + OGGT, hC = OGLT + '/head' + OGGT;
-    html = html.replace(new RegExp(tO + '[\\s\\S]*?' + tC, 'i'), tO + ogEsc(title) + tC);
-    html = html.replace(hC, '  ' + og + '\n' + hC);
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=86400');
-    return res.status(200).send(html);
-  } catch (e) {
-    console.error('serveShowroomPageWithOG error:', e?.message || e);
-    res.setHeader('Location', `/showroom`); // repli sûr (évite toute boucle de redirection)
-    return res.status(302).end();
-  }
-}
-
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // Page réalisation avec OG dynamique (rewrite /realisation/:slug)
+    // Page réalisation avec OG dynamique (rewrite /realisation/:slug) — délégué à lib/og-render
     if (req.method === 'GET' && req.query.ogpage) {
-      return serveShowroomPageWithOG(req, res, req.query.ogpage);
+      return renderShowroomOG(req, res, req.query.ogpage);
     }
 
     // ─── GET public — liste ou item unique (pas d'auth requise) ────

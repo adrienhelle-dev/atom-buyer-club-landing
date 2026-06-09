@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atom Buyers Club — L'outil en une page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#B8975A; --cream:#F5F2ED; --ink:#1A1A1A; --dim:#6b6760;
+    --green:#4caf7d; --line:#e3ddd2; --bg-soft:#faf8f4;
+    --serif:'Cormorant Garamond',Georgia,serif;
+    --sans:'DM Sans',-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#d8d3c8;}
+  body{font-family:var(--sans);color:var(--ink);font-weight:300;line-height:1.45;-webkit-font-smoothing:antialiased;padding:24px;}
+
+  .page{
+    width:210mm;min-height:297mm;margin:0 auto;background:var(--cream);
+    padding:18mm 16mm;box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+
+  /* ── Header ── */
+  .head{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--gold);padding-bottom:10px;margin-bottom:6px;}
+  .brand{font-family:var(--serif);}
+  .brand .logo{font-size:30px;font-weight:400;letter-spacing:.5px;line-height:1;}
+  .brand .logo b{font-weight:500;}
+  .brand .sub{font-family:var(--sans);font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-top:2px;}
+  .head .title{text-align:right;font-family:var(--serif);font-size:19px;color:var(--ink);font-weight:400;}
+  .head .title small{display:block;font-family:var(--sans);font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:3px;}
+
+  .pitch{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--dim);margin:10px 0 16px;}
+
+  /* ── Grid of cards ── */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .card{background:var(--bg-soft);border:1px solid var(--line);border-radius:2px;padding:11px 13px;}
+  .card.span{grid-column:1 / -1;}
+  .card h3{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+  .num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--gold);border-radius:50%;font-family:var(--serif);font-size:11px;color:var(--gold);}
+  .card p{font-size:11px;color:#333;margin:3px 0;}
+  .card ul{list-style:none;margin:4px 0 0;}
+  .card li{font-size:11px;color:#333;padding:2px 0 2px 14px;position:relative;}
+  .card li::before{content:'·';position:absolute;left:3px;color:var(--gold);font-weight:700;}
+  .tag{display:inline-block;font-size:9px;letter-spacing:.5px;background:rgba(184,151,90,.14);color:#8a6d34;border-radius:3px;padding:1px 6px;margin:0 2px 2px 0;}
+  b,strong{font-weight:500;}
+  .hot{color:#c8852a;font-weight:500;}
+  .green{color:var(--green);font-weight:500;}
+
+  /* ── Login band ── */
+  .band{background:var(--ink);color:var(--cream);border-radius:2px;padding:10px 14px;display:flex;align-items:center;gap:14px;margin:14px 0;}
+  .band .k{font-family:var(--serif);font-size:22px;color:var(--gold);}
+  .band .t{font-size:11px;line-height:1.4;}
+  .band .t b{color:#fff;}
+
+  /* ── Deal flow ── */
+  .flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .flow .step{background:#fff;border:1px solid var(--line);border-radius:20px;padding:4px 11px;font-size:10px;color:#333;}
+  .flow .arr{color:var(--gold);font-size:12px;}
+  .flow .signed{background:rgba(76,175,125,.12);border-color:rgba(76,175,125,.4);color:#2f7d56;font-weight:500;}
+
+  .deal-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .deal-split .opt{border:1px solid var(--line);border-radius:2px;padding:8px 10px;background:#fff;}
+  .deal-split .opt .lab{font-size:11px;font-weight:500;color:var(--ink);margin-bottom:2px;}
+  .deal-split .opt .desc{font-size:10px;color:var(--dim);}
+
+  /* ── Footer ── */
+  .foot{margin-top:16px;border-top:1px solid var(--line);padding-top:9px;display:flex;justify-content:space-between;align-items:center;}
+  .foot .one{font-family:var(--serif);font-size:13px;color:var(--ink);font-style:italic;}
+  .foot .one b{font-style:normal;color:var(--gold);}
+  .foot .meta{font-size:9px;color:var(--dim);text-align:right;}
+
+  .print-hint{max-width:210mm;margin:0 auto 14px;text-align:center;font-size:12px;color:#555;}
+  .print-hint b{color:#000;}
+
+  @media print{
+    html,body{background:#fff;padding:0;}
+    .print-hint{display:none;}
+    .page{box-shadow:none;width:auto;min-height:auto;margin:0;padding:12mm 12mm;}
+    @page{size:A4;margin:0;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="print-hint">📄 Pour le PDF : <b>Cmd/Ctrl + P</b> → Destination <b>« Enregistrer au format PDF »</b> → Enregistrer.</div>
+
+  <div class="page">
+
+    <div class="head">
+      <div class="brand">
+        <div class="logo">atom <b>buyers club</b></div>
+        <div class="sub">Investissement micro-logement · Paris</div>
+      </div>
+      <div class="title">L'outil en une page<small>Mémo cofondateurs</small></div>
+    </div>
+
+    <p class="pitch">Un assistant qui range tout seul vos contacts, vos biens et votre argent. Vous ouvrez le site — tout est là, à jour, depuis le téléphone.</p>
+
+    <!-- Login -->
+    <div class="band">
+      <div class="k">🔑</div>
+      <div class="t">
+        <b>Une seule adresse + un seul mot de passe</b>, les mêmes partout.
+        Marche sur <b>iPhone, ordinateur, tablette</b> — rien à installer (c'est un site web).
+        Chacun son accès ; Agathe a désormais l'accès complet, comme vous.
+      </div>
+    </div>
+
+    <!-- 4 onglets -->
+    <div class="grid">
+
+      <div class="card">
+        <h3><span class="num">1</span> Leads — les contacts intéressés</h3>
+        <p>Votre carnet de prospects <b>automatique</b> : un formulaire rempli (pub, site…) = un contact qui apparaît tout seul.</p>
+        <ul>
+          <li>Note sur 10 <span class="hot">🔥</span> : plus c'est haut, plus la personne est chaude. <b>Visez les 8-10.</b></li>
+          <li>Filtres sur une ligne : <span class="tag">🔥 Chauds</span><span class="tag">Source</span><span class="tag">Statut</span><span class="tag">Responsable</span></li>
+          <li>Suivi par étapes jusqu'à la signature.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="num">2</span> Projets — les biens à monter</h3>
+        <p>La liste de vos opérations. L'outil dit <b>automatiquement quels prospects collent à quel projet</b> (budget, arrondissement…).</p>
+        <ul>
+          <li>Envoi de la fiche projet aux bons contacts en un clic.</li>
+          <li>Compteur de leads compatibles sur chaque projet.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="num">3</span> Showroom — vos réalisations</h3>
+        <p>Vos biens déjà réalisés, en vitrine.</p>
+        <ul>
+          <li>On voit <b>qui s'est montré intéressé</b> par chaque réalisation.</li>
+          <li>Une réalisation louée se relie au bien géré dans l'app Assets.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3><span class="num">4</span> Intérêts — qui a cliqué sur quoi</h3>
+        <p>Le journal des marques d'intérêt.</p>
+        <ul>
+          <li><b>Stats par campagne de pub</b> : combien de signatures, combien d'euros.</li>
+          <li>Filtre par responsable.</li>
+        </ul>
+      </div>
+
+      <!-- Deal -->
+      <div class="card span">
+        <h3>💰 Quand un deal se signe</h3>
+        <div class="flow">
+          <span class="step">Nouveau</span><span class="arr">→</span>
+          <span class="step">Contacté</span><span class="arr">→</span>
+          <span class="step">En cours</span><span class="arr">→</span>
+          <span class="step">Qualifié</span><span class="arr">→</span>
+          <span class="step signed">Signé ✓</span>
+        </div>
+        <div class="deal-split">
+          <div class="opt">
+            <div class="lab green">Géré par Atom</div>
+            <div class="desc">Commission <b>+</b> on gère le bien (loyers suivis dans l'app Assets).</div>
+          </div>
+          <div class="opt">
+            <div class="lab">Commission seule</div>
+            <div class="desc">On touche la commission (≈ 8 900 € via Microsurfaces), sans gestion derrière.</div>
+          </div>
+        </div>
+        <p style="margin-top:7px">➡️ Pour chaque pub, vous voyez <b>noir sur blanc combien d'euros elle a réellement rapportés.</b></p>
+      </div>
+
+      <!-- Assets -->
+      <div class="card span">
+        <h3>🏠 L'app « Assets » — les biens qu'on gère</h3>
+        <p>Site séparé pour le <b>suivi des biens gérés</b> : loyers encaissés, performance mois par mois. Chaque bien se relie à sa réalisation → tout est connecté <b>du premier contact jusqu'au loyer</b>.</p>
+      </div>
+
+    </div>
+
+    <div class="foot">
+      <div class="one">Un prospect arrive → on le <b>note</b> → on le <b>suit</b> → on <b>signe</b> → on <b>encaisse</b> → on <b>gère</b>.</div>
+      <div class="meta">join.atombuyerclub.fr · atombuyersclub.fr<br>Doc interne — ne pas diffuser</div>
+    </div>
+
+  </div>
+
+</body>
+</html>
