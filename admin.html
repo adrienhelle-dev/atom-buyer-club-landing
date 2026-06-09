@@ -749,6 +749,11 @@
     .pc-action.pc-del:hover  { color: var(--red) !important; background: rgba(217,94,94,.07); }
     .pc-action.pc-voir-draft { opacity: .45; }
     .pc-action.pc-voir-draft:hover { opacity: .75; color: var(--cream); }
+    /* Mini-menu de choix d'envoi (WhatsApp / Email) sur les cards projet */
+    .send-menu { position: fixed; z-index: 300; background: #1d1810; border: 1px solid #3a3322; border-radius: 8px; padding: 4px; display: none; flex-direction: column; min-width: 156px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+    .send-menu.on { display: flex; }
+    .send-menu button { background: none; border: none; color: var(--cream); text-align: left; padding: 9px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .send-menu button:hover { background: rgba(255,255,255,.06); }
 
     /* ── Status tabs ─────────────────────────────────────────── */
     .project-tabs {
@@ -3166,11 +3171,32 @@ function projectCard(p) {
       </div>
       <div class="project-card-actions" onclick="event.stopPropagation()">
         ${slug ? `<a class="pc-action${p.public_visible ? '' : ' pc-voir-draft'}" href="/projet/${esc(slug)}" target="_blank" title="${p.public_visible ? 'Voir →' : 'Aperçu'}">↗</a>` : ''}
-        ${matchCount > 0 ? `<button class="pc-action pc-send" onclick="openSendToLeadsModal('${esc(p.id)}')" title="Envoyer aux leads compatibles">✉ ${matchCount}</button>` : ''}
-        <button class="pc-action pc-wa" onclick="openSendToLeadsModal('${esc(p.id)}', 'whatsapp')" title="WhatsApp">💬</button>
+        <button class="pc-action pc-send" onclick="openSendMenu(event, '${esc(p.id)}')" title="Envoyer aux leads compatibles (WhatsApp ou email)">📨${matchCount > 0 ? ` ${matchCount}` : ''}</button>
+        <button class="pc-action pc-pdf" onclick="downloadPdf('${esc(p.id)}', this)" title="Générer la fiche PDF">📄</button>
         <button class="pc-action pc-del" onclick="openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
       </div>
     </div>`;
+}
+
+// Mini-menu de choix d'envoi (WhatsApp / Email) sur les cards projet.
+let _sendMenuEl = null;
+function closeSendMenu() { if (_sendMenuEl) _sendMenuEl.classList.remove('on'); }
+function openSendMenu(ev, projectId) {
+  ev.stopPropagation();
+  if (!_sendMenuEl) {
+    _sendMenuEl = document.createElement('div');
+    _sendMenuEl.className = 'send-menu';
+    _sendMenuEl.innerHTML = '<button data-act="wa">💬 WhatsApp</button><button data-act="email">✉️ Email (fiche)</button>';
+    document.body.appendChild(_sendMenuEl);
+    document.addEventListener('click', closeSendMenu);
+    window.addEventListener('scroll', closeSendMenu, true);
+  }
+  _sendMenuEl.querySelector('[data-act="wa"]').onclick    = (e) => { e.stopPropagation(); closeSendMenu(); openSendToLeadsModal(projectId, 'whatsapp'); };
+  _sendMenuEl.querySelector('[data-act="email"]').onclick = (e) => { e.stopPropagation(); closeSendMenu(); openSendToLeadsModal(projectId, 'email'); };
+  const r = ev.currentTarget.getBoundingClientRect();
+  _sendMenuEl.style.top  = (r.bottom + 4) + 'px';
+  _sendMenuEl.style.left = Math.min(r.left, window.innerWidth - 170) + 'px';
+  _sendMenuEl.classList.add('on');
 }
 
 async function downloadPdf(projectId, btn) {
