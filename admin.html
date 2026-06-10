@@ -1628,7 +1628,7 @@
     <button class="nav-tab" data-view="interets" onclick="setRoute('interets')">
       Intérêts<span class="nav-tab-badge" id="interets-tab-badge" style="display:none"></span>
     </button>
-    <a class="nav-tab" href="https://atom-buyer-club.vercel.app/admin/assets" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;opacity:.7">
+    <a class="nav-tab" id="nav-assets" href="https://atom-buyer-club.vercel.app/admin/assets" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;opacity:.7">
       Assets <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
     </a>
   </nav>
@@ -2884,6 +2884,13 @@ function showDashboard(email, isViewer, role = 'admin') {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('admin-email').textContent = email;
+
+  // Comptes "staff" : 4 onglets (Leads, Projets, Showroom, Intérêts) SANS le lien Assets
+  const NO_ASSETS_EMAILS = ['melina.cabral@atom-capital.fr'];
+  if (NO_ASSETS_EMAILS.includes((email || '').toLowerCase())) {
+    const a = document.getElementById('nav-assets');
+    if (a) a.style.display = 'none';
+  }
 
   // Mode viewer (Thierry & Alexandre) : filtre "leads chauds" actif par défaut
   isViewerMode = !!isViewer;
