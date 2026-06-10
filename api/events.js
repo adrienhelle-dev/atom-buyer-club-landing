@@ -31,7 +31,13 @@ module.exports = async function handler(req, res) {
         .select('id, prenom, nom, email')
         .in('id', leadIds);
       const leadMap = Object.fromEntries((leads || []).map(l => [l.id, l]));
-      const enriched = events.map(e => ({ ...e, lead: leadMap[e.lead_id] || null }));
+      // content parsé en objet (comme le mode interests=1) : le badge "Intérêts"
+      // lit content.treated — sur la chaîne brute, tout comptait comme non traité.
+      const enriched = events.map(e => {
+        let content = {};
+        try { content = e.content ? (typeof e.content === 'string' ? JSON.parse(e.content) : e.content) : {}; } catch {}
+        return { ...e, content, lead: leadMap[e.lead_id] || null };
+      });
 
       return res.status(200).json({ events: enriched });
     }

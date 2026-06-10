@@ -4068,7 +4068,12 @@ function _updateNotifBadge() {
   // Utilise _notifEvents (30 derniers jours) si interestsCache pas encore chargé,
   // sinon interestsCache (historique complet, plus fiable)
   const source = interestsCache.length ? interestsCache : _notifEvents;
-  const untreated = source.filter(e => e.lead && !e.content?.treated).length;
+  const untreated = source.filter(e => {
+    if (!e.lead) return false;
+    let c = e.content;
+    if (typeof c === 'string') { try { c = JSON.parse(c); } catch { c = {}; } }
+    return !(c && c.treated);
+  }).length;
   const intBadge  = document.getElementById('interets-tab-badge');
   if (intBadge) {
     if (untreated > 0) {
