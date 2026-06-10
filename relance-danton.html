@@ -33,7 +33,7 @@ var DATA  = [{"prenom": "gohari", "nom": "Gohari", "email": "nahid.gohari7@gmail
 var TPL   = "Hello {{P}},\n\nMerci de votre intérêt pour le studio du 3 rue Danton (Paris 6e) — il vient d'être vendu.\n\nNous avons d'autres studios similaires, clé en main, à découvrir ici : https://join.atombuyerclub.fr/projet/studio-danton-vlev\n\nN'hésitez pas si vous avez la moindre question.\n\n{{S}}";
 var TOKEN = "danton-relance";
 var SUBJECT = "Studio 3 rue Danton (Paris 6e) — d'autres opportunites Atom";
-var WHO = { adrien:"Adrien", alexandre:"Alexandre", thierry:"Thierry" };
+var WHO = { adrien:"Adrien Helle", alexandre:"Alexandre Kiman", thierry:"Thierry Vignal" };
 
 function q(name){ return new URLSearchParams(location.search).get(name); }
 function esc(s){return (s||'').replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);});}
@@ -75,7 +75,7 @@ if(!WHO[who]){
   }
 
   app.innerHTML =
-   '<header><h1>Bonjour '+esc(sender)+' 👋</h1>'+
+   '<header><h1>Bonjour '+esc(sender.split(" ")[0])+' 👋</h1>'+
    '<p class="sub">Clique sur le bouton : WhatsApp (ou l\'email) s\'ouvre avec le message déjà rempli, signé de ton prénom. '+
    'Au clic, le lead t\'est <b>automatiquement attribué</b> dans le CRM. Envoie, puis passe au suivant.</p></header>'+
    '<div class="wrap">'+
@@ -117,7 +117,7 @@ if(!WHO[who]){
           if(map[e]){
             tr.classList.add('done');
             var tag=tr.querySelector('.tag');
-            if(map[e]===sender){ if(tag) tag.textContent='✓ déjà envoyé (toi)'; }
+            if(map[e]===sender.split(' ')[0]){ if(tag) tag.textContent='✓ déjà envoyé (toi)'; }
             else { tr.classList.add('taken'); if(tag) tag.textContent='⚠️ déjà pris — '+map[e]; }
           }
         });
