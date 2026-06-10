@@ -16,9 +16,6 @@ module.exports = async function handler(req, res) {
   // Webhook Telegram (ingestion de leads manuels via screenshot) — pas de
   // nouvelle fonction serverless : greffé ici via ?tg=1 (cf. lib/telegram-ingest).
   if (req.query.tg) return handleTelegramUpdate(req, res);
-  // Page de relance partagée (?assign=1) : un fondateur clique "Envoyer WhatsApp"
-  // → on lui assigne le lead (s'il est libre). Pas de nouvelle fonction serverless.
-  if (req.query.assign) return handleAssign(req, res);
   if (req.method !== 'POST') return res.status(405).end();
 
   const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
@@ -219,58 +216,6 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({ ok: true, updated: isUpdate, lead_id: leadId });
 };
-
-// ─── Assignation depuis la page de relance partagée ──────────────
-const ASSIGN_WHO = {
-  adrien:    'adrien.helle@atom-capital.fr',
-  alexandre: 'alexandre.kiman@atom-capital.fr',
-  thierry:   'thierry.vignal@atom-capital.fr',
-};
-const ASSIGN_TOKEN = 'danton-relance'; // garde simple contre les appels au hasard
-
-async function handleAssign(req, res) {
-  // GET ?assign=status&token=... → état d'attribution des leads Danton (vue partagée)
-  if (req.method === 'GET') {
-    if (req.query.token !== ASSIGN_TOKEN) return res.status(403).json({ error: 'forbidden' });
-    const { data } = await supabase
-      .from('leads').select('email, assigned_to')
-      .eq('utm_source', 'seloger-petit-danton');
-    const taken = (data || [])
-      .filter(l => l.assigned_to)
-      .map(l => ({ email: (l.email || '').toLowerCase(), who: (getFounder(l.assigned_to).name || '').split(' ')[0] }));
-    return res.status(200).json({ taken });
-  }
-  if (req.method !== 'POST') return res.status(405).end();
-  let b = {};
-  try { b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch {}
-  if (b.token !== ASSIGN_TOKEN) return res.status(403).json({ error: 'forbidden' });
-
-  const who          = String(b.who || '').toLowerCase();
-  const founderEmail = ASSIGN_WHO[who];
-  const email        = (b.email || '').trim().toLowerCase();
-  if (!founderEmail || !email) return res.status(400).json({ error: 'bad_request' });
-
-  const { data: lead } = await supabase
-    .from('leads').select('id, assigned_to, status').eq('email', email).maybeSingle();
-  if (!lead) return res.status(404).json({ error: 'not_found' });
-
-  let assignedTo = lead.assigned_to;
-  let claimed    = false;
-  if (!assignedTo) {
-    const upd = { assigned_to: founderEmail, updated_at: new Date().toISOString() };
-    if (lead.status === 'nouveau') upd.status = 'contacte';
-    await supabase.from('leads').update(upd).eq('id', lead.id);
-    assignedTo = founderEmail;
-    claimed    = true;
-    await supabase.from('lead_events').insert([{ lead_id: lead.id, type: 'note',
-      content: `Relance WhatsApp Danton — ${getFounder(founderEmail).name}`, author: founderEmail }]);
-  }
-  return res.status(200).json({
-    ok: true, claimed,
-    mine: assignedTo === founderEmail,
-    assigned_to: getFounder(assignedTo).name,
-  });
-}
 
 // ─── Templates email ────────────────────────────────────────────
 function row(label, value) {
