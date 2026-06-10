@@ -182,7 +182,11 @@ module.exports = async function handler(req, res) {
     else if (source === 'fiche_projet') q = q.in('utm_source', ['fiche_projet', 'projet']);
     else if (source)               q = q.eq('utm_source', source);
     if (status) q = q.eq('status', status);
-    if (search) q = q.or(`email.ilike.%${search}%,nom.ilike.%${search}%,prenom.ilike.%${search}%`);
+    if (search) {
+      // Neutralise les caractères qui altèrent la syntaxe du filtre PostgREST .or()
+      const safe = String(search).replace(/[,()%\\]/g, ' ').trim();
+      if (safe) q = q.or(`email.ilike.%${safe}%,nom.ilike.%${safe}%,prenom.ilike.%${safe}%`);
+    }
 
     q = q.range(from, from + pageSize - 1);
 

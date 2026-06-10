@@ -1651,7 +1651,7 @@
         <input type="text" id="search-input" placeholder="Rechercher nom, email…" oninput="debounceSearch()" />
       </div>
       <div class="toolbar-right">
-        <button class="btn-refresh" onclick="loadLeads(currentPage)" title="Actualiser">↻</button>
+        <button class="btn-refresh" onclick="loadLeads()" title="Actualiser">↻</button>
         <button class="btn-export" onclick="exportCSV()">↓ CSV</button>
       </div>
     </div>
@@ -1661,7 +1661,7 @@
         <option value="hot">🔥 Chauds</option>
         <option value="all">Tous</option>
       </select>
-      <select class="filter-select" id="src-filter" onchange="loadLeads(1)">
+      <select class="filter-select" id="src-filter" onchange="applyLeadFilters()">
         <option value="">Source</option>
         <option value="google">Google Ads</option>
         <option value="instagram">Instagram</option>
@@ -1673,7 +1673,7 @@
         <option value="seloger-petit-danton">SeLoger · Petit Danton</option>
         <option value="organic">Organique</option>
       </select>
-      <select class="filter-select" id="status-filter" onchange="loadLeads(1)">
+      <select class="filter-select" id="status-filter" onchange="applyLeadFilters()">
         <option value="">Statut</option>
         <option value="nouveau">Nouveau</option>
         <option value="contacte">Contacté</option>
@@ -2938,6 +2938,11 @@ function applyScoreViewFilter() {
 
 function applyFounderFilter() {
   founderFilter = document.getElementById('founder-filter')?.value || '';
+  renderTable(leadsCache);
+}
+
+// Filtres source/statut/recherche : appliqués côté client sur le cache complet.
+function applyLeadFilters() {
   renderTable(leadsCache);
 }
 
@@ -4226,40 +4231,38 @@ document.addEventListener('click', e => {
 });
 
 /* ── Leads ─────────────────────────────────────────────────── */
-async function loadLeads(page) {
-  currentPage = page;
-  const search = document.getElementById('search-input').value.trim();
-  const source = document.getElementById('src-filter').value;
-  const status = document.getElementById('status-filter').value;
-
-  const params = new URLSearchParams({ page, pageSize: 1000 });
-  if (search) params.set('search', search);
-  if (source) params.set('source', source);
-  if (status) params.set('status', status);
-
-  // État de chargement
+// Charge TOUS les leads par lots de 1000 (plus de plafond silencieux à 1000).
+// Les filtres source/statut/recherche sont appliqués côté client (renderTable)
+// → instantanés, zéro refetch. L'argument page est conservé pour compat (ignoré).
+async function loadLeads(_page) {
   const tbody = document.getElementById('leads-body');
   tbody.innerHTML = `<tr><td colspan="12" class="table-msg">Chargement des leads…</td></tr>`;
 
   try {
-    const res = await fetch(`/api/leads?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (res.status === 401) { logout(); return; }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const { leads, total } = await res.json();
+    const all = [];
+    let total = 0;
+    const MAX_BATCHES = 20; // garde-fou (20 000 leads)
+    for (let p = 1; p <= MAX_BATCHES; p++) {
+      const res = await fetch(`/api/leads?page=${p}&pageSize=1000`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { leads, total: t } = await res.json();
+      total = t;
+      all.push(...(leads || []));
+      if (all.length >= total || !leads || !leads.length) break;
+      tbody.innerHTML = `<tr><td colspan="12" class="table-msg">Chargement des leads… (${all.length}/${total})</td></tr>`;
+    }
 
     totalLeads = total;
-    renderStats(leads, total);
-    renderTable(leads);
-    renderPagination(page, total, leads ? leads.length : 0);
+    renderStats(all, total);
+    renderTable(all);
   } catch (err) {
     console.error('loadLeads error', err);
     tbody.innerHTML = `<tr><td colspan="12" class="table-msg" style="color:var(--red)">
       Impossible de charger les leads (${esc(err.message || 'erreur réseau')}).
-      <button onclick="loadLeads(${page})" style="margin-left:10px;background:rgba(184,151,90,.15);color:var(--gold);border:1px solid rgba(184,151,90,.3);border-radius:6px;padding:4px 12px;cursor:pointer">Réessayer</button>
+      <button onclick="loadLeads()" style="margin-left:10px;background:rgba(184,151,90,.15);color:var(--gold);border:1px solid rgba(184,151,90,.3);border-radius:6px;padding:4px 12px;cursor:pointer">Réessayer</button>
     </td></tr>`;
     document.getElementById('page-info').textContent = '';
   }
@@ -4294,10 +4297,27 @@ function renderTable(leads) {
   // Filtre responsable (assigned_to). '_none' = leads sans responsable.
   if (founderFilter === '_none')      filtered = filtered.filter(l => !l.assigned_to);
   else if (founderFilter)             filtered = filtered.filter(l => l.assigned_to === founderFilter);
+  // Filtres source / statut / recherche — côté client (mêmes règles que l'API)
+  const fSource = document.getElementById('src-filter')?.value || '';
+  const fStatus = document.getElementById('status-filter')?.value || '';
+  const fSearch = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+  if (fSource === 'organic')           filtered = filtered.filter(l => l.utm_source === 'organic');
+  else if (fSource === 'fiche_projet') filtered = filtered.filter(l => ['fiche_projet', 'projet'].includes(l.utm_source));
+  else if (fSource)                    filtered = filtered.filter(l => l.utm_source === fSource);
+  if (fStatus) filtered = filtered.filter(l => l.status === fStatus);
+  if (fSearch) filtered = filtered.filter(l =>
+    (l.email || '').toLowerCase().includes(fSearch) ||
+    (l.nom || '').toLowerCase().includes(fSearch) ||
+    (l.prenom || '').toLowerCase().includes(fSearch));
   // Tri par score si activé
   const sorted = sortByScore
     ? [...filtered].sort((a, b) => sortScoreDir === 'desc' ? computeScore(b) - computeScore(a) : computeScore(a) - computeScore(b))
     : filtered;
+  // Compteur "affichés / total"
+  const info = document.getElementById('page-info');
+  if (info) info.textContent = sorted.length === leads.length
+    ? `${leads.length} lead${leads.length > 1 ? 's' : ''}`
+    : `${sorted.length} affiché${sorted.length > 1 ? 's' : ''} / ${leads.length} leads`;
   const tbody = document.getElementById('leads-body');
   if (!sorted.length) {
     const msg = founderFilter
@@ -4340,18 +4360,6 @@ function renderTable(leads) {
     });
     tr.addEventListener('click', () => openDrawer(lead));
   });
-}
-
-function renderPagination(page, total, shown) {
-  // Pas de boutons de pagination : on charge tout (jusqu'à 1000).
-  // Garde-fou : si on en affiche moins que le total, on alerte (limite atteinte).
-  const info = document.getElementById('page-info');
-  if (shown < total) {
-    info.innerHTML = `<span style="color:var(--gold)">⚠ ${shown} affichés sur ${total}</span> — limite atteinte, pagination à activer`;
-  } else {
-    info.textContent = `${total} lead${total > 1 ? 's' : ''}`;
-  }
-  document.getElementById('page-btns').innerHTML = '';
 }
 
 /* ── Delete ─────────────────────────────────────────────────── */
@@ -4827,7 +4835,7 @@ async function exportCSV() {
 /* ── Helpers ────────────────────────────────────────────────── */
 function debounceSearch() {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => loadLeads(1), 350);
+  searchTimer = setTimeout(() => applyLeadFilters(), 150); // filtre client → instantané
 }
 
 function fmtDate(d) {
