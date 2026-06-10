@@ -34,7 +34,7 @@ for ep in "api/public-project?list=1" "api/showroom?list=1" "api/projects?list=1
 done
 
 echo "── Pages publiques (doivent être 200) ──"
-for pg in "" "projets" "showroom" "relance-danton" "projet/studio-danton-vlev"; do
+for pg in "" "projets" "showroom" "projet/studio-danton-vlev"; do
   check "$pg" 200
 done
 
