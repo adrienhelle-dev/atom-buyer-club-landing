@@ -442,7 +442,11 @@ function initGallery() {
     toggleWrap.style.display = 'none';
   }
 
-  if (has3d) {
+  // Exception : ces projets s'ouvrent par défaut sur "Photos actuelles" (l'onglet 3D reste dispo)
+  const photosFirstSlugs = ['studio-danton-vlev'];
+  const photosFirst = hasPhotos && photosFirstSlugs.includes(project.slug);
+
+  if (has3d && !photosFirst) {
     galleryMode = '3d';
     document.getElementById('btn-3d').classList.add('active');
     document.getElementById('btn-photos').classList.remove('active');
