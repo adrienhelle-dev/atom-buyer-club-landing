@@ -1687,6 +1687,7 @@
         <option value="adrien.helle@atom-capital.fr">Adrien</option>
         <option value="alexandre.kiman@atom-capital.fr">Alexandre</option>
         <option value="thierry.vignal@atom-capital.fr">Thierry</option>
+        <option value="melina.cabral@atom-capital.fr">Melina</option>
         <option value="_none">Non assigné</option>
       </select>
     </div>
@@ -2477,6 +2478,7 @@
           <option value="adrien.helle@atom-capital.fr">Adrien Helle</option>
           <option value="alexandre.kiman@atom-capital.fr">Alexandre Kiman</option>
           <option value="thierry.vignal@atom-capital.fr">Thierry Vignal</option>
+          <option value="melina.cabral@atom-capital.fr">Melina Cabral</option>
         </select>
       </div>
       <div class="np-field span-2">
@@ -2690,6 +2692,7 @@
       <option value="adrien.helle@atom-capital.fr">Adrien</option>
       <option value="alexandre.kiman@atom-capital.fr">Alexandre</option>
       <option value="thierry.vignal@atom-capital.fr">Thierry</option>
+      <option value="melina.cabral@atom-capital.fr">Melina</option>
       <option value="_none">Non assigné</option>
     </select>
     <span class="int-count-info" id="int-count-info"></span>
@@ -3107,6 +3110,7 @@ function founderNameFromEmail(email) {
     'adrien.helle@atom-capital.fr':    'Adrien Helle',
     'alexandre.kiman@atom-capital.fr': 'Alexandre Kiman',
     'thierry.vignal@atom-capital.fr':  'Thierry Vignal',
+    'melina.cabral@atom-capital.fr':   'Melina Cabral',
   };
   return FOUNDER_NAMES[email.toLowerCase()] || email.split('@')[0].split(/[.\-_]/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 }
@@ -5400,6 +5404,7 @@ function founderColor(email) {
     'adrien.helle@atom-capital.fr':    '#B8975A',  // or
     'alexandre.kiman@atom-capital.fr':  '#4285f4',  // bleu
     'thierry.vignal@atom-capital.fr':   '#4caf7d',  // vert
+    'melina.cabral@atom-capital.fr':    '#e1306c',  // rose
   };
   if (!email) return '#7a7874';
   if (fixed[email]) return fixed[email];
