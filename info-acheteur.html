@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Informations acheteur — Atom Buyers Club</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #0f0e0c;
+      --bg2:      #161512;
+      --bg3:      #1e1d1a;
+      --cream:    #F5F2ED;
+      --cream-dim:#C7C2BB;
+      --border:   #2c2b27;
+      --dim:      #7a7874;
+      --gold:     #B8975A;
+      --green:    #4caf7d;
+      --red:      #d95e5e;
+      --r:        8px;
+      --sans:     'DM Sans', system-ui, sans-serif;
+      --serif:    'Cormorant Garamond', Georgia, serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--cream); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+
+    .header {
+      padding: 20px 32px; border-bottom: 1px solid var(--border);
+      background: var(--bg2); display: flex; align-items: center; gap: 16px;
+    }
+    .header-logo { font-family: var(--serif); font-size: 20px; font-weight: 300; letter-spacing: .04em; color: var(--gold); }
+
+    main { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    .intro { margin-bottom: 36px; }
+    .intro-eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .intro-title { font-family: var(--serif); font-size: 36px; font-weight: 300; line-height: 1.1; margin-bottom: 12px; }
+    .intro-sub { color: var(--cream-dim); font-size: 15px; line-height: 1.65; }
+
+    /* Form */
+    .form-section { margin-bottom: 32px; }
+    .form-section-title {
+      font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 16px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-row { display: grid; gap: 14px; margin-bottom: 14px; }
+    .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 480px) { .form-row.cols-2 { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 13px; color: var(--cream-dim); }
+    .field label span.req { color: var(--gold); margin-left: 2px; }
+    .field input, .field select, .field textarea {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r);
+      color: var(--cream); font-family: var(--sans); font-size: 15px;
+      padding: 11px 14px; outline: none; transition: border-color .15s;
+      width: 100%;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+    .field select option { background: #1e1d1a; }
+    .field textarea { min-height: 80px; resize: vertical; }
+    .field input[type="date"] { color-scheme: dark; }
+
+    /* Conditional conjoint */
+    #conjoint-section { display: none; }
+    #conjoint-section.visible { display: block; }
+    #structure-section { display: none; }
+    #structure-section.visible { display: block; }
+
+    /* Upload */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--r);
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: border-color .15s; position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragging { border-color: var(--gold); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-label { font-size: 14px; color: var(--cream-dim); margin-bottom: 4px; }
+    .upload-hint { font-size: 12px; color: var(--dim); }
+    .upload-status { margin-top: 10px; font-size: 13px; }
+    .upload-status.ok { color: var(--green); }
+    .upload-status.err { color: var(--red); }
+
+    .or-email { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+    .or-email-line { flex: 1; height: 1px; background: var(--border); }
+    .or-email-text { font-size: 12px; color: var(--dim); white-space: nowrap; }
+    .email-check { display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer; }
+    .email-check input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
+    .email-check span { font-size: 14px; color: var(--cream-dim); }
+
+    /* Submit */
+    .submit-btn {
+      width: 100%; padding: 15px 24px; background: var(--gold); color: var(--bg);
+      font-family: var(--sans); font-size: 15px; font-weight: 500; border: none;
+      border-radius: var(--r); cursor: pointer; transition: opacity .15s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { opacity: .9; }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* States */
+    .state-screen {
+      min-height: 50vh; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px; text-align: center; padding: 40px;
+    }
+    .state-icon { font-size: 52px; }
+    .state-title { font-family: var(--serif); font-size: 30px; font-weight: 300; }
+    .state-sub { color: var(--dim); font-size: 15px; max-width: 360px; line-height: 1.6; }
+
+    .error-banner { background: rgba(217,94,94,.12); border: 1px solid var(--red); border-radius: var(--r); padding: 12px 16px; color: var(--red); font-size: 14px; margin-bottom: 20px; display: none; }
+    .error-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Atom Buyers Club</div>
+</div>
+
+<!-- États loading / erreur -->
+<div id="screen-loading" class="state-screen">
+  <div class="state-icon">⏳</div>
+  <div class="state-title">Chargement…</div>
+</div>
+<div id="screen-error" class="state-screen" style="display:none">
+  <div class="state-icon">🔒</div>
+  <div class="state-title">Lien invalide</div>
+  <div class="state-sub">Ce lien est introuvable ou a expiré. Contacte ton conseiller Atom pour en obtenir un nouveau.</div>
+</div>
+<div id="screen-success" class="state-screen" style="display:none">
+  <div class="state-icon">✅</div>
+  <div class="state-title">Informations enregistrées</div>
+  <div class="state-sub">Merci, ton conseiller va pouvoir finaliser les documents. Tu peux fermer cette page.</div>
+</div>
+
+<!-- Formulaire -->
+<main id="screen-form" style="display:none">
+  <div class="intro">
+    <div class="intro-eyebrow">Atom Buyers Club</div>
+    <div class="intro-title" id="intro-name">Bonjour,</div>
+    <div class="intro-sub">Pour finaliser ton dossier d'acquisition, nous avons besoin de quelques informations complémentaires. Cela nous permettra de préparer l'offre d'achat et le mandat de recherche.</div>
+  </div>
+
+  <div class="error-banner" id="error-banner"></div>
+
+  <form id="buyer-form" novalidate>
+
+    <!-- Identité -->
+    <div class="form-section">
+      <div class="form-section-title">Identité</div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="date_naissance">Date de naissance <span class="req">*</span></label>
+          <input type="date" id="date_naissance" name="date_naissance" required/>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="adresse_residence">Adresse complète de résidence <span class="req">*</span></label>
+          <textarea id="adresse_residence" name="adresse_residence" placeholder="Ex : 36 rue Chardon Lagache, 75016 Paris" required></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="situation_familiale">Situation familiale <span class="req">*</span></label>
+          <select id="situation_familiale" name="situation_familiale" required>
+            <option value="">— Sélectionner —</option>
+            <option value="celibataire">Célibataire</option>
+            <option value="marie">Marié(e)</option>
+            <option value="pacse">Pacsé(e)</option>
+            <option value="divorce">Divorcé(e)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conjoint (conditionnel) -->
+    <div class="form-section" id="conjoint-section">
+      <div class="form-section-title">Informations conjoint(e)</div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label for="conjoint_prenom">Prénom</label>
+          <input type="text" id="conjoint_prenom" name="conjoint_prenom" placeholder="Prénom"/>
+        </div>
+        <div class="field">
+          <label for="conjoint_nom">Nom</label>
+          <input type="text" id="conjoint_nom" name="conjoint_nom" placeholder="Nom"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="conjoint_dob">Date de naissance du/de la conjoint(e)</label>
+          <input type="date" id="conjoint_dob" name="conjoint_dob"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Structure d'achat -->
+    <div class="form-section">
+      <div class="form-section-title">Structure d'achat</div>
+      <div class="form-row">
+        <div class="field">
+          <label for="achat_structure">Achat en nom propre ou via une société ?</label>
+          <select id="achat_structure" name="achat_structure">
+            <option value="personnel">En nom propre</option>
+            <option value="sci">Via une SCI</option>
+            <option value="sas">Via une SAS</option>
+          </select>
+        </div>
+      </div>
+      <div id="structure-section" class="form-row">
+        <div class="field">
+          <label for="nom_structure">Nom de la société</label>
+          <input type="text" id="nom_structure" name="nom_structure" placeholder="Ex : SCI LABIT INVESTISSEMENTS"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pièce d'identité -->
+    <div class="form-section">
+      <div class="form-section-title">Pièce d'identité</div>
+      <p style="font-size:14px;color:var(--cream-dim);margin-bottom:16px;line-height:1.6;">
+        Copie de ton passeport ou carte nationale d'identité (recto-verso). Formats acceptés : JPG, PNG, PDF — 5 Mo max.
+      </p>
+
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="pj-file" accept=".jpg,.jpeg,.png,.pdf" />
+        <div class="upload-icon">📎</div>
+        <div class="upload-label">Glisse ton fichier ici ou clique pour choisir</div>
+        <div class="upload-hint">JPG, PNG, PDF — 5 Mo max</div>
+        <div class="upload-status" id="upload-status"></div>
+      </div>
+
+      <div class="or-email">
+        <div class="or-email-line"></div>
+        <div class="or-email-text">ou</div>
+        <div class="or-email-line"></div>
+      </div>
+      <label class="email-check">
+        <input type="checkbox" id="pj-by-email"/>
+        <span>Je préfère envoyer ma pièce d'identité par email à mon conseiller</span>
+      </label>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submit-btn">Envoyer mes informations</button>
+  </form>
+</main>
+
+<script>
+  const TOKEN = new URLSearchParams(location.search).get('token') || '';
+  let pjUrl = null;
+
+  function show(id) {
+    ['screen-loading','screen-error','screen-success','screen-form']
+      .forEach(s => document.getElementById(s).style.display = s === id ? '' : 'none');
+  }
+
+  // Charge les données existantes
+  async function init() {
+    if (!TOKEN) { show('screen-error'); return; }
+    try {
+      const r = await fetch(`/api/buyer-info?token=${encodeURIComponent(TOKEN)}`);
+      if (!r.ok) { show('screen-error'); return; }
+      const d = await r.json();
+      document.getElementById('intro-name').textContent = `Bonjour ${d.prenom || ''}${d.prenom && d.nom ? ' ' + d.nom : d.nom || ''} 👋`;
+      if (d.date_naissance)    document.getElementById('date_naissance').value    = d.date_naissance;
+      if (d.adresse_residence) document.getElementById('adresse_residence').value = d.adresse_residence;
+      if (d.situation_familiale) {
+        document.getElementById('situation_familiale').value = d.situation_familiale;
+        toggleConjoint(d.situation_familiale);
+      }
+      if (d.conjoint_prenom) document.getElementById('conjoint_prenom').value = d.conjoint_prenom;
+      if (d.conjoint_nom)    document.getElementById('conjoint_nom').value    = d.conjoint_nom;
+      if (d.conjoint_dob)    document.getElementById('conjoint_dob').value    = d.conjoint_dob;
+      if (d.achat_structure) {
+        document.getElementById('achat_structure').value = d.achat_structure;
+        toggleStructure(d.achat_structure);
+      }
+      if (d.nom_structure)   document.getElementById('nom_structure').value   = d.nom_structure;
+      if (d.pj_identite_url) {
+        pjUrl = '__already_provided__';
+        setUploadStatus('ok', 'Pièce d\'identité déjà fournie ✓');
+      }
+      show('screen-form');
+    } catch { show('screen-error'); }
+  }
+
+  function toggleConjoint(val) {
+    const s = document.getElementById('conjoint-section');
+    s.classList.toggle('visible', val === 'marie' || val === 'pacse');
+  }
+  function toggleStructure(val) {
+    const s = document.getElementById('structure-section');
+    s.classList.toggle('visible', val === 'sci' || val === 'sas');
+  }
+
+  document.getElementById('situation_familiale').addEventListener('change', e => toggleConjoint(e.target.value));
+  document.getElementById('achat_structure').addEventListener('change', e => toggleStructure(e.target.value));
+
+  // Upload PJ
+  function setUploadStatus(type, msg) {
+    const el = document.getElementById('upload-status');
+    el.textContent = msg;
+    el.className = 'upload-status ' + (type || '');
+  }
+
+  document.getElementById('pj-file').addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setUploadStatus('err', 'Fichier trop lourd (max 5 Mo)'); this.value = ''; return; }
+
+    setUploadStatus('', '⏳ Upload en cours…');
+    try {
+      const urlRes = await fetch(`/api/buyer-info?token=${encodeURIComponent(TOKEN)}&upload=1`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, mime_type: file.type }),
+      });
+      if (!urlRes.ok) throw new Error('URL signée non obtenue');
+      const { signedUrl, publicUrl } = await urlRes.json();
+
+      const upRes = await fetch(signedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+      if (!upRes.ok) throw new Error('Upload échoué');
+
+      pjUrl = publicUrl;
+      setUploadStatus('ok', '✓ ' + file.name + ' uploadé');
+    } catch(e) {
+      setUploadStatus('err', 'Erreur upload — réessaie ou utilise l\'option email');
+    }
+  });
+
+  // Drag & drop
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragging'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragging');
+    const file = e.dataTransfer.files[0];
+    if (file) { const inp = document.getElementById('pj-file'); inp.files = e.dataTransfer.files; inp.dispatchEvent(new Event('change')); }
+  });
+
+  // Submit
+  document.getElementById('buyer-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const banner = document.getElementById('error-banner');
+    banner.classList.remove('visible');
+
+    const dob  = document.getElementById('date_naissance').value;
+    const addr = document.getElementById('adresse_residence').value.trim();
+    const sit  = document.getElementById('situation_familiale').value;
+
+    if (!dob || !addr || !sit) {
+      banner.textContent = 'Merci de remplir les champs obligatoires (date de naissance, adresse, situation familiale).';
+      banner.classList.add('visible');
+      return;
+    }
+
+    const pjEmail = document.getElementById('pj-by-email').checked;
+    if (!pjUrl && !pjEmail && pjUrl !== '__already_provided__') {
+      banner.textContent = 'Merci de fournir ta pièce d\'identité (upload ou par email).';
+      banner.classList.add('visible');
+      return;
+    }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'Envoi en cours…';
+
+    const payload = {
+      date_naissance:    dob,
+      adresse_residence: addr,
+      situation_familiale: sit,
+      conjoint_prenom:   document.getElementById('conjoint_prenom').value.trim() || undefined,
+      conjoint_nom:      document.getElementById('conjoint_nom').value.trim()    || undefined,
+      conjoint_dob:      document.getElementById('conjoint_dob').value           || undefined,
+      achat_structure:   document.getElementById('achat_structure').value,
+      nom_structure:     document.getElementById('nom_structure').value.trim()   || undefined,
+    };
+    if (pjUrl && pjUrl !== '__already_provided__') payload.pj_identite_url = pjUrl;
+
+    // Nettoyer les undefined
+    Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+    try {
+      const r = await fetch(`/api/buyer-info?token=${encodeURIComponent(TOKEN)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error('Erreur serveur');
+      show('screen-success');
+    } catch {
+      btn.disabled = false; btn.textContent = 'Envoyer mes informations';
+      banner.textContent = 'Une erreur s\'est produite. Réessaie dans quelques instants.';
+      banner.classList.add('visible');
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>

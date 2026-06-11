@@ -1383,6 +1383,63 @@
     .int-list-item:hover .del-btn { opacity: 1; }
     .int-action-btn.del-btn:hover { color: var(--red); border-color: rgba(217,94,94,.3); background: rgba(217,94,94,.07); }
 
+    /* Pipeline status badges (visited / offer / mandat) */
+    .int-pipeline-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+      letter-spacing: .03em; white-space: nowrap; margin-top: 4px;
+    }
+    .int-pipeline-badge.visited  { background: rgba(91,91,214,.12); color: #5B5BD6; border: 1px solid rgba(91,91,214,.3); }
+    .int-pipeline-badge.offered  { background: rgba(184,151,90,.12); color: var(--gold); border: 1px solid rgba(184,151,90,.3); }
+    .int-pipeline-badge.mandated { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); }
+    .int-pipeline-badge.signed   { background: rgba(76,175,125,.2); color: #4caf7d; border: 1px solid rgba(76,175,125,.5); font-size: 11px; }
+
+    /* Pipeline action buttons */
+    .int-action-btn.visit-btn { color: #5B5BD6; border-color: rgba(91,91,214,.3); }
+    .int-action-btn.visit-btn:hover { background: rgba(91,91,214,.1); border-color: #5B5BD6; }
+    .int-action-btn.offer-btn { color: var(--gold); border-color: rgba(184,151,90,.35); }
+    .int-action-btn.offer-btn:hover { background: rgba(184,151,90,.1); border-color: var(--gold); }
+    .int-action-btn.mandat-btn { color: #4caf7d; border-color: rgba(76,175,125,.35); }
+    .int-action-btn.mandat-btn:hover { background: rgba(76,175,125,.1); border-color: #4caf7d; }
+    .int-action-btn.link-btn { color: var(--dim); border-color: var(--border); font-size: 11px; width: auto; padding: 0 8px; }
+    .int-action-btn.link-btn:hover { color: var(--cream); border-color: var(--dim); }
+
+    /* Offer / Mandat modals */
+    .offer-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 1200;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .offer-modal-overlay.on { opacity: 1; pointer-events: all; }
+    .offer-modal {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 28px 32px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+    }
+    .offer-modal-title { font-family: var(--serif); font-size: 22px; font-weight: 300; margin-bottom: 6px; }
+    .offer-modal-sub { font-size: 13px; color: var(--dim); margin-bottom: 22px; }
+    .offer-modal-field { margin-bottom: 16px; }
+    .offer-modal-label { font-size: 12px; color: var(--cream-dim); margin-bottom: 5px; display: block; }
+    .offer-modal-input {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--cream); font-family: var(--sans); font-size: 14px; padding: 9px 12px; outline: none;
+      transition: border-color .15s;
+    }
+    .offer-modal-input:focus { border-color: var(--gold); }
+    .offer-modal-notaire-toggle { font-size: 12px; color: var(--gold); cursor: pointer; margin-bottom: 14px; display: inline-block; }
+    .offer-modal-notaire-toggle:hover { text-decoration: underline; }
+    .offer-modal-notaire-fields { display: none; }
+    .offer-modal-notaire-fields.open { display: block; }
+    .offer-modal-alert { background: rgba(217,94,94,.1); border: 1px solid rgba(217,94,94,.3); border-radius: 7px; padding: 10px 14px; font-size: 13px; color: #e07070; margin-bottom: 16px; display: none; }
+    .offer-modal-alert.on { display: block; }
+    .offer-modal-info-link { background: rgba(184,151,90,.08); border: 1px solid rgba(184,151,90,.3); border-radius: 7px; padding: 10px 14px; font-size: 13px; color: var(--gold); margin-bottom: 16px; display: none; }
+    .offer-modal-info-link.on { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .offer-modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .offer-modal-cancel { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 9px 18px; color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color .12s, border-color .12s; }
+    .offer-modal-cancel:hover { color: var(--cream); border-color: var(--dim); }
+    .offer-modal-submit { background: var(--gold); color: var(--bg); border: none; border-radius: 7px; padding: 9px 20px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
+    .offer-modal-submit:hover { opacity: .88; }
+    .offer-modal-submit:disabled { opacity: .45; cursor: not-allowed; }
+
     /* Treated toggle — circular button (like sr-pub-toggle) */
     .int-treat-btn {
       width: 32px; height: 32px; border-radius: 50%;
@@ -2685,6 +2742,9 @@
     <select class="int-filter-sel" id="int-status-filter" onchange="renderInterestsTable()">
       <option value="">Tous statuts</option>
       <option value="untreated">Non traités</option>
+      <option value="visite">Visité</option>
+      <option value="offre_envoyee">Offre envoyée</option>
+      <option value="mandat_envoye">Mandat envoyé</option>
       <option value="treated">Traités</option>
     </select>
     <select class="int-filter-sel" id="int-founder-filter" onchange="renderInterestsTable()">
@@ -2703,7 +2763,7 @@
   <div class="int-list-wrap">
     <div class="int-list">
       <div class="int-list-head">
-        <div class="int-list-head-cell col-traite">Traité</div>
+        <div class="int-list-head-cell col-traite">Pipeline</div>
         <div class="int-list-head-cell">Lead</div>
         <div class="int-list-head-cell">Projet / Réalisation</div>
         <div class="int-list-head-cell col-meta">Founder · Date</div>
@@ -2715,6 +2775,82 @@
     </div>
   </div>
 
+</div>
+
+<!-- ══ MODAL OFFRE D'ACHAT ══════════════════════════════════════ -->
+<div class="offer-modal-overlay" id="offer-modal-overlay">
+  <div class="offer-modal">
+    <div class="offer-modal-title">Générer l'offre d'achat</div>
+    <div class="offer-modal-sub" id="offer-modal-sub">Pour <span id="offer-lead-name"></span> — <span id="offer-project-name"></span></div>
+
+    <div class="offer-modal-alert" id="offer-modal-alert"></div>
+
+    <div class="offer-modal-info-link" id="offer-info-link-banner">
+      <span>⚠️ Infos acheteur manquantes (date de naissance, adresse). Envoyer le lien de complétion :</span>
+      <button class="int-action-btn link-btn" id="offer-info-copy-btn" onclick="copyOfferInfoLink()">📋 Copier le lien</button>
+    </div>
+
+    <div id="offer-form-fields">
+      <div class="offer-modal-field">
+        <label class="offer-modal-label">Prix de l'offre (€ FAI)</label>
+        <input class="offer-modal-input" type="number" id="offer-prix" placeholder="79000"/>
+      </div>
+      <div>
+        <span class="offer-modal-notaire-toggle" onclick="toggleNotaireFields()">⚙️ Modifier le notaire</span>
+        <div class="offer-modal-notaire-fields" id="offer-notaire-fields">
+          <div class="offer-modal-field">
+            <label class="offer-modal-label">Notaire (nom)</label>
+            <input class="offer-modal-input" id="offer-notaire-nom" value="Maître Nicolas Chauris"/>
+          </div>
+          <div class="offer-modal-field">
+            <label class="offer-modal-label">Email notaire</label>
+            <input class="offer-modal-input" id="offer-notaire-email" value="nicolas.chauris@notaires.fr"/>
+          </div>
+          <div class="offer-modal-field">
+            <label class="offer-modal-label">Adresse notaire</label>
+            <input class="offer-modal-input" id="offer-notaire-adresse" value="40 Avenue des Chartreux, 13004 Marseille"/>
+          </div>
+          <div class="offer-modal-field">
+            <label class="offer-modal-label">Téléphone notaire</label>
+            <input class="offer-modal-input" id="offer-notaire-tel" value="04 91 78 94 34"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="offer-modal-footer">
+      <button class="offer-modal-cancel" onclick="closeOfferModal()">Annuler</button>
+      <button class="offer-modal-submit" id="offer-submit-btn" onclick="submitOffer()">📄 Générer et envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL MANDAT DE RECHERCHE ════════════════════════════════ -->
+<div class="offer-modal-overlay" id="mandat-modal-overlay">
+  <div class="offer-modal">
+    <div class="offer-modal-title">Générer le mandat</div>
+    <div class="offer-modal-sub">Pour <span id="mandat-lead-name"></span> — <span id="mandat-project-name"></span></div>
+
+    <div class="offer-modal-alert" id="mandat-modal-alert"></div>
+
+    <div class="offer-modal-info-link" id="mandat-info-link-banner">
+      <span>⚠️ Infos acheteur manquantes. Envoyer le lien de complétion :</span>
+      <button class="int-action-btn link-btn" id="mandat-info-copy-btn" onclick="copyMandatInfoLink()">📋 Copier le lien</button>
+    </div>
+
+    <div id="mandat-form-fields">
+      <div class="offer-modal-field">
+        <label class="offer-modal-label">Commission (€ TTC)</label>
+        <input class="offer-modal-input" type="number" id="mandat-commission" value="8900"/>
+      </div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:8px">Le mandat sera envoyé via DocuSign pour signature électronique. Si DocuSign n'est pas configuré, le PDF sera envoyé par email.</div>
+    </div>
+
+    <div class="offer-modal-footer">
+      <button class="offer-modal-cancel" onclick="closeMandatModal()">Annuler</button>
+      <button class="offer-modal-submit" id="mandat-submit-btn" onclick="submitMandat()">📝 Générer et envoyer</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ WIDGET NOTIFICATIONS (chat flottant bas-droite) ════════ -->
@@ -5672,17 +5808,31 @@ function _interestSource(ev) {
   return { name: '—', link: null };
 }
 
+function _interestPipelineStatus(ev) {
+  const c = ev.content || {};
+  if (c.mandat_sent_at)  return 'mandat_envoye';
+  if (c.offer_sent_at)   return 'offre_envoyee';
+  if (c.visited)         return 'visite';
+  if (c.treated)         return 'treated';
+  return 'untreated';
+}
+
 function _filteredInterests() {
   const typeF    = document.getElementById('int-type-filter')?.value    || '';
   const statusF  = document.getElementById('int-status-filter')?.value  || '';
   const founderF = document.getElementById('int-founder-filter')?.value || '';
 
   return interestsCache.filter(ev => {
-    if (!ev.lead) return false; // masquer les fantômes sans lead
+    if (!ev.lead) return false;
     if (typeF && ev.type !== typeF) return false;
-    const treated = !!(ev.content?.treated);
-    if (statusF === 'treated'   && !treated) return false;
-    if (statusF === 'untreated' && treated)  return false;
+    if (statusF) {
+      const ps = _interestPipelineStatus(ev);
+      if (statusF === 'untreated'     && ps !== 'untreated')     return false;
+      if (statusF === 'treated'       && ps !== 'treated')       return false;
+      if (statusF === 'visite'        && ps !== 'visite')        return false;
+      if (statusF === 'offre_envoyee' && ps !== 'offre_envoyee') return false;
+      if (statusF === 'mandat_envoye' && ps !== 'mandat_envoye') return false;
+    }
     if (founderF === '_none' && ev.lead.assigned_to) return false;
     if (founderF && founderF !== '_none' && ev.lead.assigned_to !== founderF) return false;
     return true;
@@ -5751,13 +5901,43 @@ function _buildInterestRow(ev) {
   const SVG_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
   const SVG_CLOCK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
-  return `<div class="int-list-item ${treated ? 'is-treated' : ''}" id="int-row-${esc(ev.id)}">
+  const pipeline   = _interestPipelineStatus(ev);
+  const isProjet   = ev.type === 'interet_projet';
+  const projectId  = ev.content?.project_id || '';
+  const evIdSafe   = esc(ev.id);
+  const projIdSafe = esc(projectId);
+
+  // Badge pipeline
+  let pipelineBadge = '';
+  if (isProjet) {
+    if      (pipeline === 'visite')        pipelineBadge = `<span class="int-pipeline-badge visited">👁 Visité</span>`;
+    else if (pipeline === 'offre_envoyee') pipelineBadge = `<span class="int-pipeline-badge offered">📄 Offre envoyée</span>`;
+    else if (pipeline === 'mandat_envoye') pipelineBadge = `<span class="int-pipeline-badge mandated">📝 Mandat envoyé</span>`;
+    else if (pipeline === 'treated')       pipelineBadge = `<span class="int-pipeline-badge signed">✓ Traité</span>`;
+  }
+
+  // Boutons pipeline (seulement pour les intérêts projets)
+  let pipelineActions = '';
+  if (isProjet) {
+    if (pipeline === 'untreated' || pipeline === 'treated') {
+      pipelineActions = `<button class="int-action-btn visit-btn" title="Marquer visité" onclick="markInterestVisited('${evIdSafe}')">👁</button>`;
+    }
+    if (pipeline === 'visite') {
+      pipelineActions = `<button class="int-action-btn visit-btn" title="Marquer visité" onclick="markInterestVisited('${evIdSafe}')">👁</button>
+        <button class="int-action-btn offer-btn" title="Générer l'offre d'achat" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">📄</button>`;
+    }
+    if (pipeline === 'offre_envoyee') {
+      pipelineActions = `<button class="int-action-btn mandat-btn" title="Générer le mandat de recherche" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">📝</button>`;
+    }
+  }
+
+  return `<div class="int-list-item ${treated ? 'is-treated' : ''}" id="int-row-${evIdSafe}">
 
     <!-- Toggle traité (bouton circulaire) -->
     <div class="int-col col-traite">
       <button class="int-treat-btn ${treated ? 'is-pub' : 'is-draft'}"
         title="${treated ? 'Marquer non traité' : 'Marquer traité'}"
-        onclick="toggleInterestTreated('${esc(ev.id)}', ${!treated})">
+        onclick="toggleInterestTreated('${evIdSafe}', ${!treated})">
         ${treated ? SVG_CHECK : SVG_CLOCK}
       </button>
     </div>
@@ -5773,6 +5953,7 @@ function _buildInterestRow(ev) {
         ${lead.email ? `<span style="color:var(--dim)">${esc(lead.email)}</span>` : ''}
         <span class="int-mob-date">${timeAgo(ev.created_at)}</span>
       </div>
+      ${pipelineBadge}
       <span class="int-lead-fiche" onclick="openLeadFromNotif('${esc(lead.id)}')">Voir la fiche →</span>
     </div>
 
@@ -5793,22 +5974,211 @@ function _buildInterestRow(ev) {
     <!-- Actions -->
     <div class="int-col col-actions">
       <div class="int-actions">
+        ${pipelineActions}
         ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="WhatsApp">
-          ${SVG_WA}<span class="int-btn-label">WhatsApp</span>
+          ${SVG_WA}
         </a>` : ''}
         ${lead.email ? `<button class="int-action-btn mail" title="Envoyer un email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom||'')}','${esc(lead.email)}')">
-          ${SVG_MAIL}<span class="int-btn-label">Email</span>
+          ${SVG_MAIL}
         </button>` : ''}
         <button class="int-fiche-btn" onclick="openLeadFromNotif('${esc(lead.id)}')">
           Fiche <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
-        <button class="int-action-btn del-btn" title="Supprimer" onclick="openDelIntModal('${esc(ev.id)}','${esc(leadName)} — ${esc(source.name)}','${esc(leadName)}')">
+        <button class="int-action-btn del-btn" title="Supprimer" onclick="openDelIntModal('${evIdSafe}','${esc(leadName)} — ${esc(source.name)}','${esc(leadName)}')">
           ${SVG_TRASH}
         </button>
       </div>
     </div>
 
   </div>`;
+}
+
+/* ── Toast notifications ────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;
+    padding:10px 20px;border-radius:8px;font-size:13px;font-family:var(--sans);pointer-events:none;
+    background:${type==='error'?'rgba(217,94,94,.92)':'rgba(76,175,125,.92)'};color:#fff;
+    box-shadow:0 4px 16px rgba(0,0,0,.4);white-space:nowrap;transition:opacity .3s`;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 320); }, 2800);
+}
+
+/* ── Pipeline : visite → offre → mandat ────────────────────── */
+
+async function markInterestVisited(eventId) {
+  const btn = document.querySelector(`#int-row-${eventId} .visit-btn`);
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const r = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'visit', interest_id: eventId }),
+    });
+    if (r.status === 401) { logout(); return; }
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'erreur');
+    // Mettre à jour le cache local et re-render la ligne
+    const ev = interestsCache.find(e => e.id === eventId);
+    if (ev) ev.content = d.content;
+    const row = document.getElementById('int-row-' + eventId);
+    if (row) row.outerHTML = _buildInterestRow(ev || interestsCache.find(e => e.id === eventId));
+  } catch (e) {
+    showToast('Erreur : ' + (e.message || e), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '👁'; }
+  }
+}
+
+let _offerInterestId = null, _offerProjectId = null, _offerInfoLink = null;
+let _mandatInterestId = null, _mandatProjectId = null, _mandatInfoLink = null;
+
+async function openOfferModal(interestId, projectId, leadName, projectName) {
+  _offerInterestId = interestId;
+  _offerProjectId  = projectId;
+  _offerInfoLink   = null;
+
+  document.getElementById('offer-lead-name').textContent    = leadName;
+  document.getElementById('offer-project-name').textContent = projectName;
+  document.getElementById('offer-modal-alert').classList.remove('on');
+  document.getElementById('offer-info-link-banner').classList.remove('on');
+  document.getElementById('offer-submit-btn').disabled = false;
+  document.getElementById('offer-submit-btn').textContent = '📄 Générer et envoyer';
+
+  // Pré-remplir le prix depuis projectsCache
+  const proj = projectsCache.find(p => p.id === projectId);
+  if (proj?.price_fai) document.getElementById('offer-prix').value = proj.price_fai;
+  else                 document.getElementById('offer-prix').value = '';
+
+  document.getElementById('offer-modal-overlay').classList.add('on');
+}
+
+function closeOfferModal() {
+  document.getElementById('offer-modal-overlay').classList.remove('on');
+}
+
+function toggleNotaireFields() {
+  document.getElementById('offer-notaire-fields').classList.toggle('open');
+}
+
+function copyOfferInfoLink() {
+  if (!_offerInfoLink) return;
+  navigator.clipboard.writeText(_offerInfoLink).then(() => showToast('Lien copié !'))
+    .catch(() => prompt('Copie ce lien :', _offerInfoLink));
+}
+
+async function submitOffer() {
+  const btn = document.getElementById('offer-submit-btn');
+  const alert = document.getElementById('offer-modal-alert');
+  btn.disabled = true; btn.textContent = '⏳ Génération…';
+  alert.classList.remove('on');
+
+  try {
+    const body = {
+      action: 'offer',
+      interest_id: _offerInterestId,
+      project_id:  _offerProjectId,
+      prix:         Number(document.getElementById('offer-prix').value) || undefined,
+      notaire_nom:    document.getElementById('offer-notaire-nom').value,
+      notaire_email:  document.getElementById('offer-notaire-email').value,
+      notaire_adresse:document.getElementById('offer-notaire-adresse').value,
+      notaire_tel:    document.getElementById('offer-notaire-tel').value,
+    };
+    const r = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    if (r.status === 401) { logout(); return; }
+    const d = await r.json();
+
+    if (d.error === 'infos_manquantes') {
+      _offerInfoLink = d.url;
+      document.getElementById('offer-info-link-banner').classList.add('on');
+      btn.disabled = false; btn.textContent = '📄 Générer et envoyer';
+      return;
+    }
+    if (!d.ok) throw new Error(d.error || 'erreur serveur');
+
+    // Succès : mise à jour du cache + re-render
+    const ev = interestsCache.find(e => e.id === _offerInterestId);
+    if (ev) ev.content = { ...(ev.content || {}), offer_sent_at: new Date().toISOString() };
+    closeOfferModal();
+    loadInterests(true);
+    showToast('Offre générée et envoyée par email ✓');
+  } catch (e) {
+    alert.textContent = 'Erreur : ' + (e.message || e);
+    alert.classList.add('on');
+    btn.disabled = false; btn.textContent = '📄 Générer et envoyer';
+  }
+}
+
+async function openMandatModal(interestId, projectId, leadName, projectName) {
+  _mandatInterestId = interestId;
+  _mandatProjectId  = projectId;
+  _mandatInfoLink   = null;
+
+  document.getElementById('mandat-lead-name').textContent    = leadName;
+  document.getElementById('mandat-project-name').textContent = projectName;
+  document.getElementById('mandat-modal-alert').classList.remove('on');
+  document.getElementById('mandat-info-link-banner').classList.remove('on');
+  document.getElementById('mandat-submit-btn').disabled = false;
+  document.getElementById('mandat-submit-btn').textContent = '📝 Générer et envoyer';
+  document.getElementById('mandat-commission').value = '8900';
+
+  document.getElementById('mandat-modal-overlay').classList.add('on');
+}
+
+function closeMandatModal() {
+  document.getElementById('mandat-modal-overlay').classList.remove('on');
+}
+
+function copyMandatInfoLink() {
+  if (!_mandatInfoLink) return;
+  navigator.clipboard.writeText(_mandatInfoLink).then(() => showToast('Lien copié !'))
+    .catch(() => prompt('Copie ce lien :', _mandatInfoLink));
+}
+
+async function submitMandat() {
+  const btn = document.getElementById('mandat-submit-btn');
+  const alert = document.getElementById('mandat-modal-alert');
+  btn.disabled = true; btn.textContent = '⏳ Génération…';
+  alert.classList.remove('on');
+
+  try {
+    const body = {
+      action:      'mandat',
+      interest_id: _mandatInterestId,
+      project_id:  _mandatProjectId,
+      commission:  Number(document.getElementById('mandat-commission').value) || 8900,
+    };
+    const r = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    if (r.status === 401) { logout(); return; }
+    const d = await r.json();
+
+    if (d.error === 'infos_manquantes') {
+      _mandatInfoLink = d.url;
+      document.getElementById('mandat-info-link-banner').classList.add('on');
+      btn.disabled = false; btn.textContent = '📝 Générer et envoyer';
+      return;
+    }
+    if (!d.ok) throw new Error(d.error || 'erreur serveur');
+
+    const ev = interestsCache.find(e => e.id === _mandatInterestId);
+    if (ev) ev.content = { ...(ev.content || {}), mandat_sent_at: new Date().toISOString() };
+    closeMandatModal();
+    loadInterests(true);
+    const msg = d.docusign ? 'Mandat envoyé via DocuSign pour signature ✓' : 'Mandat généré et envoyé par email ✓';
+    showToast(msg);
+  } catch (e) {
+    alert.textContent = 'Erreur : ' + (e.message || e);
+    alert.classList.add('on');
+    btn.disabled = false; btn.textContent = '📝 Générer et envoyer';
+  }
 }
 
 /* ── Delete intérêt ─────────────────────────────────────────── */
