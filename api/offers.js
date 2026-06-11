@@ -472,8 +472,8 @@ module.exports = async function handler(req, res) {
     const newContent = { ...content, offer_sent_at: new Date().toISOString(), offer_sent_by: payload.email, mandat_id: mandatId };
     await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
 
-    // Envoyer par email avec PDF en pièce jointe
-    if (lead.email && process.env.RESEND_API_KEY) {
+    const delivery = b.delivery || 'email';
+    if (delivery !== 'download' && lead.email && process.env.RESEND_API_KEY) {
       const resend  = new Resend(process.env.RESEND_API_KEY);
       const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
       const founder = getFounder(payload.email);
@@ -492,6 +492,44 @@ module.exports = async function handler(req, res) {
     }
 
     return res.status(200).json({ ok: true, mandat_id: mandatId, pdf_url: pdfUrl });
+  }
+
+  // ── action: offer_resend ──────────────────────────────────────────────
+  if (action === 'offer_resend') {
+    const { data: m } = await supabase.from('mandats').select('offre_pdf_url').eq('interest_event_id', interest_id).maybeSingle();
+    if (!m?.offre_pdf_url) return res.status(404).json({ error: 'offre_non_generee' });
+    if (lead.email && process.env.RESEND_API_KEY) {
+      const pdfBuf = await fetch(m.offre_pdf_url).then(r => r.arrayBuffer()).then(ab => Buffer.from(ab));
+      const resend  = new Resend(process.env.RESEND_API_KEY);
+      const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+      const founder = getFounder(payload.email);
+      await resend.emails.send({
+        from, to: [lead.email], cc: [payload.email],
+        subject: `Offre d'achat — ${project?.address || project?.title || ''}`,
+        html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre offre d'achat.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
+        attachments: [{ filename: 'Offre-achat.pdf', content: pdfBuf.toString('base64') }],
+      });
+    }
+    return res.status(200).json({ ok: true });
+  }
+
+  // ── action: mandat_resend ─────────────────────────────────────────────
+  if (action === 'mandat_resend') {
+    const { data: m } = await supabase.from('mandats').select('mandat_pdf_url').eq('interest_event_id', interest_id).maybeSingle();
+    if (!m?.mandat_pdf_url) return res.status(404).json({ error: 'mandat_non_genere' });
+    if (lead.email && process.env.RESEND_API_KEY) {
+      const pdfBuf = await fetch(m.mandat_pdf_url).then(r => r.arrayBuffer()).then(ab => Buffer.from(ab));
+      const resend  = new Resend(process.env.RESEND_API_KEY);
+      const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+      const founder = getFounder(payload.email);
+      await resend.emails.send({
+        from, to: [lead.email], cc: [payload.email],
+        subject: 'Mandat de recherche — Atom Buyers Club',
+        html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre mandat de recherche à signer.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
+        attachments: [{ filename: 'Mandat-recherche.pdf', content: pdfBuf.toString('base64') }],
+      });
+    }
+    return res.status(200).json({ ok: true });
   }
 
   // ── action: mandat ────────────────────────────────────────────────────
@@ -528,15 +566,14 @@ module.exports = async function handler(req, res) {
 
     await supabase.from('mandats').update({ mandat_pdf_url: pdfUrl, commission, statut: 'mandat_envoye' }).eq('id', mandatRow.id);
 
-    // DocuSign — envoi pour e-sign
+    const mandatDelivery = b.delivery || 'email';
     const fileName = `Mandat-${(project.address || project.title || '').replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.pdf`;
-    const envelopeId = await createDocuSignEnvelope({ pdfBuffer: pdf, fileName, lead, mandatId: mandatRow.id });
 
-    if (envelopeId) {
-      await supabase.from('mandats').update({ docusign_envelope_id: envelopeId, statut: 'mandat_envoye' }).eq('id', mandatRow.id);
-    } else {
-      // Fallback : envoie le PDF par email si DocuSign non configuré
-      if (lead.email && process.env.RESEND_API_KEY) {
+    if (mandatDelivery !== 'download') {
+      const envelopeId = await createDocuSignEnvelope({ pdfBuffer: pdf, fileName, lead, mandatId: mandatRow.id });
+      if (envelopeId) {
+        await supabase.from('mandats').update({ docusign_envelope_id: envelopeId }).eq('id', mandatRow.id);
+      } else if (lead.email && process.env.RESEND_API_KEY) {
         const resend  = new Resend(process.env.RESEND_API_KEY);
         const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
         const founder = getFounder(payload.email);

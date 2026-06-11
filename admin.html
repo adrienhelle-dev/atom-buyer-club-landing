@@ -1335,12 +1335,16 @@
     .int-source-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .int-source-link.visit-cta { color: #5B5BD6; border-color: rgba(91,91,214,.35); background: rgba(91,91,214,.07); }
     .int-source-link.visit-cta:hover { background: rgba(91,91,214,.16); border-color: rgba(91,91,214,.7); }
-    .int-source-link.offer-cta { color: var(--gold); border-color: rgba(184,151,90,.38); background: rgba(184,151,90,.07); }
-    .int-source-link.offer-cta:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
-    .int-source-link.mandat-cta { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
-    .int-source-link.mandat-cta:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
-    .int-source-link.pdf-cta { color: var(--dim); border-color: var(--border); background: transparent; font-size: 11px; padding: 5px 12px; }
-    .int-source-link.pdf-cta:hover { color: var(--cream); border-color: var(--dim); background: rgba(255,255,255,.04); }
+    .int-source-link.offer-cta { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
+    .int-source-link.offer-cta:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
+    .int-source-link.mandat-cta { color: #E07A10; border-color: rgba(224,122,16,.35); background: rgba(224,122,16,.07); }
+    .int-source-link.mandat-cta:hover { background: rgba(224,122,16,.16); border-color: rgba(224,122,16,.65); }
+    .int-source-link.mandat-cta.done { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
+    .int-source-link.mandat-cta.done:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
+    .int-mob-pipeline-btn { display: none; }
+    /* offer-modal: secondary submit btn */
+    .offer-modal-submit.secondary { background: none; border: 1px solid var(--border); color: var(--cream); margin-right: auto; }
+    .offer-modal-submit.secondary:hover { border-color: var(--dim); background: rgba(255,255,255,.05); }
     .int-lead-fiche { font-size: 11px; color: var(--gold); cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none; }
     .int-lead-fiche:hover { text-decoration: underline; }
     .tag-chips-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
@@ -1612,15 +1616,19 @@
       .int-action-btn:last-child { border-right: none; }
       .int-action-btn:active { background: rgba(255,255,255,.06); }
 
-      /* WA — vert, même largeur */
-      .int-action-btn.wa {
-        background: rgba(37,211,102,.05); color: #25d366;
-        flex: 1; border-color: var(--border);
+      /* Bouton pipeline mobile — occupe la majorité de la barre */
+      .int-mob-pipeline-btn {
+        display: flex; flex: 2; height: 46px;
+        background: none; border: none; border-right: 1px solid var(--border);
+        font-size: 13px; font-weight: 500; font-family: var(--sans);
+        align-items: center; justify-content: center; gap: 5px;
+        cursor: pointer; transition: background .12s;
       }
-      .int-action-btn.wa:hover, .int-action-btn.wa:active { background: rgba(37,211,102,.1); }
-
-      /* Email */
-      .int-action-btn.mail { color: var(--gold); flex: 1; }
+      .int-mob-pipeline-btn:active { background: rgba(255,255,255,.06); }
+      .int-mob-pipeline-btn.visit  { color: #5B5BD6; }
+      .int-mob-pipeline-btn.offer  { color: #4caf7d; }
+      .int-mob-pipeline-btn.mandat { color: #E07A10; }
+      .int-mob-pipeline-btn.mandat-done { color: #4caf7d; }
 
       /* Fiche — visible sur mobile seulement, même largeur */
       .int-fiche-btn {
@@ -2849,7 +2857,8 @@
 
     <div class="offer-modal-footer">
       <button class="offer-modal-cancel" onclick="closeOfferModal()">Annuler</button>
-      <button class="offer-modal-submit" id="offer-submit-btn" onclick="submitOffer()">📄 Générer et envoyer</button>
+      <button class="offer-modal-submit secondary" id="offer-dl-btn" onclick="submitOffer('download')">📥 Télécharger</button>
+      <button class="offer-modal-submit" id="offer-send-btn" onclick="submitOffer('email')">📧 Envoyer</button>
     </div>
   </div>
 </div>
@@ -2877,7 +2886,8 @@
 
     <div class="offer-modal-footer">
       <button class="offer-modal-cancel" onclick="closeMandatModal()">Annuler</button>
-      <button class="offer-modal-submit" id="mandat-submit-btn" onclick="submitMandat()">📝 Générer et envoyer</button>
+      <button class="offer-modal-submit secondary" id="mandat-dl-btn" onclick="submitMandat('download')">📥 Télécharger</button>
+      <button class="offer-modal-submit" id="mandat-send-btn" onclick="submitMandat('email')">📧 Envoyer</button>
     </div>
   </div>
 </div>
@@ -5947,24 +5957,28 @@ function _buildInterestRow(ev) {
     else if (pipeline === 'treated')       pipelineBadge = `<span class="int-pipeline-badge signed">Traité</span>`;
   }
 
-  // CTA pipeline intégré dans la colonne source
+  // CTA pipeline + bouton mobile
   let pipelineCta = '';
+  let mobPipelineBtn = '';
   if (isProjet) {
     const visitBtn = `<button class="int-source-link visit-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     if (pipeline === 'untreated' || pipeline === 'treated') {
       pipelineCta = visitBtn;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     } else if (pipeline === 'visite_non_concluante') {
       pipelineCta = visitBtn;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     } else if (pipeline === 'visite_concluante') {
-      pipelineCta = visitBtn + `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
+      pipelineCta = `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn offer" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
     } else if (pipeline === 'offre_envoyee') {
-      pipelineCta = visitBtn
-        + `<button class="int-source-link mandat-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`
-        + `<button class="int-source-link pdf-cta" onclick="openPdf('${evIdSafe}','offre')">PDF offre ↓</button>`;
+      pipelineCta = `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
+        + `<button class="int-source-link mandat-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn mandat" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
     } else if (pipeline === 'mandat_envoye') {
-      pipelineCta = visitBtn
-        + `<button class="int-source-link pdf-cta" onclick="openPdf('${evIdSafe}','offre')">PDF offre ↓</button>`
-        + `<button class="int-source-link pdf-cta" onclick="openPdf('${evIdSafe}','mandat')">PDF mandat ↓</button>`;
+      pipelineCta = `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
+        + `<button class="int-source-link mandat-cta done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`;
     }
   }
 
@@ -6014,12 +6028,7 @@ function _buildInterestRow(ev) {
     <!-- Actions -->
     <div class="int-col col-actions">
       <div class="int-actions">
-        ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="WhatsApp">
-          ${SVG_WA}
-        </a>` : ''}
-        ${lead.email ? `<button class="int-action-btn mail" title="Envoyer un email" onclick="openEmailComposeModal('${esc(lead.id)}','${esc(lead.prenom||'')}','${esc(lead.email)}')">
-          ${SVG_MAIL}
-        </button>` : ''}
+        ${mobPipelineBtn}
         <button class="int-fiche-btn" onclick="openLeadFromNotif('${esc(lead.id)}')">
           Fiche <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
@@ -6162,22 +6171,25 @@ function copyOfferInfoLink() {
     .catch(() => prompt('Copie ce lien :', _offerInfoLink));
 }
 
-async function submitOffer() {
-  const btn = document.getElementById('offer-submit-btn');
-  const alert = document.getElementById('offer-modal-alert');
-  btn.disabled = true; btn.textContent = '⏳ Génération…';
-  alert.classList.remove('on');
+async function submitOffer(delivery) {
+  const dlBtn   = document.getElementById('offer-dl-btn');
+  const sendBtn = document.getElementById('offer-send-btn');
+  const alertEl = document.getElementById('offer-modal-alert');
+  const activeBtn = delivery === 'download' ? dlBtn : sendBtn;
+  dlBtn.disabled = true; sendBtn.disabled = true;
+  activeBtn.textContent = '⏳ Génération…';
+  alertEl.classList.remove('on');
 
   try {
     const body = {
-      action: 'offer',
+      action: 'offer', delivery,
       interest_id: _offerInterestId,
       project_id:  _offerProjectId,
-      prix:         Number(document.getElementById('offer-prix').value) || undefined,
-      notaire_nom:    document.getElementById('offer-notaire-nom').value,
-      notaire_email:  document.getElementById('offer-notaire-email').value,
-      notaire_adresse:document.getElementById('offer-notaire-adresse').value,
-      notaire_tel:    document.getElementById('offer-notaire-tel').value,
+      prix:            Number(document.getElementById('offer-prix').value) || undefined,
+      notaire_nom:     document.getElementById('offer-notaire-nom').value,
+      notaire_email:   document.getElementById('offer-notaire-email').value,
+      notaire_adresse: document.getElementById('offer-notaire-adresse').value,
+      notaire_tel:     document.getElementById('offer-notaire-tel').value,
     };
     const r = await fetch('/api/offers', {
       method: 'POST',
@@ -6190,21 +6202,23 @@ async function submitOffer() {
     if (d.error === 'infos_manquantes') {
       _offerInfoLink = d.url;
       document.getElementById('offer-info-link-banner').classList.add('on');
-      btn.disabled = false; btn.textContent = '📄 Générer et envoyer';
+      dlBtn.disabled = false; sendBtn.disabled = false;
+      dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
       return;
     }
     if (!d.ok) throw new Error(d.error || 'erreur serveur');
 
-    // Succès : mise à jour du cache + re-render
     const ev = interestsCache.find(e => e.id === _offerInterestId);
     if (ev) ev.content = { ...(ev.content || {}), offer_sent_at: new Date().toISOString() };
     closeOfferModal();
     loadInterests(true);
-    showToast('Offre générée et envoyée par email ✓');
+    if (delivery === 'download' && d.pdf_url) window.open(d.pdf_url, '_blank');
+    showToast(delivery === 'download' ? 'PDF offre généré ✓' : 'Offre envoyée par email ✓');
   } catch (e) {
-    alert.textContent = 'Erreur : ' + (e.message || e);
-    alert.classList.add('on');
-    btn.disabled = false; btn.textContent = '📄 Générer et envoyer';
+    alertEl.textContent = 'Erreur : ' + (e.message || e);
+    alertEl.classList.add('on');
+    dlBtn.disabled = false; sendBtn.disabled = false;
+    dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
   }
 }
 
@@ -6234,15 +6248,18 @@ function copyMandatInfoLink() {
     .catch(() => prompt('Copie ce lien :', _mandatInfoLink));
 }
 
-async function submitMandat() {
-  const btn = document.getElementById('mandat-submit-btn');
-  const alert = document.getElementById('mandat-modal-alert');
-  btn.disabled = true; btn.textContent = '⏳ Génération…';
-  alert.classList.remove('on');
+async function submitMandat(delivery) {
+  const dlBtn   = document.getElementById('mandat-dl-btn');
+  const sendBtn = document.getElementById('mandat-send-btn');
+  const alertEl = document.getElementById('mandat-modal-alert');
+  const activeBtn = delivery === 'download' ? dlBtn : sendBtn;
+  dlBtn.disabled = true; sendBtn.disabled = true;
+  activeBtn.textContent = '⏳ Génération…';
+  alertEl.classList.remove('on');
 
   try {
     const body = {
-      action:      'mandat',
+      action: 'mandat', delivery,
       interest_id: _mandatInterestId,
       project_id:  _mandatProjectId,
       commission:  Number(document.getElementById('mandat-commission').value) || 8900,
@@ -6258,7 +6275,8 @@ async function submitMandat() {
     if (d.error === 'infos_manquantes') {
       _mandatInfoLink = d.url;
       document.getElementById('mandat-info-link-banner').classList.add('on');
-      btn.disabled = false; btn.textContent = '📝 Générer et envoyer';
+      dlBtn.disabled = false; sendBtn.disabled = false;
+      dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
       return;
     }
     if (!d.ok) throw new Error(d.error || 'erreur serveur');
@@ -6267,12 +6285,52 @@ async function submitMandat() {
     if (ev) ev.content = { ...(ev.content || {}), mandat_sent_at: new Date().toISOString() };
     closeMandatModal();
     loadInterests(true);
-    const msg = d.docusign ? 'Mandat envoyé via DocuSign pour signature ✓' : 'Mandat généré et envoyé par email ✓';
-    showToast(msg);
+    if (delivery === 'download' && d.pdf_url) window.open(d.pdf_url, '_blank');
+    showToast(delivery === 'download' ? 'PDF mandat généré ✓' : d.docusign ? 'Mandat envoyé via DocuSign ✓' : 'Mandat envoyé par email ✓');
   } catch (e) {
-    alert.textContent = 'Erreur : ' + (e.message || e);
-    alert.classList.add('on');
-    btn.disabled = false; btn.textContent = '📝 Générer et envoyer';
+    alertEl.textContent = 'Erreur : ' + (e.message || e);
+    alertEl.classList.add('on');
+    dlBtn.disabled = false; sendBtn.disabled = false;
+    dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
+  }
+}
+
+function showDocPopover(evId, docType, btn) {
+  document.querySelectorAll('.visit-popover').forEach(p => p.remove());
+  const items = [
+    { label: '📥 Télécharger le PDF', action: () => openPdf(evId, docType) },
+    { label: '📧 Renvoyer par email',  action: () => resendPdf(evId, docType) },
+  ];
+  const pop = document.createElement('div');
+  pop.className = 'visit-popover';
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.className = 'visit-popover-item';
+    b.textContent = it.label;
+    b.onclick = e => { e.stopPropagation(); pop.remove(); it.action(); };
+    pop.appendChild(b);
+  });
+  const rect = btn.getBoundingClientRect();
+  pop.style.cssText = `position:fixed;z-index:9999;top:${rect.bottom + 6}px;left:${rect.left}px`;
+  document.body.appendChild(pop);
+  const close = e => { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('click', close, true); } };
+  setTimeout(() => document.addEventListener('click', close, true), 0);
+}
+
+async function resendPdf(interestId, docType) {
+  try {
+    const action = docType === 'offre' ? 'offer_resend' : 'mandat_resend';
+    const r = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action, interest_id: interestId }),
+    });
+    if (r.status === 401) { logout(); return; }
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'erreur');
+    showToast(docType === 'offre' ? 'Offre renvoyée ✓' : 'Mandat renvoyé ✓');
+  } catch (e) {
+    showToast('Erreur : ' + (e.message || e), 'error');
   }
 }
 
