@@ -1527,12 +1527,6 @@
       display: inline-flex; align-items: center; gap: 5px; transition: color .12s;
     }
     .om-notaire-toggle:hover { color: var(--gold); }
-    .om-offer-link {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: none; border: none; padding: 0; cursor: pointer;
-      color: var(--gold); font-size: 12px; font-family: var(--sans);
-      text-decoration: underline; text-underline-offset: 3px;
-    }
     @media (max-width: 600px) { .om-grid { grid-template-columns: 1fr; } .om-grid .om-full { grid-column: auto; } }
     .offer-modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     .offer-modal-cancel { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 9px 18px; color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color .12s, border-color .12s; }
@@ -2913,7 +2907,7 @@
 
     <div id="offer-form-fields">
       <div class="om-section">
-        <div class="om-section-title">Acheteur <span class="om-check todo" id="offer-buyer-check">à compléter</span></div>
+        <div class="om-section-title">Acheteur <span class="om-check todo" id="offer-buyer-check" onclick="focusMissingBuyer('offer')" style="cursor:pointer" title="Cliquer pour aller au premier champ manquant">à compléter</span></div>
         <div class="om-grid">
           <div class="om-field">
             <label>Date de naissance <span class="req">*</span></label>
@@ -3010,7 +3004,7 @@
 
     <div id="mandat-form-fields">
       <div class="om-section">
-        <div class="om-section-title">Acheteur <span class="om-check todo" id="mandat-buyer-check">à compléter</span></div>
+        <div class="om-section-title">Acheteur <span class="om-check todo" id="mandat-buyer-check" onclick="focusMissingBuyer('mandat')" style="cursor:pointer" title="Cliquer pour aller au premier champ manquant">à compléter</span></div>
         <div class="om-grid">
           <div class="om-field">
             <label>Date de naissance <span class="req">*</span></label>
@@ -3052,9 +3046,6 @@
           <div class="om-field">
             <label>Commission (€ TTC)</label>
             <input class="offer-modal-input" type="number" id="mandat-commission" value="8900"/>
-          </div>
-          <div class="om-field" style="display:flex;align-items:flex-end;padding-bottom:9px">
-            <button class="om-offer-link" onclick="openOfferFromMandatModal()">📄 Voir l'offre PDF →</button>
           </div>
         </div>
         <div style="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.5">Le mandat est envoyé via DocuSign pour signature électronique. Si DocuSign n'est pas configuré, le PDF part par email.</div>
@@ -6444,6 +6435,22 @@ function syncBuyerState(prefix) {
   return complete;
 }
 
+/* Clic sur le badge "à compléter" : focus + surbrillance du premier champ requis manquant */
+function focusMissingBuyer(prefix) {
+  const val = id => document.getElementById(id)?.value?.trim() || '';
+  const target = !val(prefix + '-buyer-dob')     ? prefix + '-buyer-dob'
+              : !val(prefix + '-buyer-adresse')  ? prefix + '-buyer-adresse'
+              : (prefix === 'offer' && !val('offer-prix')) ? 'offer-prix'
+              : null;
+  if (!target) return;
+  const el = document.getElementById(target);
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.focus();
+  el.style.borderColor = 'var(--gold)';
+  el.style.boxShadow = '0 0 0 3px rgba(184,151,90,.18)';
+  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1400);
+}
+
 /* PATCH les infos acheteur sur le lead avant la génération PDF */
 async function _saveBuyerInfo(prefix, leadId) {
   const val = id => document.getElementById(id)?.value?.trim() || null;
@@ -6530,7 +6537,7 @@ async function submitOffer(delivery) {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error === 'infos_manquantes' ? 'Infos acheteur incomplètes (date de naissance, adresse)' : (d.error || 'erreur serveur'));
 
-    if (ev) ev.content = { ...(ev.content || {}), offer_sent_at: new Date().toISOString() };
+    if (ev) ev.content = { ...(ev.content || {}), offer_sent_at: new Date().toISOString(), ...(d.emailed ? { offer_emailed_at: new Date().toISOString() } : {}) };
     closeOfferModal();
     loadInterests(true);
     if (delivery === 'download' && d.pdf_url) window.open(d.pdf_url, '_blank');
@@ -6566,10 +6573,6 @@ function closeMandatModal() {
   document.getElementById('mandat-modal-overlay').classList.remove('on');
 }
 
-function openOfferFromMandatModal() {
-  if (_mandatInterestId) openPdf(_mandatInterestId, 'offre');
-}
-
 async function submitMandat(delivery) {
   if (!syncBuyerState('mandat')) return;
   const dlBtn   = document.getElementById('mandat-dl-btn');
@@ -6599,7 +6602,7 @@ async function submitMandat(delivery) {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error === 'infos_manquantes' ? 'Infos acheteur incomplètes (date de naissance, adresse)' : (d.error || 'erreur serveur'));
 
-    if (ev) ev.content = { ...(ev.content || {}), mandat_sent_at: new Date().toISOString() };
+    if (ev) ev.content = { ...(ev.content || {}), mandat_sent_at: new Date().toISOString(), ...(d.emailed ? { mandat_emailed_at: new Date().toISOString() } : {}) };
     closeMandatModal();
     loadInterests(true);
     if (delivery === 'download' && d.pdf_url) window.open(d.pdf_url, '_blank');
@@ -6614,10 +6617,20 @@ async function submitMandat(delivery) {
 
 function showDocPopover(evId, docType, btn) {
   document.querySelectorAll('.visit-popover').forEach(p => p.remove());
+  const ev = interestsCache.find(e => e.id === evId);
+  const emailedAt = docType === 'offre' ? ev?.content?.offer_emailed_at : ev?.content?.mandat_emailed_at;
   const items = [
     { label: '📥 Télécharger le PDF', action: () => openPdf(evId, docType) },
-    { label: '📧 Renvoyer par email',  action: () => resendPdf(evId, docType) },
+    { label: emailedAt ? '📧 Renvoyer par email' : '📧 Envoyer par email', action: () => resendPdf(evId, docType) },
   ];
+  // Modifier les paramètres et régénérer le PDF
+  if (ev?.lead) {
+    const leadName  = (`${ev.lead.prenom || ''} ${ev.lead.nom || ''}`).trim() || ev.lead.email || 'Lead';
+    const projectId = ev.content?.project_id || '';
+    const srcName   = _interestSource(ev).name;
+    const openModal = docType === 'offre' ? openOfferModal : openMandatModal;
+    items.push({ label: '✏️ Modifier et régénérer', action: () => openModal(evId, projectId, leadName, srcName) });
+  }
   const pop = document.createElement('div');
   pop.className = 'visit-popover';
   items.forEach(it => {
@@ -6645,7 +6658,9 @@ async function resendPdf(interestId, docType) {
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || 'erreur');
-    showToast(docType === 'offre' ? 'Offre renvoyée ✓' : 'Mandat renvoyé ✓');
+    const ev = interestsCache.find(e => e.id === interestId);
+    if (ev && d.content) ev.content = d.content;
+    showToast(docType === 'offre' ? 'Offre envoyée par email ✓' : 'Mandat envoyé par email ✓');
   } catch (e) {
     showToast('Erreur : ' + (e.message || e), 'error');
   }

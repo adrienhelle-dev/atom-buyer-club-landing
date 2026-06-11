@@ -505,11 +505,8 @@ module.exports = async function handler(req, res) {
       mandatId = m?.id;
     }
 
-    // Mettre à jour le content de l'événement
-    const newContent = { ...content, offer_sent_at: new Date().toISOString(), offer_sent_by: payload.email, mandat_id: mandatId };
-    await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
-
     const delivery = b.delivery || 'email';
+    let offerEmailed = false;
     if (delivery !== 'download' && lead.email && process.env.RESEND_API_KEY) {
       const resend  = new Resend(process.env.RESEND_API_KEY);
       const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
@@ -526,9 +523,20 @@ module.exports = async function handler(req, res) {
 <p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
         attachments: [{ filename: `Offre-achat-${(project.address || project.title || '').replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.pdf`, content: Buffer.from(pdf).toString('base64') }],
       });
+      offerEmailed = true;
     }
 
-    return res.status(200).json({ ok: true, mandat_id: mandatId, pdf_url: pdfUrl });
+    // Mettre à jour le content de l'événement (emailed_at seulement si un mail est parti)
+    const newContent = {
+      ...content,
+      offer_sent_at: new Date().toISOString(),
+      offer_sent_by: payload.email,
+      mandat_id: mandatId,
+      ...(offerEmailed ? { offer_emailed_at: new Date().toISOString() } : {}),
+    };
+    await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
+
+    return res.status(200).json({ ok: true, mandat_id: mandatId, pdf_url: pdfUrl, emailed: offerEmailed });
   }
 
   // ── action: offer_resend ──────────────────────────────────────────────
@@ -546,6 +554,9 @@ module.exports = async function handler(req, res) {
         html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre offre d'achat.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
         attachments: [{ filename: 'Offre-achat.pdf', content: pdfBuf.toString('base64') }],
       });
+      const newContent = { ...content, offer_emailed_at: new Date().toISOString() };
+      await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
+      return res.status(200).json({ ok: true, content: newContent });
     }
     return res.status(200).json({ ok: true });
   }
@@ -565,6 +576,9 @@ module.exports = async function handler(req, res) {
         html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre mandat de recherche à signer.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
         attachments: [{ filename: 'Mandat-recherche.pdf', content: pdfBuf.toString('base64') }],
       });
+      const newContent = { ...content, mandat_emailed_at: new Date().toISOString() };
+      await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
+      return res.status(200).json({ ok: true, content: newContent });
     }
     return res.status(200).json({ ok: true });
   }
@@ -642,10 +656,15 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      const newContent = { ...content, mandat_sent_at: new Date().toISOString(), mandat_sent_by: payload.email };
+      const newContent = {
+        ...content,
+        mandat_sent_at: new Date().toISOString(),
+        mandat_sent_by: payload.email,
+        ...(mandatDelivery !== 'download' ? { mandat_emailed_at: new Date().toISOString() } : {}),
+      };
       await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
 
-      return res.status(200).json({ ok: true, mandat_id: mandatRow.id, pdf_url: pdfUrl, docusign: !!envelopeId });
+      return res.status(200).json({ ok: true, mandat_id: mandatRow.id, pdf_url: pdfUrl, docusign: !!envelopeId, emailed: mandatDelivery !== 'download' });
     } catch (err) {
       console.error('mandat action error:', err);
       return res.status(500).json({ ok: false, error: err.message || 'Erreur serveur mandat' });
