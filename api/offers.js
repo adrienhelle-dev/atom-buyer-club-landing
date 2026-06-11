@@ -415,7 +415,19 @@ module.exports = async function handler(req, res) {
 
   // ── action: visit ─────────────────────────────────────────────────────
   if (action === 'visit') {
-    const newContent = { ...content, visited: true, visited_at: new Date().toISOString(), visited_by: payload.email };
+    let newContent;
+    if (b.remove) {
+      const { visited, visited_at, visited_by, visit_conclusive, ...rest } = content;
+      newContent = rest;
+    } else {
+      newContent = {
+        ...content,
+        visited: true,
+        visit_conclusive: b.visit_conclusive !== undefined ? !!b.visit_conclusive : true,
+        visited_at: new Date().toISOString(),
+        visited_by: payload.email,
+      };
+    }
     await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
     return res.status(200).json({ ok: true, content: newContent });
   }

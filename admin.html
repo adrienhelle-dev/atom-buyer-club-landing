@@ -1396,10 +1396,28 @@
       font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
       letter-spacing: .03em; white-space: nowrap; margin-top: 4px;
     }
-    .int-pipeline-badge.visited  { background: rgba(91,91,214,.12); color: #5B5BD6; border: 1px solid rgba(91,91,214,.3); }
+    .int-pipeline-badge.visited       { background: rgba(91,91,214,.12); color: #5B5BD6; border: 1px solid rgba(91,91,214,.3); }
+    .int-pipeline-badge.visited.non-concluante { background: rgba(122,120,116,.1); color: var(--dim); border: 1px solid rgba(122,120,116,.2); }
     .int-pipeline-badge.offered  { background: rgba(184,151,90,.12); color: var(--gold); border: 1px solid rgba(184,151,90,.3); }
     .int-pipeline-badge.mandated { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); }
     .int-pipeline-badge.signed   { background: rgba(76,175,125,.2); color: #4caf7d; border: 1px solid rgba(76,175,125,.5); font-size: 11px; }
+
+    /* Visit popover */
+    .visit-popover {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; min-width: 190px; z-index: 9999;
+    }
+    .visit-popover-item {
+      display: block; width: 100%; text-align: left; padding: 10px 14px;
+      background: none; border: none; border-bottom: 1px solid rgba(255,255,255,.05);
+      color: var(--cream); font-size: 12px; font-family: var(--sans); cursor: pointer;
+      transition: background .12s;
+    }
+    .visit-popover-item:last-child { border-bottom: none; }
+    .visit-popover-item:hover { background: rgba(255,255,255,.06); }
+    .visit-popover-item.concluante { color: #5B5BD6; }
+    .visit-popover-item.non-concluante { color: var(--dim); }
+    .visit-popover-item.remove { color: var(--red); }
 
     /* Pipeline action buttons */
     .int-action-btn.visit-btn { color: #5B5BD6; border-color: rgba(91,91,214,.3); }
@@ -5819,10 +5837,11 @@ function _interestSource(ev) {
 
 function _interestPipelineStatus(ev) {
   const c = ev.content || {};
-  if (c.mandat_sent_at)  return 'mandat_envoye';
-  if (c.offer_sent_at)   return 'offre_envoyee';
-  if (c.visited)         return 'visite';
-  if (c.treated)         return 'treated';
+  if (c.mandat_sent_at)                    return 'mandat_envoye';
+  if (c.offer_sent_at)                     return 'offre_envoyee';
+  if (c.visited && c.visit_conclusive === false) return 'visite_non_concluante';
+  if (c.visited)                           return 'visite_concluante';
+  if (c.treated)                           return 'treated';
   return 'untreated';
 }
 
@@ -5838,7 +5857,7 @@ function _filteredInterests() {
       const ps = _interestPipelineStatus(ev);
       if (statusF === 'untreated'     && ps !== 'untreated')     return false;
       if (statusF === 'treated'       && ps !== 'treated')       return false;
-      if (statusF === 'visite'        && ps !== 'visite')        return false;
+      if (statusF === 'visite'        && ps !== 'visite_concluante' && ps !== 'visite_non_concluante') return false;
       if (statusF === 'offre_envoyee' && ps !== 'offre_envoyee') return false;
       if (statusF === 'mandat_envoye' && ps !== 'mandat_envoye') return false;
     }
@@ -5919,7 +5938,8 @@ function _buildInterestRow(ev) {
   // Badge pipeline
   let pipelineBadge = '';
   if (isProjet) {
-    if      (pipeline === 'visite')        pipelineBadge = `<span class="int-pipeline-badge visited">Visité</span>`;
+    if      (pipeline === 'visite_concluante')    pipelineBadge = `<span class="int-pipeline-badge visited">Visite concluante</span>`;
+    else if (pipeline === 'visite_non_concluante') pipelineBadge = `<span class="int-pipeline-badge visited non-concluante">Visite non concluante</span>`;
     else if (pipeline === 'offre_envoyee') pipelineBadge = `<span class="int-pipeline-badge offered">Offre envoyée</span>`;
     else if (pipeline === 'mandat_envoye') pipelineBadge = `<span class="int-pipeline-badge mandated">Mandat envoyé</span>`;
     else if (pipeline === 'treated')       pipelineBadge = `<span class="int-pipeline-badge signed">Traité</span>`;
@@ -5928,10 +5948,12 @@ function _buildInterestRow(ev) {
   // CTA pipeline intégré dans la colonne source
   let pipelineCta = '';
   if (isProjet && pipeline !== 'mandat_envoye') {
-    const visitBtn = `<button class="int-source-link visit-cta" onclick="markInterestVisited('${evIdSafe}')">Visite ›</button>`;
+    const visitBtn = `<button class="int-source-link visit-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     if (pipeline === 'untreated' || pipeline === 'treated') {
       pipelineCta = visitBtn;
-    } else if (pipeline === 'visite') {
+    } else if (pipeline === 'visite_non_concluante') {
+      pipelineCta = visitBtn;
+    } else if (pipeline === 'visite_concluante') {
       pipelineCta = visitBtn + `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
     } else if (pipeline === 'offre_envoyee') {
       pipelineCta = visitBtn + `<button class="int-source-link mandat-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
@@ -6008,7 +6030,7 @@ function showToast(msg, type = 'success') {
   el.textContent = msg;
   el.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;
     padding:10px 20px;border-radius:8px;font-size:13px;font-family:var(--sans);pointer-events:none;
-    background:${type==='error'?'rgba(217,94,94,.92)':'rgba(76,175,125,.92)'};color:#fff;
+    background:${type==='error'?'rgba(217,94,94,.92)':type==='info'?'rgba(91,91,214,.9)':'rgba(76,175,125,.92)'};color:#fff;
     box-shadow:0 4px 16px rgba(0,0,0,.4);white-space:nowrap;transition:opacity .3s`;
   document.body.appendChild(el);
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 320); }, 2800);
@@ -6016,26 +6038,67 @@ function showToast(msg, type = 'success') {
 
 /* ── Pipeline : visite → offre → mandat ────────────────────── */
 
-async function markInterestVisited(eventId) {
-  const btn = document.querySelector(`#int-row-${eventId} .visit-btn`);
-  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+function showVisitPopover(evId, pipeline, btn) {
+  document.querySelectorAll('.visit-popover').forEach(p => p.remove());
+
+  const items = [];
+  if (pipeline === 'untreated' || pipeline === 'treated') {
+    items.push({ label: 'Visite concluante',     cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
+    items.push({ label: 'Visite non concluante', cls: 'non-concluante', action: () => setVisitStatus(evId, 'non_concluante') });
+  } else if (pipeline === 'visite_non_concluante') {
+    items.push({ label: 'Marquer concluante',    cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
+    items.push({ label: 'Retirer la visite',     cls: 'remove',         action: () => setVisitStatus(evId, 'remove') });
+  } else {
+    items.push({ label: 'Marquer non concluante', cls: 'non-concluante', action: () => setVisitStatus(evId, 'non_concluante') });
+    items.push({ label: 'Retirer la visite',      cls: 'remove',         action: () => setVisitStatus(evId, 'remove') });
+  }
+
+  const pop = document.createElement('div');
+  pop.className = 'visit-popover';
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.className = 'visit-popover-item ' + it.cls;
+    b.textContent = it.label;
+    b.onclick = e => { e.stopPropagation(); pop.remove(); it.action(); };
+    pop.appendChild(b);
+  });
+
+  const rect = btn.getBoundingClientRect();
+  pop.style.cssText = `position:fixed;z-index:9999;top:${rect.bottom + 6}px;left:${rect.left}px`;
+  document.body.appendChild(pop);
+
+  const close = e => { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('click', close, true); } };
+  setTimeout(() => document.addEventListener('click', close, true), 0);
+}
+
+async function setVisitStatus(eventId, mode) {
+  const visitBtn = document.querySelector(`#int-row-${eventId} .visit-cta`);
+  if (visitBtn) { visitBtn.disabled = true; visitBtn.textContent = '…'; }
   try {
+    const body = { action: 'visit', interest_id: eventId };
+    if (mode === 'remove')         body.remove = true;
+    else if (mode === 'concluante') body.visit_conclusive = true;
+    else                            body.visit_conclusive = false;
+
     const r = await fetch('/api/offers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action: 'visit', interest_id: eventId }),
+      body: JSON.stringify(body),
     });
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || 'erreur');
-    // Mettre à jour le cache local et re-render la ligne
+
     const ev = interestsCache.find(e => e.id === eventId);
     if (ev) ev.content = d.content;
     const row = document.getElementById('int-row-' + eventId);
-    if (row) row.outerHTML = _buildInterestRow(ev || interestsCache.find(e => e.id === eventId));
+    if (row && ev) row.outerHTML = _buildInterestRow(ev);
+
+    const msg = mode === 'remove' ? 'Visite retirée' : mode === 'concluante' ? 'Visite concluante ✓' : 'Visite non concluante';
+    showToast(msg, mode === 'concluante' ? 'success' : 'info');
   } catch (e) {
     showToast('Erreur : ' + (e.message || e), 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '👁'; }
+    if (visitBtn) { visitBtn.disabled = false; visitBtn.textContent = 'Visite ›'; }
   }
 }
 
