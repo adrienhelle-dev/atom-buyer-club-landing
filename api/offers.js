@@ -417,11 +417,15 @@ module.exports = async function handler(req, res) {
   if (action === 'visit') {
     let newContent;
     if (b.remove) {
-      const { visited, visited_at, visited_by, visit_conclusive, ...rest } = content;
+      const { visited, visited_at, visited_by, visit_conclusive, sans_suite, treated, ...rest } = content;
       newContent = rest;
+    } else if (b.sans_suite) {
+      const { visited, visited_at, visited_by, visit_conclusive, ...rest } = content;
+      newContent = { ...rest, sans_suite: true, treated: true };
     } else {
+      const { sans_suite, ...rest } = content;
       newContent = {
-        ...content,
+        ...rest,
         visited: true,
         visit_conclusive: b.visit_conclusive !== undefined ? !!b.visit_conclusive : true,
         visited_at: new Date().toISOString(),

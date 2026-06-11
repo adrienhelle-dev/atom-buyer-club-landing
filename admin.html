@@ -1407,6 +1407,7 @@
     .int-pipeline-badge.offered  { background: rgba(184,151,90,.12); color: var(--gold); border: 1px solid rgba(184,151,90,.3); }
     .int-pipeline-badge.mandated { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); }
     .int-pipeline-badge.signed   { background: rgba(76,175,125,.2); color: #4caf7d; border: 1px solid rgba(76,175,125,.5); font-size: 11px; }
+    .int-pipeline-badge.sans-suite { background: rgba(122,120,116,.08); color: var(--dim); border: 1px solid rgba(122,120,116,.2); }
 
     /* Visit popover */
     .visit-popover {
@@ -2786,6 +2787,7 @@
       <option value="offre_envoyee">Offre envoyée</option>
       <option value="mandat_envoye">Mandat envoyé</option>
       <option value="treated">Traités</option>
+      <option value="sans_suite">Sans suite</option>
     </select>
     <select class="int-filter-sel" id="int-founder-filter" onchange="renderInterestsTable()">
       <option value="">Tous founders</option>
@@ -5852,6 +5854,7 @@ function _interestSource(ev) {
 
 function _interestPipelineStatus(ev) {
   const c = ev.content || {};
+  if (c.sans_suite)                        return 'sans_suite';
   if (c.mandat_sent_at)                    return 'mandat_envoye';
   if (c.offer_sent_at)                     return 'offre_envoyee';
   if (c.visited && c.visit_conclusive === false) return 'visite_non_concluante';
@@ -5875,6 +5878,7 @@ function _filteredInterests() {
       if (statusF === 'visite'        && ps !== 'visite_concluante' && ps !== 'visite_non_concluante') return false;
       if (statusF === 'offre_envoyee' && ps !== 'offre_envoyee') return false;
       if (statusF === 'mandat_envoye' && ps !== 'mandat_envoye') return false;
+      if (statusF === 'sans_suite'    && ps !== 'sans_suite')    return false;
     }
     if (founderF === '_none' && ev.lead.assigned_to) return false;
     if (founderF && founderF !== '_none' && ev.lead.assigned_to !== founderF) return false;
@@ -5958,6 +5962,7 @@ function _buildInterestRow(ev) {
     else if (pipeline === 'offre_envoyee') pipelineBadge = `<span class="int-pipeline-badge offered">Offre envoyée</span>`;
     else if (pipeline === 'mandat_envoye') pipelineBadge = `<span class="int-pipeline-badge mandated">Mandat envoyé</span>`;
     else if (pipeline === 'treated')       pipelineBadge = `<span class="int-pipeline-badge signed">Traité</span>`;
+    else if (pipeline === 'sans_suite')    pipelineBadge = `<span class="int-pipeline-badge sans-suite">Sans suite</span>`;
   }
 
   // CTA pipeline + bouton mobile
@@ -5965,7 +5970,7 @@ function _buildInterestRow(ev) {
   let mobPipelineBtn = '';
   if (isProjet) {
     const visitBtn = `<button class="int-source-link visit-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
-    if (pipeline === 'untreated' || pipeline === 'treated') {
+    if (pipeline === 'untreated' || pipeline === 'treated' || pipeline === 'sans_suite') {
       pipelineCta = visitBtn;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     } else if (pipeline === 'visite_non_concluante') {
@@ -5986,7 +5991,8 @@ function _buildInterestRow(ev) {
   }
 
   const isNonConcluante = pipeline === 'visite_non_concluante';
-  return `<div class="int-list-item ${treated ? 'is-treated' : ''} ${isNonConcluante ? 'is-non-concluante' : ''}" id="int-row-${evIdSafe}">
+  const isSansSuite     = pipeline === 'sans_suite';
+  return `<div class="int-list-item ${treated || isSansSuite ? 'is-treated' : ''} ${isNonConcluante ? 'is-non-concluante' : ''}" id="int-row-${evIdSafe}">
 
     <!-- Toggle traité (bouton circulaire) -->
     <div class="int-col col-traite">
@@ -6065,9 +6071,15 @@ function showVisitPopover(evId, pipeline, btn) {
   if (pipeline === 'untreated' || pipeline === 'treated') {
     items.push({ label: 'Visite concluante',     cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
     items.push({ label: 'Visite non concluante', cls: 'non-concluante', action: () => setVisitStatus(evId, 'non_concluante') });
+    items.push({ label: 'Sans suite',             cls: 'remove',         action: () => setVisitStatus(evId, 'sans_suite') });
   } else if (pipeline === 'visite_non_concluante') {
     items.push({ label: 'Marquer concluante',    cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
+    items.push({ label: 'Sans suite',             cls: 'remove',         action: () => setVisitStatus(evId, 'sans_suite') });
     items.push({ label: 'Retirer la visite',     cls: 'remove',         action: () => setVisitStatus(evId, 'remove') });
+  } else if (pipeline === 'sans_suite') {
+    items.push({ label: 'Visite concluante',     cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
+    items.push({ label: 'Visite non concluante', cls: 'non-concluante', action: () => setVisitStatus(evId, 'non_concluante') });
+    items.push({ label: 'Retirer sans suite',    cls: 'remove',         action: () => setVisitStatus(evId, 'remove') });
   } else {
     items.push({ label: 'Marquer non concluante', cls: 'non-concluante', action: () => setVisitStatus(evId, 'non_concluante') });
     items.push({ label: 'Retirer la visite',      cls: 'remove',         action: () => setVisitStatus(evId, 'remove') });
@@ -6083,9 +6095,18 @@ function showVisitPopover(evId, pipeline, btn) {
     pop.appendChild(b);
   });
 
-  const rect = btn.getBoundingClientRect();
-  pop.style.cssText = `position:fixed;z-index:9999;top:${rect.bottom + 6}px;left:${rect.left}px`;
   document.body.appendChild(pop);
+
+  // Positionnement adaptatif : ouvre vers le haut si insuffisant en bas
+  const rect = btn.getBoundingClientRect();
+  const popH = pop.offsetHeight || 110;
+  const popW = pop.offsetWidth  || 200;
+  const left = Math.max(8, Math.min(rect.left, window.innerWidth - popW - 8));
+  if (window.innerHeight - rect.bottom < popH + 12) {
+    pop.style.cssText = `position:fixed;z-index:9999;bottom:${window.innerHeight - rect.top + 6}px;left:${left}px`;
+  } else {
+    pop.style.cssText = `position:fixed;z-index:9999;top:${rect.bottom + 6}px;left:${left}px`;
+  }
 
   const close = e => { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('click', close, true); } };
   setTimeout(() => document.addEventListener('click', close, true), 0);
@@ -6096,9 +6117,10 @@ async function setVisitStatus(eventId, mode) {
   if (visitBtn) { visitBtn.disabled = true; visitBtn.textContent = '…'; }
   try {
     const body = { action: 'visit', interest_id: eventId };
-    if (mode === 'remove')         body.remove = true;
-    else if (mode === 'concluante') body.visit_conclusive = true;
-    else                            body.visit_conclusive = false;
+    if (mode === 'remove')           body.remove = true;
+    else if (mode === 'sans_suite')  body.sans_suite = true;
+    else if (mode === 'concluante')  body.visit_conclusive = true;
+    else                             body.visit_conclusive = false;
 
     const r = await fetch('/api/offers', {
       method: 'POST',
@@ -6114,7 +6136,7 @@ async function setVisitStatus(eventId, mode) {
     const row = document.getElementById('int-row-' + eventId);
     if (row && ev) row.outerHTML = _buildInterestRow(ev);
 
-    const msg = mode === 'remove' ? 'Visite retirée' : mode === 'concluante' ? 'Visite concluante ✓' : 'Visite non concluante';
+    const msg = mode === 'remove' ? 'Statut retiré' : mode === 'concluante' ? 'Visite concluante ✓' : mode === 'sans_suite' ? 'Sans suite' : 'Visite non concluante';
     showToast(msg, mode === 'concluante' ? 'success' : 'info');
   } catch (e) {
     showToast('Erreur : ' + (e.message || e), 'error');
