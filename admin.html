@@ -1332,8 +1332,25 @@
     }
     .int-source-link:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
     .int-source-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-    .int-source-link.traiter-cta { color: var(--dim); border-color: rgba(122,120,116,.25); background: rgba(122,120,116,.04); }
-    .int-source-link.traiter-cta:hover { color: var(--cream); background: rgba(122,120,116,.12); border-color: rgba(122,120,116,.4); }
+    @keyframes pulse-dot { 0%,100% { opacity:.35; transform:scale(.8); } 50% { opacity:1; transform:scale(1.1); } }
+    .int-source-link.traiter-cta {
+      color: var(--cream); border-color: rgba(184,151,90,.35); background: rgba(184,151,90,.06);
+      display: inline-flex; align-items: center; gap: 7px;
+    }
+    .int-source-link.traiter-cta::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0; animation: pulse-dot 2s ease-in-out infinite;
+    }
+    .int-source-link.traiter-cta:hover { background: rgba(184,151,90,.14); border-color: rgba(184,151,90,.6); }
+    .int-source-link.wa-cta {
+      color: #fff; border-color: transparent;
+      background: linear-gradient(135deg, #1da851, #25d366);
+      font-weight: 600; display: inline-flex; align-items: center; gap: 6px;
+      box-shadow: 0 2px 10px rgba(37,211,102,.22);
+    }
+    .int-source-link.wa-cta:hover { filter: brightness(1.07); box-shadow: 0 3px 14px rgba(37,211,102,.38); }
+    .int-source-link.attente-cta { color: var(--gold); border-color: rgba(184,151,90,.35); background: rgba(184,151,90,.07); display: inline-flex; align-items: center; gap: 6px; }
+    .int-source-link.attente-cta:hover { background: rgba(184,151,90,.15); border-color: rgba(184,151,90,.65); }
     .int-source-link.visit-cta { color: #5B5BD6; border-color: rgba(91,91,214,.35); background: rgba(91,91,214,.07); }
     .int-source-link.visit-cta:hover { background: rgba(91,91,214,.16); border-color: rgba(91,91,214,.7); }
     .int-source-link.generate-cta { color: #E07A10; border-color: rgba(224,122,16,.35); background: rgba(224,122,16,.07); }
@@ -1420,6 +1437,8 @@
     .int-pipeline-badge.mandated { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); }
     .int-pipeline-badge.signed   { background: rgba(76,175,125,.2); color: #4caf7d; border: 1px solid rgba(76,175,125,.5); font-size: 11px; }
     .int-pipeline-badge.sans-suite { background: rgba(122,120,116,.08); color: var(--dim); border: 1px solid rgba(122,120,116,.2); }
+    .int-pipeline-badge.waiting { background: rgba(184,151,90,.1); color: var(--gold); border: 1px solid rgba(184,151,90,.28); }
+    .int-pipeline-badge.waiting .badge-days { opacity: .65; font-weight: 500; }
 
     /* Visit popover */
     .visit-popover {
@@ -1648,7 +1667,14 @@
         cursor: pointer; transition: background .12s;
       }
       .int-mob-pipeline-btn:active { background: rgba(255,255,255,.06); }
-      .int-mob-pipeline-btn.traiter    { color: var(--dim); }
+      .int-mob-pipeline-btn.traiter    { color: var(--cream); }
+      .int-mob-pipeline-btn.traiter::before {
+        content: ''; width: 6px; height: 6px; border-radius: 50%;
+        background: var(--gold); flex-shrink: 0; animation: pulse-dot 2s ease-in-out infinite;
+      }
+      .int-mob-pipeline-btn.wa { color: #25d366; font-weight: 600; background: rgba(37,211,102,.06); }
+      .int-mob-pipeline-btn.wa:active { background: rgba(37,211,102,.14); }
+      .int-mob-pipeline-btn.waiting   { color: var(--gold); }
       .int-mob-pipeline-btn.visit     { color: #5B5BD6; }
       .int-mob-pipeline-btn.generate  { color: #E07A10; }
       .int-mob-pipeline-btn.offer     { color: #4caf7d; }
@@ -1661,7 +1687,7 @@
         font-size: 12px; font-weight: 500;
         align-items: center; justify-content: center; gap: 4px;
         height: 46px; cursor: pointer;
-        background: none; border: none; border-left: 1px solid var(--border);
+        background: none; border: none; border-radius: 0;
         font-family: var(--sans); transition: background .12s;
       }
       .int-fiche-btn:hover { background: rgba(255,255,255,.07); color: var(--cream); }
@@ -2804,6 +2830,7 @@
     <select class="int-filter-sel" id="int-status-filter" onchange="renderInterestsTable()">
       <option value="">Tous statuts</option>
       <option value="untreated">Non traités</option>
+      <option value="attente_visite">En attente de visite</option>
       <option value="visite">Visité</option>
       <option value="offre_envoyee">Offre envoyée</option>
       <option value="mandat_envoye">Mandat envoyé</option>
@@ -5896,8 +5923,18 @@ function _interestPipelineStatus(ev) {
   if (c.offer_sent_at)                     return 'offre_envoyee';
   if (c.visited && c.visit_conclusive === false) return 'visite_non_concluante';
   if (c.visited)                           return 'visite_concluante';
+  if (c.wa_contacted_at)                   return 'attente_visite';
   if (c.treated)                           return 'treated';
   return 'untreated';
+}
+
+// Jours restants avant passage auto en "sans suite" (10 j après la relance WhatsApp)
+const WA_FOLLOWUP_DAYS = 10;
+function _waDaysLeft(ev) {
+  const at = ev.content?.wa_contacted_at;
+  if (!at) return null;
+  const elapsed = Math.floor((Date.now() - new Date(at).getTime()) / 86400000);
+  return Math.max(0, WA_FOLLOWUP_DAYS - elapsed);
 }
 
 function _filteredInterests() {
@@ -5911,6 +5948,7 @@ function _filteredInterests() {
     if (statusF) {
       const ps = _interestPipelineStatus(ev);
       if (statusF === 'untreated'     && ps !== 'untreated')     return false;
+      if (statusF === 'attente_visite' && ps !== 'attente_visite') return false;
       if (statusF === 'treated'       && ps !== 'treated')       return false;
       if (statusF === 'visite'        && ps !== 'visite_concluante' && ps !== 'visite_non_concluante') return false;
       if (statusF === 'offre_envoyee' && ps !== 'offre_envoyee') return false;
@@ -5998,6 +6036,7 @@ function _buildInterestRow(ev) {
     else if (pipeline === 'visite_non_concluante') pipelineBadge = `<span class="int-pipeline-badge visited non-concluante">Visite non concluante</span>`;
     else if (pipeline === 'offre_envoyee') pipelineBadge = `<span class="int-pipeline-badge offered">Offre envoyée</span>`;
     else if (pipeline === 'mandat_envoye') pipelineBadge = `<span class="int-pipeline-badge mandated">Mandat envoyé</span>`;
+    else if (pipeline === 'attente_visite') pipelineBadge = `<span class="int-pipeline-badge waiting">En attente de visite <span class="badge-days">· J-${_waDaysLeft(ev)}</span></span>`;
     else if (pipeline === 'treated')       pipelineBadge = `<span class="int-pipeline-badge signed">Traité</span>`;
     else if (pipeline === 'sans_suite')    pipelineBadge = `<span class="int-pipeline-badge sans-suite">Sans suite</span>`;
   }
@@ -6008,9 +6047,21 @@ function _buildInterestRow(ev) {
   if (isProjet) {
     const visitBtn = `<button class="int-source-link visit-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     const traiterBtn = `<button class="int-source-link traiter-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">À traiter ›</button>`;
-    if (pipeline === 'untreated' || pipeline === 'treated' || pipeline === 'sans_suite') {
+    if (pipeline === 'untreated' || pipeline === 'treated') {
+      if (phone) {
+        // Première étape : relance WhatsApp personnalisée → "en attente de visite"
+        pipelineCta = `<button class="int-source-link wa-cta" onclick="startWaContact('${evIdSafe}')">${SVG_WA} WhatsApp ›</button>`;
+        mobPipelineBtn = `<button class="int-mob-pipeline-btn wa" onclick="startWaContact('${evIdSafe}')">${SVG_WA} WhatsApp ›</button>`;
+      } else {
+        pipelineCta = traiterBtn;
+        mobPipelineBtn = `<button class="int-mob-pipeline-btn traiter" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">À traiter ›</button>`;
+      }
+    } else if (pipeline === 'sans_suite') {
       pipelineCta = traiterBtn;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn traiter" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">À traiter ›</button>`;
+    } else if (pipeline === 'attente_visite') {
+      pipelineCta = `<button class="int-source-link attente-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">${SVG_CLOCK} En attente de visite ›</button>`;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn waiting" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">En attente de visite ›</button>`;
     } else if (pipeline === 'visite_non_concluante') {
       pipelineCta = visitBtn;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
@@ -6099,6 +6150,11 @@ function showVisitPopover(evId, pipeline, btn) {
     items.push({ label: 'Visite concluante',     cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
     items.push({ label: 'Visite non concluante', cls: 'non-concluante', action: () => setVisitStatus(evId, 'non_concluante') });
     items.push({ label: 'Sans suite',             cls: 'remove',         action: () => setVisitStatus(evId, 'sans_suite') });
+  } else if (pipeline === 'attente_visite') {
+    items.push({ label: 'Visite concluante',     cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
+    items.push({ label: 'Visite non concluante', cls: 'non-concluante', action: () => setVisitStatus(evId, 'non_concluante') });
+    items.push({ label: 'Sans suite',             cls: 'remove',         action: () => setVisitStatus(evId, 'sans_suite') });
+    items.push({ label: 'Réinitialiser le suivi', cls: 'remove',         action: () => setVisitStatus(evId, 'remove') });
   } else if (pipeline === 'visite_non_concluante') {
     items.push({ label: 'Marquer concluante',    cls: 'concluante',     action: () => setVisitStatus(evId, 'concluante') });
     items.push({ label: 'Sans suite',             cls: 'remove',         action: () => setVisitStatus(evId, 'sans_suite') });
@@ -6168,6 +6224,47 @@ async function setVisitStatus(eventId, mode) {
   } catch (e) {
     showToast('Erreur : ' + (e.message || e), 'error');
     if (visitBtn) { visitBtn.disabled = false; visitBtn.textContent = 'Visite ›'; }
+  }
+}
+
+/* ── Relance WhatsApp : 1re étape du pipeline intérêt ────────── */
+function _buildWaVisitText(lead, ev) {
+  const c    = ev.content || {};
+  const proj = c.project_id ? projectsCache.find(p => p.id === c.project_id) : null;
+  const name = c.project_title || c.project_name || proj?.title || 'notre projet';
+  const bits = [];
+  if (proj?.surface_carrez) bits.push(`${proj.surface_carrez} m²`);
+  if (proj?.arrondissement) bits.push(`Paris ${proj.arrondissement}ᵉ`);
+  const desc = bits.length ? ` (${bits.join(', ')})` : '';
+  return `Bonjour ${lead.prenom || ''},\n\n` +
+    `Merci pour votre intérêt pour « ${name} »${desc} sur Atom Buyers Club.\n\n` +
+    `Nous serions ravis de vous le faire visiter — auriez-vous des disponibilités cette semaine ou la semaine prochaine pour un rendez-vous sur place ?\n\n` +
+    `À très vite,\nL'équipe Atom`;
+}
+
+async function startWaContact(evId) {
+  const ev = interestsCache.find(e => e.id === evId);
+  if (!ev || !ev.lead) return;
+  const phone = phoneIntl(ev.lead.tel);
+  if (!phone) { showToast('Pas de numéro de téléphone pour ce lead', 'error'); return; }
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(_buildWaVisitText(ev.lead, ev))}`, '_blank');
+
+  try {
+    const r = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'wa_contact', interest_id: evId }),
+    });
+    if (r.status === 401) { logout(); return; }
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'erreur');
+    ev.content = d.content;
+    const row = document.getElementById('int-row-' + evId);
+    if (row) row.outerHTML = _buildInterestRow(ev);
+    showToast(`Relance envoyée — en attente de visite (${WA_FOLLOWUP_DAYS} j)`, 'success');
+  } catch (e) {
+    showToast('Erreur : ' + (e.message || e), 'error');
   }
 }
 

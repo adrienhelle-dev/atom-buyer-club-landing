@@ -50,6 +50,11 @@ module.exports = async function handler(req, res) {
     const result = await notifyStaleDigest(stale, days);
     console.log(`[cron] stale hot leads : ${stale.length} signalé(s)`, result);
 
+    // ── Intérêts relancés WhatsApp sans visite après N jours → sans suite ──
+    // (greffé ici pour ne pas créer de fonction serverless — limite 12)
+    const waExpiry = await expireWaInterests();
+    console.log(`[cron] wa-expiry : ${waExpiry.expired} intérêt(s) passé(s) en sans suite`);
+
     // ── Health-check quotidien : alerte Telegram UNIQUEMENT si panne ──
     // (greffé ici pour ne pas créer de fonction serverless — limite 12)
     const health = await runHealthCheck();
@@ -59,12 +64,75 @@ module.exports = async function handler(req, res) {
     }
     console.log(`[cron] health-check : ${health.checked} testés, ${health.failures.length} en panne`);
 
-    return res.status(200).json({ ok: true, days, stale: stale.length, sent: !!result.ok && !result.skipped, health });
+    return res.status(200).json({ ok: true, days, stale: stale.length, sent: !!result.ok && !result.skipped, wa_expired: waExpiry.expired, health });
   } catch (e) {
     console.error('[cron] crash:', e?.message || e);
     return res.status(500).json({ error: 'handler_crash', detail: e?.message || String(e) });
   }
 };
+
+// ── Expiration des relances WhatsApp ──────────────────────────────────────────
+// Un intérêt projet relancé par WhatsApp (wa_contacted_at) sans visite, offre ni
+// sans suite au bout de WA_FOLLOWUP_DAYS jours passe automatiquement en "sans
+// suite" et le groupe Telegram est prévenu.
+async function expireWaInterests() {
+  const followupDays = parseInt(process.env.WA_FOLLOWUP_DAYS, 10) || 10;
+  const waCutoff = Date.now() - followupDays * 24 * 60 * 60 * 1000;
+
+  // content est une colonne TEXT (JSON sérialisé) : impossible de filtrer côté
+  // PostgREST, on parse côté serveur sur une fenêtre bornée.
+  const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: events, error } = await supabase
+    .from('lead_events')
+    .select('id, content, lead_id, created_at')
+    .eq('type', 'interet_projet')
+    .gte('created_at', since)
+    .limit(2000);
+  if (error) { console.error('[cron] wa-expiry events error:', error); return { expired: 0 }; }
+
+  const toExpire = [];
+  for (const ev of events || []) {
+    let c = {};
+    try { c = ev.content ? (typeof ev.content === 'string' ? JSON.parse(ev.content) : ev.content) : {}; } catch {}
+    if (!c.wa_contacted_at) continue;
+    if (c.visited || c.sans_suite || c.offer_sent_at || c.mandat_sent_at) continue;
+    if (new Date(c.wa_contacted_at).getTime() > waCutoff) continue;
+    toExpire.push({ ev, content: c });
+  }
+  if (!toExpire.length) return { expired: 0 };
+
+  // Noms des leads pour le message Telegram
+  const leadIds = [...new Set(toExpire.map(t => t.ev.lead_id).filter(Boolean))];
+  const { data: leads } = await supabase.from('leads').select('id, prenom, nom').in('id', leadIds);
+  const leadMap = Object.fromEntries((leads || []).map(l => [l.id, l]));
+
+  const lines = [];
+  for (const { ev, content } of toExpire) {
+    const newContent = {
+      ...content,
+      sans_suite: true,
+      sans_suite_auto: true,
+      sans_suite_at: new Date().toISOString(),
+      treated: true,
+    };
+    const { error: upErr } = await supabase.from('lead_events').update({ content: newContent }).eq('id', ev.id);
+    if (upErr) { console.error('[cron] wa-expiry update error:', ev.id, upErr.message); continue; }
+    const lead = leadMap[ev.lead_id];
+    const name = lead ? `${lead.prenom || ''} ${lead.nom || ''}`.trim() : 'Lead inconnu';
+    const proj = content.project_title || content.project_name || 'Projet';
+    const dateRelance = new Date(content.wa_contacted_at).toLocaleDateString('fr-FR');
+    lines.push(`• <b>${name}</b> — ${proj} (relancé le ${dateRelance})`);
+  }
+
+  if (lines.length) {
+    await sendTelegram(
+      `⏳ <b>Intérêts passés en « sans suite » automatiquement</b>\n` +
+      `${followupDays} jours sans visite après la relance WhatsApp :\n\n` +
+      lines.join('\n')
+    );
+  }
+  return { expired: lines.length };
+}
 
 // ── Health-check : mêmes règles que scripts/smoke.sh ──────────────────────────
 // Endpoints API : 404 = fonction NON déployée (le bug OG), 5xx = déployée mais en erreur.

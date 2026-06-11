@@ -434,11 +434,22 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, url: `${site}/info-acheteur?token=${token}` });
   }
 
+  // ── action: wa_contact ── relance WhatsApp → "en attente de visite" ───
+  if (action === 'wa_contact') {
+    const newContent = {
+      ...content,
+      wa_contacted_at: new Date().toISOString(),
+      wa_contacted_by: payload.email,
+    };
+    await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
+    return res.status(200).json({ ok: true, content: newContent });
+  }
+
   // ── action: visit ─────────────────────────────────────────────────────
   if (action === 'visit') {
     let newContent;
     if (b.remove) {
-      const { visited, visited_at, visited_by, visit_conclusive, sans_suite, treated, ...rest } = content;
+      const { visited, visited_at, visited_by, visit_conclusive, sans_suite, treated, wa_contacted_at, wa_contacted_by, ...rest } = content;
       newContent = rest;
     } else if (b.sans_suite) {
       const { visited, visited_at, visited_by, visit_conclusive, ...rest } = content;
