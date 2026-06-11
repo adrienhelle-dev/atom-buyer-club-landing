@@ -131,8 +131,31 @@
       max-width: 1100px; margin: 0 auto; padding: 0 32px;
       display: flex; gap: 10px; align-items: center;
     }
+    @property --ba { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    @keyframes serpent-spin { to { --ba: 360deg; } }
+    @keyframes glow-pulse {
+      0%,100% { box-shadow: 0 0 18px rgba(184,151,90,.18), 0 -6px 28px rgba(0,0,0,.45); }
+      50%      { box-shadow: 0 0 32px rgba(184,151,90,.38), 0 -6px 28px rgba(0,0,0,.45); }
+    }
+
+    .sticky-cta-wrap {
+      flex: 1;
+      border-radius: 12px;
+      padding: 2px;
+      background: conic-gradient(from var(--ba),
+        transparent 0deg,
+        transparent 265deg,
+        rgba(140,110,55,.55) 288deg,
+        #B8975A 315deg,
+        #fdf0c2 333deg,
+        #B8975A 350deg,
+        rgba(140,110,55,.55) 360deg
+      );
+      animation: serpent-spin 3s linear infinite, glow-pulse 3s ease-in-out infinite;
+    }
+
     .sticky-btn-primary {
-      flex: 1; padding: 15px 20px;
+      display: block; width: 100%; padding: 15px 20px;
       background: var(--cream); color: var(--bg);
       border: none; border-radius: 10px;
       font-size: 15px; font-weight: 500;
@@ -309,7 +332,9 @@
 <!-- STICKY BAR -->
 <div id="sticky-bar">
   <div class="sticky-inner">
-    <button class="sticky-btn-primary" onclick="openInterestModal()">Je suis intéressé(e) →</button>
+    <div class="sticky-cta-wrap">
+      <button class="sticky-btn-primary" onclick="openInterestModal()">Je suis intéressé(e) →</button>
+    </div>
   </div><!-- /sticky-inner -->
 </div><!-- /sticky-bar -->
 
