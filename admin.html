@@ -1475,8 +1475,12 @@
     .offer-modal-notaire-fields.open { display: block; }
     .offer-modal-alert { background: rgba(217,94,94,.1); border: 1px solid rgba(217,94,94,.3); border-radius: 7px; padding: 10px 14px; font-size: 13px; color: #e07070; margin-bottom: 16px; display: none; }
     .offer-modal-alert.on { display: block; }
-    .offer-modal-info-link { background: rgba(184,151,90,.08); border: 1px solid rgba(184,151,90,.3); border-radius: 7px; padding: 10px 14px; font-size: 13px; color: var(--gold); margin-bottom: 16px; display: none; }
-    .offer-modal-info-link.on { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .offer-modal-info-link { background: rgba(184,151,90,.08); border: 1px solid rgba(184,151,90,.3); border-radius: 7px; padding: 10px 14px; font-size: 13px; color: var(--gold); margin-bottom: 16px; display: none; gap: 8px; flex-direction: column; }
+    .offer-modal-info-link.on { display: flex; }
+    .info-link-actions { display: flex; gap: 6px; }
+    .info-link-btn { background: none; border: 1px solid rgba(184,151,90,.35); border-radius: 6px; padding: 4px 12px; font-size: 11px; font-weight: 500; color: var(--dim); cursor: pointer; font-family: var(--sans); transition: color .12s, border-color .12s, background .12s; }
+    .info-link-btn:hover { color: var(--cream); border-color: rgba(184,151,90,.7); background: rgba(184,151,90,.06); }
+    .info-link-btn.accent { color: var(--gold); border-color: rgba(184,151,90,.5); }
     .offer-modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     .offer-modal-cancel { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 9px 18px; color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color .12s, border-color .12s; }
     .offer-modal-cancel:hover { color: var(--cream); border-color: var(--dim); }
@@ -2843,8 +2847,11 @@
     <div class="offer-modal-alert" id="offer-modal-alert"></div>
 
     <div class="offer-modal-info-link" id="offer-info-link-banner">
-      <span>⚠️ Infos acheteur manquantes (date de naissance, adresse). Envoyer le lien de complétion :</span>
-      <button class="int-action-btn link-btn" id="offer-info-copy-btn" onclick="copyOfferInfoLink()">📋 Copier le lien</button>
+      <span id="offer-info-link-msg">⚠️ Infos acheteur manquantes (date de naissance, adresse).</span>
+      <div class="info-link-actions">
+        <button class="info-link-btn" onclick="copyOfferInfoLink()">Copier le lien</button>
+        <button class="info-link-btn accent" onclick="openOfferInfoLink()">Ouvrir →</button>
+      </div>
     </div>
 
     <div id="offer-form-fields">
@@ -2892,8 +2899,11 @@
     <div class="offer-modal-alert" id="mandat-modal-alert"></div>
 
     <div class="offer-modal-info-link" id="mandat-info-link-banner">
-      <span>⚠️ Infos acheteur manquantes. Envoyer le lien de complétion :</span>
-      <button class="int-action-btn link-btn" id="mandat-info-copy-btn" onclick="copyMandatInfoLink()">📋 Copier le lien</button>
+      <span id="mandat-info-link-msg">⚠️ Infos acheteur manquantes (date de naissance, adresse).</span>
+      <div class="info-link-actions">
+        <button class="info-link-btn" onclick="copyMandatInfoLink()">Copier le lien</button>
+        <button class="info-link-btn accent" onclick="openMandatInfoLink()">Ouvrir →</button>
+      </div>
     </div>
 
     <div id="mandat-form-fields">
@@ -6209,6 +6219,10 @@ function copyOfferInfoLink() {
     .catch(() => prompt('Copie ce lien :', _offerInfoLink));
 }
 
+function openOfferInfoLink() {
+  if (_offerInfoLink) window.open(_offerInfoLink, '_blank');
+}
+
 async function submitOffer(delivery) {
   const dlBtn   = document.getElementById('offer-dl-btn');
   const sendBtn = document.getElementById('offer-send-btn');
@@ -6240,8 +6254,13 @@ async function submitOffer(delivery) {
     if (d.error === 'infos_manquantes') {
       _offerInfoLink = d.url;
       document.getElementById('offer-info-link-banner').classList.add('on');
+      const msgEl = document.getElementById('offer-info-link-msg');
+      if (msgEl) msgEl.textContent = d.email_sent
+        ? `✓ Lien envoyé à ${d.lead_email} — en attente de complétion.`
+        : '⚠️ Infos acheteur manquantes (date de naissance, adresse).';
       dlBtn.disabled = false; sendBtn.disabled = false;
       dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
+      if (d.email_sent) showToast(`Lien envoyé à ${d.lead_email} ✓`);
       return;
     }
     if (!d.ok) throw new Error(d.error || 'erreur serveur');
@@ -6292,6 +6311,10 @@ function copyMandatInfoLink() {
     .catch(() => prompt('Copie ce lien :', _mandatInfoLink));
 }
 
+function openMandatInfoLink() {
+  if (_mandatInfoLink) window.open(_mandatInfoLink, '_blank');
+}
+
 async function submitMandat(delivery) {
   const dlBtn   = document.getElementById('mandat-dl-btn');
   const sendBtn = document.getElementById('mandat-send-btn');
@@ -6319,8 +6342,13 @@ async function submitMandat(delivery) {
     if (d.error === 'infos_manquantes') {
       _mandatInfoLink = d.url;
       document.getElementById('mandat-info-link-banner').classList.add('on');
+      const msgEl = document.getElementById('mandat-info-link-msg');
+      if (msgEl) msgEl.textContent = d.email_sent
+        ? `✓ Lien envoyé à ${d.lead_email} — en attente de complétion.`
+        : '⚠️ Infos acheteur manquantes (date de naissance, adresse).';
       dlBtn.disabled = false; sendBtn.disabled = false;
       dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
+      if (d.email_sent) showToast(`Lien envoyé à ${d.lead_email} ✓`);
       return;
     }
     if (!d.ok) throw new Error(d.error || 'erreur serveur');
