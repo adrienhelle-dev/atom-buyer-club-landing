@@ -1469,6 +1469,7 @@
       transition: border-color .15s;
     }
     .offer-modal-input:focus { border-color: var(--gold); }
+    select.offer-modal-input { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7874' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
     .offer-modal-notaire-toggle { font-size: 12px; color: var(--gold); cursor: pointer; margin-bottom: 14px; display: inline-block; }
     .offer-modal-notaire-toggle:hover { text-decoration: underline; }
     .offer-modal-notaire-fields { display: none; }
@@ -2855,6 +2856,14 @@
     </div>
 
     <div id="offer-form-fields">
+      <div class="offer-modal-field">
+        <label class="offer-modal-label">Condition de financement</label>
+        <select class="offer-modal-input" id="offer-condition-pret">
+          <option value="avec">Avec condition suspensive d'obtention de prêt</option>
+          <option value="sans_comptant">Sans condition suspensive — Acquisition au comptant</option>
+          <option value="sans_renonciation">Sans condition suspensive — Renonciation expresse</option>
+        </select>
+      </div>
       <div class="offer-modal-field">
         <label class="offer-modal-label">Prix de l'offre (€ FAI)</label>
         <input class="offer-modal-input" type="number" id="offer-prix" placeholder="79000"/>
@@ -6237,6 +6246,7 @@ async function submitOffer(delivery) {
       action: 'offer', delivery,
       interest_id: _offerInterestId,
       project_id:  _offerProjectId,
+      condition_pret:  document.getElementById('offer-condition-pret').value,
       prix:            Number(document.getElementById('offer-prix').value) || undefined,
       notaire_nom:     document.getElementById('offer-notaire-nom').value,
       notaire_email:   document.getElementById('offer-notaire-email').value,

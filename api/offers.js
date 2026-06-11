@@ -122,7 +122,15 @@ async function createDocuSignEnvelope({ pdfBuffer, fileName, lead, mandatId }) {
 
 // ── PDF Builders ───────────────────────────────────────────────────────────
 
-function buildOfferHtml({ lead, project, prix, notaire, dateToday }) {
+const ATOM_LOGO_SVG = `<svg width="32" height="32" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="8" fill="#B8975A"/><path transform="matrix(2.07 0 0 2 8 0.3)" d="M12.4651 19.6844C10.7251 19.6844 9.82511 18.4544 9.58511 16.5644L9.49511 15.9044C9.13511 17.7944 7.33511 19.7444 4.57513 19.7444 2.02513 19.7444 0.255127 18.0944 0.255127 15.8744 0.255127 13.8644 1.69513 12.4244 4.36513 12.1844L8.92511 11.8244 8.71511 10.2944C8.35511 7.56445 7.12511 5.76444 4.84513 5.76444 3.07513 5.76444 1.75513 6.87444 1.09513 8.46445L0.705128 8.37444C1.27513 6.24444 3.43513 3.93444 6.49511 3.93444 9.52511 3.93444 11.4451 5.91444 11.8951 9.48445L12.7651 16.1144C12.9451 17.4044 13.4551 17.7944 13.9651 17.7944 14.3851 17.7944 14.6851 17.4344 14.7751 16.9244L15.1351 16.9544C15.0751 18.2444 14.1451 19.6844 12.4651 19.6844ZM3.28513 15.2144C3.28513 16.6544 4.33513 17.9744 6.16511 17.9744 8.08511 17.9744 9.25511 16.5944 9.40511 15.2144L8.98511 12.2744 6.04511 12.5144C4.21513 12.6944 3.28513 13.7744 3.28513 15.2144Z" fill="#1A1A1A"/></svg>`;
+
+const CONDITION_TEXTE = {
+  avec: `La présente offre est formulée <strong>avec condition suspensive d'obtention de prêt</strong>, conformément aux dispositions des articles L. 313-40 et suivants du Code de la consommation. Elle ne constitue pas un avant-contrat et ne deviendra définitive qu'à la signature d'un compromis de vente.`,
+  sans_comptant: `La présente offre est formulée <strong>sans condition suspensive d'obtention de prêt</strong>, l'acquéreur procédant à une <strong>acquisition au comptant sur fonds propres</strong>. Elle ne constitue pas un avant-contrat et ne deviendra définitive qu'à la signature d'un compromis de vente.`,
+  sans_renonciation: `La présente offre est formulée <strong>sans condition suspensive d'obtention de prêt</strong>, l'acquéreur renonçant expressément au bénéfice de la condition suspensive prévue aux articles L. 313-40 et suivants du Code de la consommation. Elle ne constitue pas un avant-contrat et ne deviendra définitive qu'à la signature d'un compromis de vente.`,
+};
+
+function buildOfferHtml({ lead, project, prix, notaire, dateToday, conditionPret }) {
   const signataires = [];
   const civil = lead.prenom?.toLowerCase().startsWith('m') ? 'M.' : 'M.'; // défaut M.
   signataires.push(`<li><strong>${esc(civil)} ${esc(lead.nom?.toUpperCase())} ${esc(lead.prenom)}</strong>, né(e) le ${esc(fmtDate(lead.date_naissance))}, demeurant au ${esc(lead.adresse_residence)}</li>`);
@@ -135,11 +143,16 @@ function buildOfferHtml({ lead, project, prix, notaire, dateToday }) {
   const valableJusquau = addDays(dateToday, 15);
   const surface = project.surface_carrez ? `${project.surface_carrez}m²` : '—';
   const etage   = project.floor ? ordinal(project.floor) + ' étage' : '—';
+  const conditionHtml = CONDITION_TEXTE[conditionPret] || CONDITION_TEXTE.avec;
 
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Georgia, serif; font-size: 12pt; color: #1a1a1a; background: #fff; padding: 60px 70px; line-height: 1.7; }
+  body { font-family: 'Times New Roman', Georgia, serif; font-size: 12pt; color: #1a1a1a; background: #fff; padding: 50px 70px 60px; line-height: 1.7; }
+  .pdf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; padding-bottom: 20px; border-bottom: 1px solid #ddd; }
+  .pdf-logo { display: flex; align-items: center; gap: 10px; }
+  .pdf-brand { font-family: Georgia, 'Times New Roman', serif; font-size: 13pt; font-weight: normal; letter-spacing: .03em; color: #1a1a1a; }
+  .pdf-header-date { font-size: 10.5pt; color: #555; }
   p { margin-bottom: 14px; }
   ul { margin: 10px 0 14px 20px; }
   li { margin-bottom: 6px; }
@@ -151,6 +164,14 @@ function buildOfferHtml({ lead, project, prix, notaire, dateToday }) {
   .sig-label { font-size: 10pt; color: #444; margin-bottom: 60px; }
 </style></head><body>
 
+<div class="pdf-header">
+  <div class="pdf-logo">
+    ${ATOM_LOGO_SVG}
+    <span class="pdf-brand">Atom Buyers Club</span>
+  </div>
+  <div class="pdf-header-date">Paris, le ${esc(dateToday)}</div>
+</div>
+
 <p>Madame, Monsieur,</p>
 
 <p>Je/nous soussigné(e)(s) :</p>
@@ -160,7 +181,7 @@ function buildOfferHtml({ lead, project, prix, notaire, dateToday }) {
 
 <p>Faisant suite à la visite du bien situé au <strong>${esc(project.address || project.title)}</strong>, je/nous souhaite(ons) vous présenter une offre d'achat au prix de <strong>${formatPrix(prix)} FAI</strong> pour le studio de <strong>${esc(surface)} Carrez</strong>, situé au <strong>${esc(etage)}</strong> de l'immeuble, valable jusqu'au <strong>${esc(valableJusquau)}</strong>.</p>
 
-<p>Cette offre d'achat est assortie d'une <strong>condition suspensive d'obtention de prêt</strong> et ne constitue pas un avant-contrat et ne deviendra définitive qu'à la signature d'un compromis de vente.</p>
+<p>${conditionHtml}</p>
 
 <p>Vous trouverez ci-dessous les coordonnées de notre notaire :</p>
 
@@ -467,10 +488,11 @@ module.exports = async function handler(req, res) {
       adresse: b.notaire_adresse || '40 Avenue des Chartreux, 13004 Marseille',
       tel:     b.notaire_tel     || '04 91 78 94 34',
     };
-    const prix      = b.prix || project.price_fai || 0;
-    const dateToday = todayFr();
+    const prix         = b.prix || project.price_fai || 0;
+    const dateToday    = todayFr();
+    const conditionPret = b.condition_pret || 'avec';
 
-    const html = buildOfferHtml({ lead, project, prix, notaire, dateToday });
+    const html = buildOfferHtml({ lead, project, prix, notaire, dateToday, conditionPret });
     const pdf  = await renderPdf(html);
 
     const pdfPath = `${lead.id}/offre-${Date.now()}.pdf`;
