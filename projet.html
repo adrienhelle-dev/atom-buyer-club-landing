@@ -430,10 +430,12 @@ function initStickyBar() {
   const contact = project?.wa_contact;
   if (contact?.phone) {
     const msg = `Bonjour, j'ai vu le projet "${project.title || ''}" sur Atom Buyers Club et je suis intéressé(e). Pouvez-vous me recontacter ?`;
-    document.getElementById('sticky-wa').href = buildWaUrl(contact.phone, msg);
-    document.getElementById('sticky-wa').style.display = 'flex';
-    // Bouton WA modale post-submit
-    document.getElementById('modal-wa-btn').href = buildWaUrl(contact.phone, msg);
+    const waBtn = document.getElementById('modal-wa-btn');
+    if (waBtn) {
+      waBtn.href = buildWaUrl(contact.phone, msg);
+      const waPost = document.getElementById('modal-wa-post');
+      if (waPost) waPost.style.display = '';
+    }
   }
 }
 
