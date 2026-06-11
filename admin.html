@@ -1339,6 +1339,8 @@
     .int-source-link.offer-cta:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
     .int-source-link.mandat-cta { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
     .int-source-link.mandat-cta:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
+    .int-source-link.pdf-cta { color: var(--dim); border-color: var(--border); background: transparent; font-size: 11px; padding: 5px 12px; }
+    .int-source-link.pdf-cta:hover { color: var(--cream); border-color: var(--dim); background: rgba(255,255,255,.04); }
     .int-lead-fiche { font-size: 11px; color: var(--gold); cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none; }
     .int-lead-fiche:hover { text-decoration: underline; }
     .tag-chips-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
@@ -5947,7 +5949,7 @@ function _buildInterestRow(ev) {
 
   // CTA pipeline intégré dans la colonne source
   let pipelineCta = '';
-  if (isProjet && pipeline !== 'mandat_envoye') {
+  if (isProjet) {
     const visitBtn = `<button class="int-source-link visit-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     if (pipeline === 'untreated' || pipeline === 'treated') {
       pipelineCta = visitBtn;
@@ -5956,7 +5958,13 @@ function _buildInterestRow(ev) {
     } else if (pipeline === 'visite_concluante') {
       pipelineCta = visitBtn + `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
     } else if (pipeline === 'offre_envoyee') {
-      pipelineCta = visitBtn + `<button class="int-source-link mandat-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
+      pipelineCta = visitBtn
+        + `<button class="int-source-link mandat-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`
+        + `<button class="int-source-link pdf-cta" onclick="openPdf('${evIdSafe}','offre')">PDF offre ↓</button>`;
+    } else if (pipeline === 'mandat_envoye') {
+      pipelineCta = visitBtn
+        + `<button class="int-source-link pdf-cta" onclick="openPdf('${evIdSafe}','offre')">PDF offre ↓</button>`
+        + `<button class="int-source-link pdf-cta" onclick="openPdf('${evIdSafe}','mandat')">PDF mandat ↓</button>`;
     }
   }
 
@@ -6099,6 +6107,21 @@ async function setVisitStatus(eventId, mode) {
   } catch (e) {
     showToast('Erreur : ' + (e.message || e), 'error');
     if (visitBtn) { visitBtn.disabled = false; visitBtn.textContent = 'Visite ›'; }
+  }
+}
+
+async function openPdf(interestId, type) {
+  try {
+    const r = await fetch(`/api/offers?interest_id=${interestId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (r.status === 401) { logout(); return; }
+    const d = await r.json();
+    const url = type === 'offre' ? d.mandat?.offre_pdf_url : d.mandat?.mandat_pdf_url;
+    if (url) window.open(url, '_blank');
+    else showToast('PDF non disponible', 'error');
+  } catch (e) {
+    showToast('Erreur : ' + (e.message || e), 'error');
   }
 }
 
