@@ -6056,12 +6056,9 @@ function _buildInterestRow(ev) {
       </div>
     </div>
 
-    <!-- Founder + date (desktop) -->
+    <!-- Date (desktop) -->
     <div class="int-col col-meta">
-      ${lead.assigned_to
-        ? `<span class="founder-badge" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>`
-        : ''}
-      <div style="font-size:11px;color:var(--dim);margin-top:3px">${timeAgo(ev.created_at)}</div>
+      <div style="font-size:11px;color:var(--dim)">${timeAgo(ev.created_at)}</div>
     </div>
 
     <!-- Actions -->
