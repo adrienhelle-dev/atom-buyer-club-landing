@@ -1552,23 +1552,26 @@
         content: ''; position: absolute; left: 0; top: 0; bottom: 0;
         width: 3px; background: #4caf7d; border-radius: 14px 0 0 14px;
       }
+      .int-list-item.is-non-concluante { opacity: .38; filter: grayscale(.35); }
+      .int-list-item.is-non-concluante .int-mob-pipeline-btn,
+      .int-list-item.is-non-concluante .int-pipeline-badge { opacity: 1; filter: none; }
 
       /* ── Reset cols ── */
       .int-col { padding: 0; }
       .int-col.col-meta { display: none !important; }
 
-      /* ── Toggle : absolu top-right, touch-friendly ── */
-      .int-col.col-traite {
-        position: absolute; top: 0; right: 0; bottom: auto;
-        width: 52px; height: 52px;
-        display: flex; align-items: center; justify-content: center;
-        z-index: 2;
-      }
+      /* ── Bouton traité masqué sur mobile (remplacé par badge statut) ── */
+      .int-col.col-traite { display: none !important; }
 
       /* ── Section lead ── */
       .int-col.col-lead {
-        padding: 14px 58px 11px 16px;
-        display: block;
+        padding: 14px 16px 11px 16px;
+        display: block; position: relative;
+      }
+      /* Badge pipeline repositionné en haut-droite de la card */
+      .int-pipeline-badge {
+        position: absolute; top: 12px; right: 12px;
+        margin-top: 0 !important;
       }
       .int-lead-row { flex-wrap: nowrap; gap: 6px; align-items: center; }
       .int-lead-name { font-size: 14px; font-weight: 500; }
@@ -1596,8 +1599,8 @@
         font-size: 12px; padding: 8px 34px; min-height: 36px;
         display: inline-flex; align-items: center; justify-content: center;
       }
-      .int-source-btns { margin-top: 0; margin-left: auto; flex-shrink: 0; flex-wrap: wrap; gap: 5px; }
-      .int-source-btns .int-source-link { margin-left: 0; flex-shrink: 0; padding: 8px 18px; min-height: 36px; }
+      /* Pills source masquées sur mobile (CTAs dans la barre du bas) */
+      .int-source-btns { display: none !important; }
 
       /* ── Barre d'actions ── */
       .int-col.col-actions {
@@ -5982,7 +5985,8 @@ function _buildInterestRow(ev) {
     }
   }
 
-  return `<div class="int-list-item ${treated ? 'is-treated' : ''}" id="int-row-${evIdSafe}">
+  const isNonConcluante = pipeline === 'visite_non_concluante';
+  return `<div class="int-list-item ${treated ? 'is-treated' : ''} ${isNonConcluante ? 'is-non-concluante' : ''}" id="int-row-${evIdSafe}">
 
     <!-- Toggle traité (bouton circulaire) -->
     <div class="int-col col-traite">
@@ -6012,7 +6016,6 @@ function _buildInterestRow(ev) {
     <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
       <div class="int-source-btns">
-        ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank" rel="noopener">Voir ›</a>` : ''}
         ${pipelineCta}
       </div>
     </div>
