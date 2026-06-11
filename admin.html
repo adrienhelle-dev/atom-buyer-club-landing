@@ -1332,6 +1332,13 @@
       font-family: inherit; letter-spacing: .02em; white-space: nowrap;
     }
     .int-source-link:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
+    .int-source-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .int-source-link.visit-cta { color: #5B5BD6; border-color: rgba(91,91,214,.35); background: rgba(91,91,214,.07); }
+    .int-source-link.visit-cta:hover { background: rgba(91,91,214,.16); border-color: rgba(91,91,214,.7); }
+    .int-source-link.offer-cta { color: var(--gold); border-color: rgba(184,151,90,.38); background: rgba(184,151,90,.07); }
+    .int-source-link.offer-cta:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
+    .int-source-link.mandat-cta { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
+    .int-source-link.mandat-cta:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
     .int-lead-fiche { font-size: 11px; color: var(--gold); cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none; }
     .int-lead-fiche:hover { text-decoration: underline; }
     .tag-chips-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
@@ -1565,6 +1572,8 @@
         font-size: 12px; padding: 8px 34px; min-height: 36px;
         display: inline-flex; align-items: center; justify-content: center;
       }
+      .int-source-btns { margin-top: 0; margin-left: auto; flex-shrink: 0; flex-wrap: wrap; gap: 5px; }
+      .int-source-btns .int-source-link { margin-left: 0; flex-shrink: 0; padding: 8px 18px; min-height: 36px; }
 
       /* ── Barre d'actions ── */
       .int-col.col-actions {
@@ -5910,24 +5919,21 @@ function _buildInterestRow(ev) {
   // Badge pipeline
   let pipelineBadge = '';
   if (isProjet) {
-    if      (pipeline === 'visite')        pipelineBadge = `<span class="int-pipeline-badge visited">👁 Visité</span>`;
-    else if (pipeline === 'offre_envoyee') pipelineBadge = `<span class="int-pipeline-badge offered">📄 Offre envoyée</span>`;
-    else if (pipeline === 'mandat_envoye') pipelineBadge = `<span class="int-pipeline-badge mandated">📝 Mandat envoyé</span>`;
-    else if (pipeline === 'treated')       pipelineBadge = `<span class="int-pipeline-badge signed">✓ Traité</span>`;
+    if      (pipeline === 'visite')        pipelineBadge = `<span class="int-pipeline-badge visited">Visité</span>`;
+    else if (pipeline === 'offre_envoyee') pipelineBadge = `<span class="int-pipeline-badge offered">Offre envoyée</span>`;
+    else if (pipeline === 'mandat_envoye') pipelineBadge = `<span class="int-pipeline-badge mandated">Mandat envoyé</span>`;
+    else if (pipeline === 'treated')       pipelineBadge = `<span class="int-pipeline-badge signed">Traité</span>`;
   }
 
-  // Boutons pipeline (seulement pour les intérêts projets)
-  let pipelineActions = '';
+  // CTA pipeline intégré dans la colonne source
+  let pipelineCta = '';
   if (isProjet) {
     if (pipeline === 'untreated' || pipeline === 'treated') {
-      pipelineActions = `<button class="int-action-btn visit-btn" title="Marquer visité" onclick="markInterestVisited('${evIdSafe}')">👁</button>`;
-    }
-    if (pipeline === 'visite') {
-      pipelineActions = `<button class="int-action-btn visit-btn" title="Marquer visité" onclick="markInterestVisited('${evIdSafe}')">👁</button>
-        <button class="int-action-btn offer-btn" title="Générer l'offre d'achat" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">📄</button>`;
-    }
-    if (pipeline === 'offre_envoyee') {
-      pipelineActions = `<button class="int-action-btn mandat-btn" title="Générer le mandat de recherche" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">📝</button>`;
+      pipelineCta = `<button class="int-source-link visit-cta" onclick="markInterestVisited('${evIdSafe}')">Visite ›</button>`;
+    } else if (pipeline === 'visite') {
+      pipelineCta = `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
+    } else if (pipeline === 'offre_envoyee') {
+      pipelineCta = `<button class="int-source-link mandat-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
     }
   }
 
@@ -5960,7 +5966,10 @@ function _buildInterestRow(ev) {
     <!-- Source projet/réalisation -->
     <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
-      ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank" rel="noopener">Voir ›</a>` : ''}
+      <div class="int-source-btns">
+        ${source.link ? `<a class="int-source-link" href="${esc(source.link)}" target="_blank" rel="noopener">Voir ›</a>` : ''}
+        ${pipelineCta}
+      </div>
     </div>
 
     <!-- Founder + date (desktop) -->
@@ -5974,7 +5983,6 @@ function _buildInterestRow(ev) {
     <!-- Actions -->
     <div class="int-col col-actions">
       <div class="int-actions">
-        ${pipelineActions}
         ${phone ? `<a class="int-action-btn wa" href="https://wa.me/${phone}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener" title="WhatsApp">
           ${SVG_WA}
         </a>` : ''}
