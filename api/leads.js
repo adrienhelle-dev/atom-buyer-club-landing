@@ -8,6 +8,9 @@ const PATCH_ALLOWED = [
   // Issue du deal (rempli quand status='signe') : 'managed' (géré par Atom → asset)
   // ou 'commission' (vente Microsurfaces). + montant de commission + date de signature.
   'deal_outcome', 'commission_amount', 'deal_closed_at',
+  // Infos acheteur saisies par l'admin dans les modals offre/mandat
+  'date_naissance', 'adresse_residence', 'situation_familiale',
+  'conjoint_prenom', 'conjoint_nom', 'conjoint_dob',
 ];
 
 // ── Export CSV (fusionné depuis l'ancien api/export.js pour rester ≤ 12 fonctions)

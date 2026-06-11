@@ -1292,7 +1292,8 @@
     }
     .int-list-item:hover { background: rgba(255,255,255,.025); }
     .int-list-item.is-treated { opacity: .55; }
-    .int-list-item.is-non-concluante { opacity: .4; filter: grayscale(.4); }
+    .int-list-item.is-non-concluante,
+    .int-list-item.is-sans-suite { opacity: .4; filter: grayscale(.4); }
     .int-col { padding: 13px 14px; font-size: 13px; color: var(--cream); min-width: 0; }
 
     /* Tablet (≤900px) : cache la colonne meta */
@@ -1351,6 +1352,8 @@
     .int-source-link.wa-cta:hover { filter: brightness(1.07); box-shadow: 0 3px 14px rgba(37,211,102,.38); }
     .int-source-link.attente-cta { color: var(--gold); border-color: rgba(184,151,90,.35); background: rgba(184,151,90,.07); display: inline-flex; align-items: center; gap: 6px; }
     .int-source-link.attente-cta:hover { background: rgba(184,151,90,.15); border-color: rgba(184,151,90,.65); }
+    .int-source-link.sans-suite-cta { color: var(--dim); border-color: rgba(122,120,116,.25); background: rgba(122,120,116,.05); }
+    .int-source-link.sans-suite-cta:hover { color: var(--cream); background: rgba(122,120,116,.12); border-color: rgba(122,120,116,.45); }
     .int-source-link.visit-cta { color: #5B5BD6; border-color: rgba(91,91,214,.35); background: rgba(91,91,214,.07); }
     .int-source-link.visit-cta:hover { background: rgba(91,91,214,.16); border-color: rgba(91,91,214,.7); }
     .int-source-link.generate-cta { color: #E07A10; border-color: rgba(224,122,16,.35); background: rgba(224,122,16,.07); }
@@ -1495,12 +1498,42 @@
     .offer-modal-notaire-fields.open { display: block; }
     .offer-modal-alert { background: rgba(217,94,94,.1); border: 1px solid rgba(217,94,94,.3); border-radius: 7px; padding: 10px 14px; font-size: 13px; color: #e07070; margin-bottom: 16px; display: none; }
     .offer-modal-alert.on { display: block; }
-    .offer-modal-info-link { background: rgba(184,151,90,.08); border: 1px solid rgba(184,151,90,.3); border-radius: 7px; padding: 10px 14px; font-size: 13px; color: var(--gold); margin-bottom: 16px; display: none; gap: 8px; flex-direction: column; }
-    .offer-modal-info-link.on { display: flex; }
-    .info-link-actions { display: flex; gap: 6px; }
-    .info-link-btn { background: none; border: 1px solid rgba(184,151,90,.35); border-radius: 6px; padding: 4px 12px; font-size: 11px; font-weight: 500; color: var(--dim); cursor: pointer; font-family: var(--sans); transition: color .12s, border-color .12s, background .12s; }
-    .info-link-btn:hover { color: var(--cream); border-color: rgba(184,151,90,.7); background: rgba(184,151,90,.06); }
-    .info-link-btn.accent { color: var(--gold); border-color: rgba(184,151,90,.5); }
+    /* ── Modal offre/mandat : sections + grille sleek ─────────── */
+    .om-section { margin-top: 20px; }
+    .om-section:first-child { margin-top: 0; }
+    .om-section-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 11px;
+    }
+    .om-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(184,151,90,.3), transparent); }
+    .om-check {
+      font-size: 10px; font-weight: 600; letter-spacing: .02em; text-transform: none;
+      color: #4caf7d; background: rgba(76,175,125,.1); border: 1px solid rgba(76,175,125,.3);
+      padding: 1px 8px; border-radius: 20px; white-space: nowrap;
+    }
+    .om-check.todo { color: var(--gold); background: rgba(184,151,90,.08); border-color: rgba(184,151,90,.3); }
+    .om-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .om-grid .om-full { grid-column: 1 / -1; }
+    .om-field label {
+      display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 5px;
+    }
+    .om-field label .req { color: var(--gold); }
+    .om-field .offer-modal-input { margin: 0; }
+    input[type="date"].offer-modal-input { color-scheme: dark; }
+    .om-notaire-toggle {
+      font-size: 11px; color: var(--dim); cursor: pointer; user-select: none;
+      display: inline-flex; align-items: center; gap: 5px; transition: color .12s;
+    }
+    .om-notaire-toggle:hover { color: var(--gold); }
+    .om-offer-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none; padding: 0; cursor: pointer;
+      color: var(--gold); font-size: 12px; font-family: var(--sans);
+      text-decoration: underline; text-underline-offset: 3px;
+    }
+    @media (max-width: 600px) { .om-grid { grid-template-columns: 1fr; } .om-grid .om-full { grid-column: auto; } }
     .offer-modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     .offer-modal-cancel { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 9px 18px; color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color .12s, border-color .12s; }
     .offer-modal-cancel:hover { color: var(--cream); border-color: var(--dim); }
@@ -1589,9 +1622,12 @@
         content: ''; position: absolute; left: 0; top: 0; bottom: 0;
         width: 3px; background: #4caf7d; border-radius: 14px 0 0 14px;
       }
-      .int-list-item.is-non-concluante { opacity: .38; filter: grayscale(.35); }
+      .int-list-item.is-non-concluante,
+      .int-list-item.is-sans-suite { opacity: .38; filter: grayscale(.35); }
       .int-list-item.is-non-concluante .int-mob-pipeline-btn,
-      .int-list-item.is-non-concluante .int-pipeline-badge { opacity: 1; filter: none; }
+      .int-list-item.is-non-concluante .int-pipeline-badge,
+      .int-list-item.is-sans-suite .int-mob-pipeline-btn,
+      .int-list-item.is-sans-suite .int-pipeline-badge { opacity: 1; filter: none; }
 
       /* ── Reset cols ── */
       .int-col { padding: 0; }
@@ -1675,6 +1711,7 @@
       .int-mob-pipeline-btn.wa { color: #25d366; font-weight: 600; background: rgba(37,211,102,.06); }
       .int-mob-pipeline-btn.wa:active { background: rgba(37,211,102,.14); }
       .int-mob-pipeline-btn.waiting   { color: var(--gold); }
+      .int-mob-pipeline-btn.sans-suite { color: var(--dim); }
       .int-mob-pipeline-btn.visit     { color: #5B5BD6; }
       .int-mob-pipeline-btn.generate  { color: #E07A10; }
       .int-mob-pipeline-btn.offer     { color: #4caf7d; }
@@ -2855,7 +2892,7 @@
       <div class="int-list-head">
         <div class="int-list-head-cell">PIPELINE LEAD</div>
         <div class="int-list-head-cell">Projet / Réalisation</div>
-        <div class="int-list-head-cell col-meta">Founder · Date</div>
+        <div class="int-list-head-cell col-meta">Date</div>
         <div class="int-list-head-cell">Actions</div>
       </div>
       <div id="int-tbody">
@@ -2874,45 +2911,82 @@
 
     <div class="offer-modal-alert" id="offer-modal-alert"></div>
 
-    <div class="offer-modal-info-link" id="offer-info-link-banner">
-      <span id="offer-info-link-msg">⚠️ Infos acheteur manquantes (date de naissance, adresse).</span>
-      <div class="info-link-actions">
-        <button class="info-link-btn" onclick="copyOfferInfoLink()">Copier le lien</button>
-        <button class="info-link-btn accent" onclick="openOfferInfoLink()">Ouvrir →</button>
-      </div>
-    </div>
-
     <div id="offer-form-fields">
-      <div class="offer-modal-field">
-        <label class="offer-modal-label">Condition de financement</label>
-        <select class="offer-modal-input" id="offer-condition-pret">
-          <option value="avec">Avec condition suspensive d'obtention de prêt</option>
-          <option value="sans_comptant">Sans condition suspensive — Acquisition au comptant</option>
-          <option value="sans_renonciation">Sans condition suspensive — Renonciation expresse</option>
-        </select>
+      <div class="om-section">
+        <div class="om-section-title">Acheteur <span class="om-check todo" id="offer-buyer-check">à compléter</span></div>
+        <div class="om-grid">
+          <div class="om-field">
+            <label>Date de naissance <span class="req">*</span></label>
+            <input class="offer-modal-input" type="date" id="offer-buyer-dob" oninput="syncBuyerState('offer')"/>
+          </div>
+          <div class="om-field">
+            <label>Situation familiale</label>
+            <select class="offer-modal-input" id="offer-buyer-situation" onchange="syncBuyerState('offer')">
+              <option value="">—</option>
+              <option value="celibataire">Célibataire</option>
+              <option value="marie">Marié(e)</option>
+              <option value="pacse">Pacsé(e)</option>
+            </select>
+          </div>
+          <div class="om-field om-full">
+            <label>Adresse de résidence <span class="req">*</span></label>
+            <input class="offer-modal-input" id="offer-buyer-adresse" placeholder="12 rue de la Paix, 75009 Paris" oninput="syncBuyerState('offer')"/>
+          </div>
+        </div>
+        <div class="om-grid" id="offer-conjoint-fields" style="display:none;margin-top:10px">
+          <div class="om-field">
+            <label>Prénom conjoint(e)</label>
+            <input class="offer-modal-input" id="offer-conjoint-prenom"/>
+          </div>
+          <div class="om-field">
+            <label>Nom conjoint(e)</label>
+            <input class="offer-modal-input" id="offer-conjoint-nom"/>
+          </div>
+          <div class="om-field om-full">
+            <label>Date de naissance conjoint(e)</label>
+            <input class="offer-modal-input" type="date" id="offer-conjoint-dob"/>
+          </div>
+        </div>
       </div>
-      <div class="offer-modal-field">
-        <label class="offer-modal-label">Prix de l'offre (€ FAI)</label>
-        <input class="offer-modal-input" type="number" id="offer-prix" placeholder="79000"/>
+
+      <div class="om-section">
+        <div class="om-section-title">Offre</div>
+        <div class="om-grid">
+          <div class="om-field">
+            <label>Prix (€ FAI) <span class="req">*</span></label>
+            <input class="offer-modal-input" type="number" id="offer-prix" placeholder="79000" oninput="syncBuyerState('offer')"/>
+          </div>
+          <div class="om-field">
+            <label>Financement</label>
+            <select class="offer-modal-input" id="offer-condition-pret">
+              <option value="avec">Condition suspensive de prêt</option>
+              <option value="sans_comptant">Sans condition — comptant</option>
+              <option value="sans_renonciation">Sans condition — renonciation</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div>
-        <span class="offer-modal-notaire-toggle" onclick="toggleNotaireFields()">⚙️ Modifier le notaire</span>
+
+      <div class="om-section">
+        <span class="om-notaire-toggle" onclick="toggleNotaireFields()">⚙️ Notaire — Maître Nicolas Chauris <span style="opacity:.6">(modifier)</span></span>
         <div class="offer-modal-notaire-fields" id="offer-notaire-fields">
-          <div class="offer-modal-field">
-            <label class="offer-modal-label">Notaire (nom)</label>
-            <input class="offer-modal-input" id="offer-notaire-nom" value="Maître Nicolas Chauris"/>
-          </div>
-          <div class="offer-modal-field">
-            <label class="offer-modal-label">Email notaire</label>
-            <input class="offer-modal-input" id="offer-notaire-email" value="nicolas.chauris@notaires.fr"/>
-          </div>
-          <div class="offer-modal-field">
-            <label class="offer-modal-label">Adresse notaire</label>
-            <input class="offer-modal-input" id="offer-notaire-adresse" value="40 Avenue des Chartreux, 13004 Marseille"/>
-          </div>
-          <div class="offer-modal-field">
-            <label class="offer-modal-label">Téléphone notaire</label>
-            <input class="offer-modal-input" id="offer-notaire-tel" value="04 91 78 94 34"/>
+          <div class="om-grid" style="margin-top:10px">
+            <div class="om-field">
+              <label>Notaire (nom)</label>
+              <input class="offer-modal-input" id="offer-notaire-nom" value="Maître Nicolas Chauris"/>
+            </div>
+            <div class="om-field">
+              <label>Email notaire</label>
+              <input class="offer-modal-input" id="offer-notaire-email" value="nicolas.chauris@notaires.fr"/>
+            </div>
+            <div class="om-field">
+              <label>Adresse notaire</label>
+              <input class="offer-modal-input" id="offer-notaire-adresse" value="40 Avenue des Chartreux, 13004 Marseille"/>
+            </div>
+            <div class="om-field">
+              <label>Téléphone notaire</label>
+              <input class="offer-modal-input" id="offer-notaire-tel" value="04 91 78 94 34"/>
+            </div>
           </div>
         </div>
       </div>
@@ -2934,23 +3008,57 @@
 
     <div class="offer-modal-alert" id="mandat-modal-alert"></div>
 
-    <div class="offer-modal-info-link" id="mandat-info-link-banner">
-      <span id="mandat-info-link-msg">⚠️ Infos acheteur manquantes (date de naissance, adresse).</span>
-      <div class="info-link-actions">
-        <button class="info-link-btn" onclick="copyMandatInfoLink()">Copier le lien</button>
-        <button class="info-link-btn accent" onclick="openMandatInfoLink()">Ouvrir →</button>
-      </div>
-    </div>
-
     <div id="mandat-form-fields">
-      <div style="margin-bottom:12px">
-        <button onclick="openOfferFromMandatModal()" style="background:none;border:none;padding:0;color:var(--gold);font-size:12px;cursor:pointer;text-decoration:underline;font-family:var(--sans)">📄 Voir l'offre PDF →</button>
+      <div class="om-section">
+        <div class="om-section-title">Acheteur <span class="om-check todo" id="mandat-buyer-check">à compléter</span></div>
+        <div class="om-grid">
+          <div class="om-field">
+            <label>Date de naissance <span class="req">*</span></label>
+            <input class="offer-modal-input" type="date" id="mandat-buyer-dob" oninput="syncBuyerState('mandat')"/>
+          </div>
+          <div class="om-field">
+            <label>Situation familiale</label>
+            <select class="offer-modal-input" id="mandat-buyer-situation" onchange="syncBuyerState('mandat')">
+              <option value="">—</option>
+              <option value="celibataire">Célibataire</option>
+              <option value="marie">Marié(e)</option>
+              <option value="pacse">Pacsé(e)</option>
+            </select>
+          </div>
+          <div class="om-field om-full">
+            <label>Adresse de résidence <span class="req">*</span></label>
+            <input class="offer-modal-input" id="mandat-buyer-adresse" placeholder="12 rue de la Paix, 75009 Paris" oninput="syncBuyerState('mandat')"/>
+          </div>
+        </div>
+        <div class="om-grid" id="mandat-conjoint-fields" style="display:none;margin-top:10px">
+          <div class="om-field">
+            <label>Prénom conjoint(e)</label>
+            <input class="offer-modal-input" id="mandat-conjoint-prenom"/>
+          </div>
+          <div class="om-field">
+            <label>Nom conjoint(e)</label>
+            <input class="offer-modal-input" id="mandat-conjoint-nom"/>
+          </div>
+          <div class="om-field om-full">
+            <label>Date de naissance conjoint(e)</label>
+            <input class="offer-modal-input" type="date" id="mandat-conjoint-dob"/>
+          </div>
+        </div>
       </div>
-      <div class="offer-modal-field">
-        <label class="offer-modal-label">Commission (€ TTC)</label>
-        <input class="offer-modal-input" type="number" id="mandat-commission" value="8900"/>
+
+      <div class="om-section">
+        <div class="om-section-title">Mandat</div>
+        <div class="om-grid">
+          <div class="om-field">
+            <label>Commission (€ TTC)</label>
+            <input class="offer-modal-input" type="number" id="mandat-commission" value="8900"/>
+          </div>
+          <div class="om-field" style="display:flex;align-items:flex-end;padding-bottom:9px">
+            <button class="om-offer-link" onclick="openOfferFromMandatModal()">📄 Voir l'offre PDF →</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.5">Le mandat est envoyé via DocuSign pour signature électronique. Si DocuSign n'est pas configuré, le PDF part par email.</div>
       </div>
-      <div style="font-size:12px;color:var(--dim);margin-bottom:8px">Le mandat sera envoyé via DocuSign pour signature électronique. Si DocuSign n'est pas configuré, le PDF sera envoyé par email.</div>
     </div>
 
     <div class="offer-modal-footer">
@@ -6032,8 +6140,8 @@ function _buildInterestRow(ev) {
   // Badge pipeline
   let pipelineBadge = '';
   if (isProjet) {
-    if      (pipeline === 'visite_concluante')    pipelineBadge = `<span class="int-pipeline-badge visited">Visite concluante</span>`;
-    else if (pipeline === 'visite_non_concluante') pipelineBadge = `<span class="int-pipeline-badge visited non-concluante">Visite non concluante</span>`;
+    if      (pipeline === 'visite_concluante')    pipelineBadge = `<span class="int-pipeline-badge visited" style="cursor:pointer" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite concluante</span>`;
+    else if (pipeline === 'visite_non_concluante') pipelineBadge = `<span class="int-pipeline-badge visited non-concluante" style="cursor:pointer" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite non concluante</span>`;
     else if (pipeline === 'offre_envoyee') pipelineBadge = `<span class="int-pipeline-badge offered">Offre envoyée</span>`;
     else if (pipeline === 'mandat_envoye') pipelineBadge = `<span class="int-pipeline-badge mandated">Mandat envoyé</span>`;
     else if (pipeline === 'attente_visite') pipelineBadge = `<span class="int-pipeline-badge waiting">En attente de visite <span class="badge-days">· J-${_waDaysLeft(ev)}</span></span>`;
@@ -6057,31 +6165,39 @@ function _buildInterestRow(ev) {
         mobPipelineBtn = `<button class="int-mob-pipeline-btn traiter" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">À traiter ›</button>`;
       }
     } else if (pipeline === 'sans_suite') {
-      pipelineCta = traiterBtn;
-      mobPipelineBtn = `<button class="int-mob-pipeline-btn traiter" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">À traiter ›</button>`;
+      pipelineCta = `<button class="int-source-link sans-suite-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Sans suite ›</button>`;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn sans-suite" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Sans suite ›</button>`;
     } else if (pipeline === 'attente_visite') {
       pipelineCta = `<button class="int-source-link attente-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">${SVG_CLOCK} En attente de visite ›</button>`;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn waiting" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">En attente de visite ›</button>`;
     } else if (pipeline === 'visite_non_concluante') {
       pipelineCta = visitBtn;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
-    } else if (pipeline === 'visite_concluante') {
-      pipelineCta = visitBtn + `<button class="int-source-link generate-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
-      mobPipelineBtn = `<button class="int-mob-pipeline-btn generate" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
-    } else if (pipeline === 'offre_envoyee') {
-      pipelineCta = `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
-        + `<button class="int-source-link generate-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
-      mobPipelineBtn = `<button class="int-mob-pipeline-btn generate" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
-    } else if (pipeline === 'mandat_envoye') {
-      pipelineCta = `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
-        + `<button class="int-source-link mandat-cta" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`;
-      mobPipelineBtn = `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`;
+    } else if (pipeline === 'visite_concluante' || pipeline === 'offre_envoyee' || pipeline === 'mandat_envoye') {
+      // Offre et Mandat indépendants : orange = à générer, vert = généré (accès au PDF)
+      const offerDone  = !!(ev.content?.offer_sent_at);
+      const mandatDone = !!(ev.content?.mandat_sent_at);
+      const modalArgs  = `'${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}'`;
+      pipelineCta =
+        (offerDone
+          ? `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
+          : `<button class="int-source-link generate-cta" onclick="openOfferModal(${modalArgs})">Offre ›</button>`)
+        + (mandatDone
+          ? `<button class="int-source-link mandat-cta" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`
+          : `<button class="int-source-link generate-cta" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`);
+      mobPipelineBtn =
+        (offerDone
+          ? `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
+          : `<button class="int-mob-pipeline-btn generate" onclick="openOfferModal(${modalArgs})">Offre ›</button>`)
+        + (mandatDone
+          ? `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`
+          : `<button class="int-mob-pipeline-btn generate" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`);
     }
   }
 
   const isNonConcluante = pipeline === 'visite_non_concluante';
   const isSansSuite     = pipeline === 'sans_suite';
-  return `<div class="int-list-item ${treated || isSansSuite ? 'is-treated' : ''} ${isNonConcluante ? 'is-non-concluante' : ''}" id="int-row-${evIdSafe}">
+  return `<div class="int-list-item ${treated && !isSansSuite ? 'is-treated' : ''} ${isNonConcluante ? 'is-non-concluante' : ''} ${isSansSuite ? 'is-sans-suite' : ''}" id="int-row-${evIdSafe}">
 
     <!-- Lead info -->
     <div class="int-col col-lead">
@@ -6260,6 +6376,12 @@ async function startWaContact(evId) {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || 'erreur');
     ev.content = d.content;
+    // L'admin qui relance devient responsable du lead (badge TV/AK/AH sur la card)
+    if (d.assigned_to) {
+      interestsCache.forEach(e => { if (e.lead?.id === ev.lead.id) e.lead.assigned_to = d.assigned_to; });
+      const lc = leadsCache.find(l => l.id === ev.lead.id);
+      if (lc) lc.assigned_to = d.assigned_to;
+    }
     const row = document.getElementById('int-row-' + evId);
     if (row) row.outerHTML = _buildInterestRow(ev);
     showToast(`Relance envoyée — en attente de visite (${WA_FOLLOWUP_DAYS} j)`, 'success');
@@ -6283,27 +6405,85 @@ async function openPdf(interestId, type) {
   }
 }
 
-let _offerInterestId = null, _offerProjectId = null, _offerInfoLink = null;
-let _mandatInterestId = null, _mandatProjectId = null, _mandatInfoLink = null;
+let _offerInterestId = null, _offerProjectId = null;
+let _mandatInterestId = null, _mandatProjectId = null;
+
+/* Pré-remplit la section Acheteur depuis le lead en cache */
+function _fillBuyerFields(prefix, lead) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  set(prefix + '-buyer-dob',       lead?.date_naissance ? String(lead.date_naissance).slice(0, 10) : '');
+  set(prefix + '-buyer-adresse',   lead?.adresse_residence);
+  set(prefix + '-buyer-situation', lead?.situation_familiale);
+  set(prefix + '-conjoint-prenom', lead?.conjoint_prenom);
+  set(prefix + '-conjoint-nom',    lead?.conjoint_nom);
+  set(prefix + '-conjoint-dob',    lead?.conjoint_dob ? String(lead.conjoint_dob).slice(0, 10) : '');
+  syncBuyerState(prefix);
+}
+
+/* État du formulaire : badge complet/à compléter, champs conjoint, boutons */
+function syncBuyerState(prefix) {
+  const val = id => document.getElementById(id)?.value?.trim() || '';
+  const dob = val(prefix + '-buyer-dob'), adresse = val(prefix + '-buyer-adresse');
+  const situation = val(prefix + '-buyer-situation');
+  const conjoint = document.getElementById(prefix + '-conjoint-fields');
+  if (conjoint) conjoint.style.display = (situation === 'marie' || situation === 'pacse') ? '' : 'none';
+
+  const buyerOk = !!(dob && adresse);
+  let complete  = buyerOk;
+  if (prefix === 'offer') complete = complete && !!val('offer-prix');
+
+  const check = document.getElementById(prefix + '-buyer-check');
+  if (check) {
+    check.textContent = buyerOk ? '✓ complet' : 'à compléter';
+    check.classList.toggle('todo', !buyerOk);
+  }
+  const dl   = document.getElementById(prefix + '-dl-btn');
+  const send = document.getElementById(prefix + '-send-btn');
+  if (dl)   dl.disabled   = !complete;
+  if (send) send.disabled = !complete;
+  return complete;
+}
+
+/* PATCH les infos acheteur sur le lead avant la génération PDF */
+async function _saveBuyerInfo(prefix, leadId) {
+  const val = id => document.getElementById(id)?.value?.trim() || null;
+  const body = {
+    date_naissance:      val(prefix + '-buyer-dob'),
+    adresse_residence:   val(prefix + '-buyer-adresse'),
+    situation_familiale: val(prefix + '-buyer-situation'),
+    conjoint_prenom:     val(prefix + '-conjoint-prenom'),
+    conjoint_nom:        val(prefix + '-conjoint-nom'),
+    conjoint_dob:        val(prefix + '-conjoint-dob'),
+  };
+  const r = await fetch(`/api/leads?id=${leadId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error('Sauvegarde des infos acheteur impossible');
+  // Sync caches : tous les intérêts de ce lead + leadsCache
+  interestsCache.forEach(e => { if (e.lead?.id === leadId) Object.assign(e.lead, body); });
+  const lc = leadsCache.find(l => l.id === leadId);
+  if (lc) Object.assign(lc, body);
+}
 
 async function openOfferModal(interestId, projectId, leadName, projectName) {
   _offerInterestId = interestId;
   _offerProjectId  = projectId;
-  _offerInfoLink   = null;
 
   document.getElementById('offer-lead-name').textContent    = leadName;
   document.getElementById('offer-project-name').textContent = projectName;
   document.getElementById('offer-modal-alert').classList.remove('on');
-  document.getElementById('offer-info-link-banner').classList.remove('on');
   const _oDl = document.getElementById('offer-dl-btn');
   const _oSend = document.getElementById('offer-send-btn');
-  if (_oDl)   { _oDl.disabled = false;   _oDl.textContent   = '📥 Télécharger'; }
-  if (_oSend) { _oSend.disabled = false; _oSend.textContent = '📧 Envoyer'; }
+  if (_oDl)   _oDl.textContent   = '📥 Télécharger';
+  if (_oSend) _oSend.textContent = '📧 Envoyer';
 
-  // Pré-remplir le prix depuis projectsCache
+  // Pré-remplir : prix projet + infos acheteur connues
   const proj = projectsCache.find(p => p.id === projectId);
-  if (proj?.price_fai) document.getElementById('offer-prix').value = proj.price_fai;
-  else                 document.getElementById('offer-prix').value = '';
+  document.getElementById('offer-prix').value = proj?.price_fai || '';
+  const ev = interestsCache.find(e => e.id === interestId);
+  _fillBuyerFields('offer', ev?.lead);
 
   document.getElementById('offer-modal-overlay').classList.add('on');
 }
@@ -6316,17 +6496,8 @@ function toggleNotaireFields() {
   document.getElementById('offer-notaire-fields').classList.toggle('open');
 }
 
-function copyOfferInfoLink() {
-  if (!_offerInfoLink) return;
-  navigator.clipboard.writeText(_offerInfoLink).then(() => showToast('Lien copié !'))
-    .catch(() => prompt('Copie ce lien :', _offerInfoLink));
-}
-
-function openOfferInfoLink() {
-  if (_offerInfoLink) window.open(_offerInfoLink, '_blank');
-}
-
 async function submitOffer(delivery) {
+  if (!syncBuyerState('offer')) return;
   const dlBtn   = document.getElementById('offer-dl-btn');
   const sendBtn = document.getElementById('offer-send-btn');
   const alertEl = document.getElementById('offer-modal-alert');
@@ -6336,6 +6507,9 @@ async function submitOffer(delivery) {
   alertEl.classList.remove('on');
 
   try {
+    const ev = interestsCache.find(e => e.id === _offerInterestId);
+    if (ev?.lead?.id) await _saveBuyerInfo('offer', ev.lead.id);
+
     const body = {
       action: 'offer', delivery,
       interest_id: _offerInterestId,
@@ -6354,22 +6528,8 @@ async function submitOffer(delivery) {
     });
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
+    if (!d.ok) throw new Error(d.error === 'infos_manquantes' ? 'Infos acheteur incomplètes (date de naissance, adresse)' : (d.error || 'erreur serveur'));
 
-    if (d.error === 'infos_manquantes') {
-      _offerInfoLink = d.url;
-      document.getElementById('offer-info-link-banner').classList.add('on');
-      const msgEl = document.getElementById('offer-info-link-msg');
-      if (msgEl) msgEl.textContent = d.email_sent
-        ? `✓ Lien envoyé à ${d.lead_email} — en attente de complétion.`
-        : '⚠️ Infos acheteur manquantes (date de naissance, adresse).';
-      dlBtn.disabled = false; sendBtn.disabled = false;
-      dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
-      if (d.email_sent) showToast(`Lien envoyé à ${d.lead_email} ✓`);
-      return;
-    }
-    if (!d.ok) throw new Error(d.error || 'erreur serveur');
-
-    const ev = interestsCache.find(e => e.id === _offerInterestId);
     if (ev) ev.content = { ...(ev.content || {}), offer_sent_at: new Date().toISOString() };
     closeOfferModal();
     loadInterests(true);
@@ -6386,17 +6546,18 @@ async function submitOffer(delivery) {
 async function openMandatModal(interestId, projectId, leadName, projectName) {
   _mandatInterestId = interestId;
   _mandatProjectId  = projectId;
-  _mandatInfoLink   = null;
 
   document.getElementById('mandat-lead-name').textContent    = leadName;
   document.getElementById('mandat-project-name').textContent = projectName;
   document.getElementById('mandat-modal-alert').classList.remove('on');
-  document.getElementById('mandat-info-link-banner').classList.remove('on');
   const _mDl = document.getElementById('mandat-dl-btn');
   const _mSend = document.getElementById('mandat-send-btn');
-  if (_mDl)   { _mDl.disabled = false;   _mDl.textContent   = '📥 Télécharger'; }
-  if (_mSend) { _mSend.disabled = false; _mSend.textContent = '📧 Envoyer'; }
+  if (_mDl)   _mDl.textContent   = '📥 Télécharger';
+  if (_mSend) _mSend.textContent = '📧 Envoyer';
   document.getElementById('mandat-commission').value = '8900';
+
+  const ev = interestsCache.find(e => e.id === interestId);
+  _fillBuyerFields('mandat', ev?.lead);
 
   document.getElementById('mandat-modal-overlay').classList.add('on');
 }
@@ -6409,17 +6570,8 @@ function openOfferFromMandatModal() {
   if (_mandatInterestId) openPdf(_mandatInterestId, 'offre');
 }
 
-function copyMandatInfoLink() {
-  if (!_mandatInfoLink) return;
-  navigator.clipboard.writeText(_mandatInfoLink).then(() => showToast('Lien copié !'))
-    .catch(() => prompt('Copie ce lien :', _mandatInfoLink));
-}
-
-function openMandatInfoLink() {
-  if (_mandatInfoLink) window.open(_mandatInfoLink, '_blank');
-}
-
 async function submitMandat(delivery) {
+  if (!syncBuyerState('mandat')) return;
   const dlBtn   = document.getElementById('mandat-dl-btn');
   const sendBtn = document.getElementById('mandat-send-btn');
   const alertEl = document.getElementById('mandat-modal-alert');
@@ -6429,6 +6581,9 @@ async function submitMandat(delivery) {
   alertEl.classList.remove('on');
 
   try {
+    const ev = interestsCache.find(e => e.id === _mandatInterestId);
+    if (ev?.lead?.id) await _saveBuyerInfo('mandat', ev.lead.id);
+
     const body = {
       action: 'mandat', delivery,
       interest_id: _mandatInterestId,
@@ -6442,22 +6597,8 @@ async function submitMandat(delivery) {
     });
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
+    if (!d.ok) throw new Error(d.error === 'infos_manquantes' ? 'Infos acheteur incomplètes (date de naissance, adresse)' : (d.error || 'erreur serveur'));
 
-    if (d.error === 'infos_manquantes') {
-      _mandatInfoLink = d.url;
-      document.getElementById('mandat-info-link-banner').classList.add('on');
-      const msgEl = document.getElementById('mandat-info-link-msg');
-      if (msgEl) msgEl.textContent = d.email_sent
-        ? `✓ Lien envoyé à ${d.lead_email} — en attente de complétion.`
-        : '⚠️ Infos acheteur manquantes (date de naissance, adresse).';
-      dlBtn.disabled = false; sendBtn.disabled = false;
-      dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
-      if (d.email_sent) showToast(`Lien envoyé à ${d.lead_email} ✓`);
-      return;
-    }
-    if (!d.ok) throw new Error(d.error || 'erreur serveur');
-
-    const ev = interestsCache.find(e => e.id === _mandatInterestId);
     if (ev) ev.content = { ...(ev.content || {}), mandat_sent_at: new Date().toISOString() };
     closeMandatModal();
     loadInterests(true);

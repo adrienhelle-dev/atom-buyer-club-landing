@@ -58,7 +58,7 @@ module.exports = async function handler(req, res) {
       const leadIds = [...new Set(events.map(e => e.lead_id).filter(Boolean))];
       const { data: leads } = await supabase
         .from('leads')
-        .select('id, prenom, nom, email, tel, assigned_to, timing, financement, accord, capacite, arrondissements, status, utm_source')
+        .select('id, prenom, nom, email, tel, assigned_to, timing, financement, accord, capacite, arrondissements, status, utm_source, date_naissance, adresse_residence, situation_familiale, conjoint_prenom, conjoint_nom, conjoint_dob')
         .in('id', leadIds);
       const leadMap = Object.fromEntries((leads || []).map(l => [l.id, l]));
 

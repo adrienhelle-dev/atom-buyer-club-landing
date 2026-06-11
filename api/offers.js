@@ -435,6 +435,7 @@ module.exports = async function handler(req, res) {
   }
 
   // ── action: wa_contact ── relance WhatsApp → "en attente de visite" ───
+  // L'admin qui relance devient responsable du lead.
   if (action === 'wa_contact') {
     const newContent = {
       ...content,
@@ -442,7 +443,8 @@ module.exports = async function handler(req, res) {
       wa_contacted_by: payload.email,
     };
     await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
-    return res.status(200).json({ ok: true, content: newContent });
+    await supabase.from('leads').update({ assigned_to: payload.email }).eq('id', ev.lead_id);
+    return res.status(200).json({ ok: true, content: newContent, assigned_to: payload.email });
   }
 
   // ── action: visit ─────────────────────────────────────────────────────
@@ -470,26 +472,9 @@ module.exports = async function handler(req, res) {
 
   // ── action: offer ─────────────────────────────────────────────────────
   if (action === 'offer') {
+    // Backstop : les infos acheteur sont désormais saisies par l'admin dans le modal
     if (!lead.date_naissance || !lead.adresse_residence) {
-      let token = lead.infos_token;
-      if (!token) { token = crypto.randomBytes(16).toString('hex'); await supabase.from('leads').update({ infos_token: token }).eq('id', lead.id); }
-      const site = (process.env.SITE_URL || 'https://join.atombuyerclub.fr').replace(/\/$/, '');
-      const infoUrl = `${site}/info-acheteur?token=${token}`;
-      let email_sent = false;
-      if (lead.email && process.env.RESEND_API_KEY) {
-        try {
-          const resend = new Resend(process.env.RESEND_API_KEY);
-          const from = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
-          const founder = getFounder(payload.email);
-          await resend.emails.send({
-            from, to: [lead.email], cc: [payload.email],
-            subject: 'Complétez vos informations — Atom Buyers Club',
-            html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Pour finaliser votre dossier d'acquisition, merci de renseigner vos informations personnelles via le lien ci-dessous :</p><p><a href="${infoUrl}" style="color:#B8975A">Compléter mes informations →</a></p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
-          });
-          email_sent = true;
-        } catch {}
-      }
-      return res.status(422).json({ error: 'infos_manquantes', url: infoUrl, email_sent, lead_email: lead.email || null });
+      return res.status(422).json({ ok: false, error: 'infos_manquantes' });
     }
     if (!project) return res.status(400).json({ error: 'project_id requis pour générer une offre' });
 
@@ -587,26 +572,9 @@ module.exports = async function handler(req, res) {
   // ── action: mandat ────────────────────────────────────────────────────
   if (action === 'mandat') {
     try {
+      // Backstop : les infos acheteur sont désormais saisies par l'admin dans le modal
       if (!lead.date_naissance || !lead.adresse_residence) {
-        let token = lead.infos_token;
-        if (!token) { token = crypto.randomBytes(16).toString('hex'); await supabase.from('leads').update({ infos_token: token }).eq('id', lead.id); }
-        const site = (process.env.SITE_URL || 'https://join.atombuyerclub.fr').replace(/\/$/, '');
-        const infoUrl = `${site}/info-acheteur?token=${token}`;
-        let email_sent = false;
-        if (lead.email && process.env.RESEND_API_KEY) {
-          try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const from = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
-            const founder = getFounder(payload.email);
-            await resend.emails.send({
-              from, to: [lead.email], cc: [payload.email],
-              subject: 'Complétez vos informations — Atom Buyers Club',
-              html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Pour finaliser votre dossier d'acquisition, merci de renseigner vos informations personnelles via le lien ci-dessous :</p><p><a href="${infoUrl}" style="color:#B8975A">Compléter mes informations →</a></p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
-            });
-            email_sent = true;
-          } catch {}
-        }
-        return res.status(422).json({ error: 'infos_manquantes', url: infoUrl, email_sent, lead_email: lead.email || null });
+        return res.status(422).json({ ok: false, error: 'infos_manquantes' });
       }
 
       // Récupérer ou créer le mandat (doit exister après l'étape offre)
