@@ -442,7 +442,22 @@ module.exports = async function handler(req, res) {
       let token = lead.infos_token;
       if (!token) { token = crypto.randomBytes(16).toString('hex'); await supabase.from('leads').update({ infos_token: token }).eq('id', lead.id); }
       const site = (process.env.SITE_URL || 'https://join.atombuyerclub.fr').replace(/\/$/, '');
-      return res.status(422).json({ error: 'infos_manquantes', url: `${site}/info-acheteur?token=${token}` });
+      const infoUrl = `${site}/info-acheteur?token=${token}`;
+      let email_sent = false;
+      if (lead.email && process.env.RESEND_API_KEY) {
+        try {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const from = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+          const founder = getFounder(payload.email);
+          await resend.emails.send({
+            from, to: [lead.email], cc: [payload.email],
+            subject: 'Complétez vos informations — Atom Buyers Club',
+            html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Pour finaliser votre dossier d'acquisition, merci de renseigner vos informations personnelles via le lien ci-dessous :</p><p><a href="${infoUrl}" style="color:#B8975A">Compléter mes informations →</a></p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
+          });
+          email_sent = true;
+        } catch {}
+      }
+      return res.status(422).json({ error: 'infos_manquantes', url: infoUrl, email_sent, lead_email: lead.email || null });
     }
     if (!project) return res.status(400).json({ error: 'project_id requis pour générer une offre' });
 
@@ -543,7 +558,22 @@ module.exports = async function handler(req, res) {
         let token = lead.infos_token;
         if (!token) { token = crypto.randomBytes(16).toString('hex'); await supabase.from('leads').update({ infos_token: token }).eq('id', lead.id); }
         const site = (process.env.SITE_URL || 'https://join.atombuyerclub.fr').replace(/\/$/, '');
-        return res.status(422).json({ error: 'infos_manquantes', url: `${site}/info-acheteur?token=${token}` });
+        const infoUrl = `${site}/info-acheteur?token=${token}`;
+        let email_sent = false;
+        if (lead.email && process.env.RESEND_API_KEY) {
+          try {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const from = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+            const founder = getFounder(payload.email);
+            await resend.emails.send({
+              from, to: [lead.email], cc: [payload.email],
+              subject: 'Complétez vos informations — Atom Buyers Club',
+              html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Pour finaliser votre dossier d'acquisition, merci de renseigner vos informations personnelles via le lien ci-dessous :</p><p><a href="${infoUrl}" style="color:#B8975A">Compléter mes informations →</a></p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
+            });
+            email_sent = true;
+          } catch {}
+        }
+        return res.status(422).json({ error: 'infos_manquantes', url: infoUrl, email_sent, lead_email: lead.email || null });
       }
 
       // Récupérer ou créer le mandat (doit exister après l'étape offre)
