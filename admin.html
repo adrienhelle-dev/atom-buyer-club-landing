@@ -1332,7 +1332,6 @@
     }
     .int-source-link:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
     .int-source-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-    .int-source-founder { display: none; }
     .int-source-link.traiter-cta { color: var(--dim); border-color: rgba(122,120,116,.25); background: rgba(122,120,116,.04); }
     .int-source-link.traiter-cta:hover { color: var(--cream); background: rgba(122,120,116,.12); border-color: rgba(122,120,116,.4); }
     .int-source-link.visit-cta { color: #5B5BD6; border-color: rgba(91,91,214,.35); background: rgba(91,91,214,.07); }
@@ -1347,8 +1346,12 @@
     /* offer-modal: secondary submit btn */
     .offer-modal-submit.secondary { background: none; border: 1px solid var(--border); color: var(--cream); margin-right: auto; }
     .offer-modal-submit.secondary:hover { border-color: var(--dim); background: rgba(255,255,255,.05); }
-    .int-lead-fiche { font-size: 11px; color: var(--gold); cursor: pointer; margin-top: 4px; display: inline-block; text-decoration: none; }
-    .int-lead-fiche:hover { text-decoration: underline; }
+    .int-lead-fiche { display: none; }
+    .int-founder-inline {
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+      font-size: 8px; font-weight: 700; letter-spacing: -.3px;
+    }
     .tag-chips-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
     .tag-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: rgba(184,151,90,.1); border: 1px solid rgba(184,151,90,.25); border-radius: 20px; font-size: 12px; color: var(--gold); }
     .tag-chip button { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 13px; padding: 0; line-height: 1; }
@@ -1391,8 +1394,15 @@
     .int-action-btn.wa:hover { background: rgba(37,211,102,.08); border-color: #25d366; }
     .int-action-btn.mail { color: var(--gold); border-color: rgba(184,151,90,.3); }
     .int-action-btn.mail:hover { background: rgba(184,151,90,.08); border-color: var(--gold); }
-    /* Fiche (desktop hidden, shown mobile) */
-    .int-fiche-btn:hover { background: rgba(255,255,255,.07); color: var(--cream); }
+    /* Fiche — pill sleek desktop */
+    .int-fiche-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 11px; border-radius: 20px; font-size: 11px; font-weight: 500;
+      color: var(--dim); border: 1px solid var(--border); background: transparent;
+      cursor: pointer; transition: color .12s, border-color .12s, background .12s;
+      white-space: nowrap;
+    }
+    .int-fiche-btn:hover { background: rgba(255,255,255,.06); color: var(--cream); border-color: rgba(184,151,90,.4); }
     /* Delete — ghost by default, reveal on row hover (desktop) */
     .int-action-btn.del-btn { opacity: 0; color: var(--dim); border-color: transparent; transition: opacity .15s, background .12s, color .12s, border-color .12s; }
     .int-list-item:hover .del-btn { opacity: 1; }
@@ -1503,7 +1513,7 @@
 
     /* Elements masqués sur desktop, visibles sur mobile */
     .int-btn-label { display: none; }
-    .int-fiche-btn { display: none; }
+
     .int-mob-date  { display: none; }
 
     /* ── Mobile cards (≤600px) ─────────────────────────────────────── */
@@ -6008,6 +6018,7 @@ function _buildInterestRow(ev) {
       <div class="int-lead-row">
         <span class="int-lead-name" onclick="openLeadFromNotif('${esc(lead.id)}')">${esc(leadName)}</span>
         <span class="int-type-badge ${meta.cls}">${meta.icon} ${meta.short || meta.label}</span>
+        ${lead.assigned_to ? `<span class="int-founder-inline" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>` : ''}
       </div>
       <div class="int-lead-meta">
         <span class="int-score ${scoreCls}">${score}</span>
@@ -6021,7 +6032,6 @@ function _buildInterestRow(ev) {
     <!-- Source projet/réalisation -->
     <div class="int-col col-source">
       <div class="int-source-name">${esc(source.name)}</div>
-      ${lead.assigned_to ? `<span class="int-source-founder" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>` : ''}
       <div class="int-source-btns">
         ${pipelineCta}
       </div>
