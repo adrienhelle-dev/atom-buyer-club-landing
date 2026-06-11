@@ -1335,12 +1335,12 @@
     .int-source-link.traiter-cta:hover { color: var(--cream); background: rgba(122,120,116,.12); border-color: rgba(122,120,116,.4); }
     .int-source-link.visit-cta { color: #5B5BD6; border-color: rgba(91,91,214,.35); background: rgba(91,91,214,.07); }
     .int-source-link.visit-cta:hover { background: rgba(91,91,214,.16); border-color: rgba(91,91,214,.7); }
+    .int-source-link.generate-cta { color: #E07A10; border-color: rgba(224,122,16,.35); background: rgba(224,122,16,.07); }
+    .int-source-link.generate-cta:hover { background: rgba(224,122,16,.16); border-color: rgba(224,122,16,.65); }
     .int-source-link.offer-cta { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
     .int-source-link.offer-cta:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
-    .int-source-link.mandat-cta { color: #E07A10; border-color: rgba(224,122,16,.35); background: rgba(224,122,16,.07); }
-    .int-source-link.mandat-cta:hover { background: rgba(224,122,16,.16); border-color: rgba(224,122,16,.65); }
-    .int-source-link.mandat-cta.done { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
-    .int-source-link.mandat-cta.done:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
+    .int-source-link.mandat-cta { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
+    .int-source-link.mandat-cta:hover { background: rgba(76,175,125,.16); border-color: rgba(76,175,125,.65); }
     .int-mob-pipeline-btn { display: none; }
     /* offer-modal: secondary submit btn */
     .offer-modal-submit.secondary { background: none; border: 1px solid var(--border); color: var(--cream); margin-right: auto; }
@@ -1566,10 +1566,11 @@
         padding: 14px 16px 11px 16px;
         display: block; position: relative;
       }
-      /* Badge pipeline repositionné en haut-droite de la card */
+      /* Badge pipeline : haut-gauche, sous le nom */
       .int-pipeline-badge {
-        position: absolute; top: 12px; right: 12px;
-        margin-top: 0 !important;
+        position: static;
+        margin-top: 5px !important;
+        display: inline-flex;
       }
       .int-lead-row { flex-wrap: nowrap; gap: 6px; align-items: center; }
       .int-lead-name { font-size: 14px; font-weight: 500; }
@@ -1626,10 +1627,11 @@
         cursor: pointer; transition: background .12s;
       }
       .int-mob-pipeline-btn:active { background: rgba(255,255,255,.06); }
-      .int-mob-pipeline-btn.traiter { color: var(--dim); }
-      .int-mob-pipeline-btn.visit  { color: #5B5BD6; }
-      .int-mob-pipeline-btn.offer  { color: #4caf7d; }
-      .int-mob-pipeline-btn.mandat { color: #E07A10; }
+      .int-mob-pipeline-btn.traiter    { color: var(--dim); }
+      .int-mob-pipeline-btn.visit     { color: #5B5BD6; }
+      .int-mob-pipeline-btn.generate  { color: #E07A10; }
+      .int-mob-pipeline-btn.offer     { color: #4caf7d; }
+      .int-mob-pipeline-btn.mandat    { color: #E07A10; }
       .int-mob-pipeline-btn.mandat-done { color: #4caf7d; }
 
       /* Fiche — visible sur mobile seulement, même largeur */
@@ -5975,15 +5977,15 @@ function _buildInterestRow(ev) {
       pipelineCta = visitBtn;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     } else if (pipeline === 'visite_concluante') {
-      pipelineCta = visitBtn + `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
-      mobPipelineBtn = `<button class="int-mob-pipeline-btn offer" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
+      pipelineCta = visitBtn + `<button class="int-source-link generate-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn generate" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
     } else if (pipeline === 'offre_envoyee') {
       pipelineCta = `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
-        + `<button class="int-source-link mandat-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
-      mobPipelineBtn = `<button class="int-mob-pipeline-btn mandat" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
+        + `<button class="int-source-link generate-cta" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn generate" onclick="openMandatModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Mandat ›</button>`;
     } else if (pipeline === 'mandat_envoye') {
       pipelineCta = `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
-        + `<button class="int-source-link mandat-cta done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`;
+        + `<button class="int-source-link mandat-cta" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`;
     }
   }
@@ -6160,8 +6162,10 @@ async function openOfferModal(interestId, projectId, leadName, projectName) {
   document.getElementById('offer-project-name').textContent = projectName;
   document.getElementById('offer-modal-alert').classList.remove('on');
   document.getElementById('offer-info-link-banner').classList.remove('on');
-  document.getElementById('offer-submit-btn').disabled = false;
-  document.getElementById('offer-submit-btn').textContent = '📄 Générer et envoyer';
+  const _oDl = document.getElementById('offer-dl-btn');
+  const _oSend = document.getElementById('offer-send-btn');
+  if (_oDl)   { _oDl.disabled = false;   _oDl.textContent   = '📥 Télécharger'; }
+  if (_oSend) { _oSend.disabled = false; _oSend.textContent = '📧 Envoyer'; }
 
   // Pré-remplir le prix depuis projectsCache
   const proj = projectsCache.find(p => p.id === projectId);
@@ -6245,8 +6249,10 @@ async function openMandatModal(interestId, projectId, leadName, projectName) {
   document.getElementById('mandat-project-name').textContent = projectName;
   document.getElementById('mandat-modal-alert').classList.remove('on');
   document.getElementById('mandat-info-link-banner').classList.remove('on');
-  document.getElementById('mandat-submit-btn').disabled = false;
-  document.getElementById('mandat-submit-btn').textContent = '📝 Générer et envoyer';
+  const _mDl = document.getElementById('mandat-dl-btn');
+  const _mSend = document.getElementById('mandat-send-btn');
+  if (_mDl)   { _mDl.disabled = false;   _mDl.textContent   = '📥 Télécharger'; }
+  if (_mSend) { _mSend.disabled = false; _mSend.textContent = '📧 Envoyer'; }
   document.getElementById('mandat-commission').value = '8900';
 
   document.getElementById('mandat-modal-overlay').classList.add('on');
