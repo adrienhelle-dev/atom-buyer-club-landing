@@ -2881,6 +2881,9 @@
     </div>
 
     <div id="mandat-form-fields">
+      <div style="margin-bottom:12px">
+        <button onclick="openOfferFromMandatModal()" style="background:none;border:none;padding:0;color:var(--gold);font-size:12px;cursor:pointer;text-decoration:underline;font-family:var(--sans)">📄 Voir l'offre PDF →</button>
+      </div>
       <div class="offer-modal-field">
         <label class="offer-modal-label">Commission (€ TTC)</label>
         <input class="offer-modal-input" type="number" id="mandat-commission" value="8900"/>
@@ -6260,6 +6263,10 @@ async function openMandatModal(interestId, projectId, leadName, projectName) {
 
 function closeMandatModal() {
   document.getElementById('mandat-modal-overlay').classList.remove('on');
+}
+
+function openOfferFromMandatModal() {
+  if (_mandatInterestId) openPdf(_mandatInterestId, 'offre');
 }
 
 function copyMandatInfoLink() {

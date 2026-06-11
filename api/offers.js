@@ -538,64 +538,87 @@ module.exports = async function handler(req, res) {
 
   // ── action: mandat ────────────────────────────────────────────────────
   if (action === 'mandat') {
-    if (!lead.date_naissance || !lead.adresse_residence) {
-      let token = lead.infos_token;
-      if (!token) { token = crypto.randomBytes(16).toString('hex'); await supabase.from('leads').update({ infos_token: token }).eq('id', lead.id); }
-      const site = (process.env.SITE_URL || 'https://join.atombuyerclub.fr').replace(/\/$/, '');
-      return res.status(422).json({ error: 'infos_manquantes', url: `${site}/info-acheteur?token=${token}` });
-    }
-    if (!project) return res.status(400).json({ error: 'project_id requis pour générer un mandat' });
+    try {
+      if (!lead.date_naissance || !lead.adresse_residence) {
+        let token = lead.infos_token;
+        if (!token) { token = crypto.randomBytes(16).toString('hex'); await supabase.from('leads').update({ infos_token: token }).eq('id', lead.id); }
+        const site = (process.env.SITE_URL || 'https://join.atombuyerclub.fr').replace(/\/$/, '');
+        return res.status(422).json({ error: 'infos_manquantes', url: `${site}/info-acheteur?token=${token}` });
+      }
 
-    // Récupérer ou créer le mandat (doit exister après l'étape offre)
-    let mandatRow;
-    const { data: existing } = await supabase.from('mandats').select('*').eq('interest_event_id', interest_id).maybeSingle();
-    if (existing) {
-      mandatRow = existing;
-    } else {
-      const { data: m } = await supabase.from('mandats').insert([{ lead_id: lead.id, project_id: projectId, interest_event_id: interest_id, commission: b.commission || 8900, created_by: payload.email }]).select('*').single();
-      mandatRow = m;
-    }
+      // Récupérer ou créer le mandat (doit exister après l'étape offre)
+      let mandatRow;
+      const { data: existing, error: existErr } = await supabase.from('mandats').select('*').eq('interest_event_id', interest_id).maybeSingle();
+      if (existErr) { console.error('mandat lookup:', existErr); return res.status(500).json({ ok: false, error: existErr.message }); }
 
-    const commission = b.commission || mandatRow?.commission || 8900;
-    const dateToday  = todayFr();
+      if (existing) {
+        mandatRow = existing;
+      } else {
+        // project_id fallback : content → b.project_id (déjà dans projectId)
+        const mandatProjectId = projectId || null;
+        if (!mandatProjectId) return res.status(400).json({ ok: false, error: 'project_id requis pour générer un mandat' });
 
-    // Numéro du mandat (ex: 162 → 163)
-    const numero = mandatRow?.numero || '—';
+        const { data: m, error: insertErr } = await supabase.from('mandats')
+          .insert([{ lead_id: lead.id, project_id: mandatProjectId, interest_event_id: interest_id, commission: b.commission || 8900, created_by: payload.email }])
+          .select('*').single();
+        if (insertErr || !m) {
+          console.error('mandat insert:', insertErr);
+          return res.status(500).json({ ok: false, error: insertErr?.message || 'Impossible de créer le mandat' });
+        }
+        mandatRow = m;
+      }
 
-    const html = buildMandatHtml({ lead, project, commission, numero, dateToday });
-    const pdf  = await renderPdf(html);
+      // Résoudre le projet depuis le mandat existant si besoin
+      let proj = project;
+      if (!proj && mandatRow.project_id) {
+        const { data: p } = await supabase.from('projects').select('*').eq('id', mandatRow.project_id).maybeSingle();
+        proj = p;
+      }
+      if (!proj) return res.status(400).json({ ok: false, error: 'Projet introuvable pour ce mandat' });
 
-    const pdfPath = `${lead.id}/mandat-${Date.now()}.pdf`;
-    const pdfUrl  = await uploadPdf(pdf, pdfPath);
+      const commission = b.commission || mandatRow?.commission || 8900;
+      const dateToday  = todayFr();
+      const numero = mandatRow?.numero || '—';
 
-    await supabase.from('mandats').update({ mandat_pdf_url: pdfUrl, commission, statut: 'mandat_envoye' }).eq('id', mandatRow.id);
+      const html = buildMandatHtml({ lead, project: proj, commission, numero, dateToday });
+      const pdf  = await renderPdf(html);
 
-    const mandatDelivery = b.delivery || 'email';
-    const fileName = `Mandat-${(project.address || project.title || '').replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.pdf`;
+      const pdfPath = `${lead.id}/mandat-${Date.now()}.pdf`;
+      const pdfUrl  = await uploadPdf(pdf, pdfPath);
 
-    if (mandatDelivery !== 'download') {
-      const envelopeId = await createDocuSignEnvelope({ pdfBuffer: pdf, fileName, lead, mandatId: mandatRow.id });
-      if (envelopeId) {
-        await supabase.from('mandats').update({ docusign_envelope_id: envelopeId }).eq('id', mandatRow.id);
-      } else if (lead.email && process.env.RESEND_API_KEY) {
-        const resend  = new Resend(process.env.RESEND_API_KEY);
-        const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
-        const founder = getFounder(payload.email);
-        await resend.emails.send({
-          from, to: [lead.email], cc: [payload.email],
-          subject: `Mandat de recherche — Atom Buyers Club`,
-          html: `<p>Bonjour ${esc(lead.prenom)},</p>
+      await supabase.from('mandats').update({ mandat_pdf_url: pdfUrl, commission, statut: 'mandat_envoye' }).eq('id', mandatRow.id);
+
+      const mandatDelivery = b.delivery || 'email';
+      const fileName = `Mandat-${(proj.address || proj.title || '').replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.pdf`;
+
+      let envelopeId = null;
+      if (mandatDelivery !== 'download') {
+        envelopeId = await createDocuSignEnvelope({ pdfBuffer: pdf, fileName, lead, mandatId: mandatRow.id });
+        if (envelopeId) {
+          await supabase.from('mandats').update({ docusign_envelope_id: envelopeId }).eq('id', mandatRow.id);
+        } else if (lead.email && process.env.RESEND_API_KEY) {
+          const resend  = new Resend(process.env.RESEND_API_KEY);
+          const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+          const founder = getFounder(payload.email);
+          await resend.emails.send({
+            from, to: [lead.email], cc: [payload.email],
+            subject: `Mandat de recherche — Atom Buyers Club`,
+            html: `<p>Bonjour ${esc(lead.prenom)},</p>
 <p>Veuillez trouver ci-joint votre mandat de recherche à signer et nous retourner.</p>
 <p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
-          attachments: [{ filename: fileName, content: Buffer.from(pdf).toString('base64') }],
-        });
+            attachments: [{ filename: fileName, content: Buffer.from(pdf).toString('base64') }],
+          });
+        }
       }
+
+      const newContent = { ...content, mandat_sent_at: new Date().toISOString(), mandat_sent_by: payload.email };
+      await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
+
+      return res.status(200).json({ ok: true, mandat_id: mandatRow.id, pdf_url: pdfUrl, docusign: !!envelopeId });
+    } catch (err) {
+      console.error('mandat action error:', err);
+      return res.status(500).json({ ok: false, error: err.message || 'Erreur serveur mandat' });
     }
-
-    const newContent = { ...content, mandat_sent_at: new Date().toISOString(), mandat_sent_by: payload.email };
-    await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
-
-    return res.status(200).json({ ok: true, mandat_id: mandatRow.id, pdf_url: pdfUrl, docusign: !!envelopeId });
   }
 
   return res.status(400).json({ error: 'action inconnue' });
