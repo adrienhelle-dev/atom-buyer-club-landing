@@ -1274,19 +1274,18 @@
     /* Header */
     .int-list-head {
       display: grid;
-      grid-template-columns: 50px 1fr 1fr 130px 116px;
+      grid-template-columns: 1fr 1fr 130px 116px;
       padding: 0; border-bottom: 1px solid var(--border); background: var(--bg2);
     }
     .int-list-head-cell {
       padding: 10px 14px; font-size: 10px; font-weight: 600;
       letter-spacing: .1em; text-transform: uppercase; color: var(--dim); white-space: nowrap;
     }
-    .int-list-head-cell.col-traite { text-align: center; }
 
     /* Ligne */
     .int-list-item {
       display: grid;
-      grid-template-columns: 50px 1fr 1fr 130px 116px;
+      grid-template-columns: 1fr 1fr 130px 116px;
       align-items: center;
       border-bottom: 1px solid var(--border);
       transition: background .12s;
@@ -1294,12 +1293,11 @@
     .int-list-item:hover { background: rgba(255,255,255,.025); }
     .int-list-item.is-treated { opacity: .55; }
     .int-col { padding: 13px 14px; font-size: 13px; color: var(--cream); min-width: 0; }
-    .int-col.col-traite { display: flex; align-items: center; justify-content: center; padding: 0; }
 
     /* Tablet (≤900px) : cache la colonne meta */
     @media (max-width: 900px) {
-      .int-list-head { grid-template-columns: 50px 1fr 1fr 116px; }
-      .int-list-item { grid-template-columns: 50px 1fr 1fr 116px; }
+      .int-list-head { grid-template-columns: 1fr 1fr 116px; }
+      .int-list-item { grid-template-columns: 1fr 1fr 116px; }
       .int-col.col-meta { display: none; }
       .int-col { padding: 11px 10px; }
     }
@@ -1333,6 +1331,8 @@
     }
     .int-source-link:hover { background: rgba(184,151,90,.18); border-color: rgba(184,151,90,.65); }
     .int-source-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .int-source-link.traiter-cta { color: var(--dim); border-color: rgba(122,120,116,.25); background: rgba(122,120,116,.04); }
+    .int-source-link.traiter-cta:hover { color: var(--cream); background: rgba(122,120,116,.12); border-color: rgba(122,120,116,.4); }
     .int-source-link.visit-cta { color: #5B5BD6; border-color: rgba(91,91,214,.35); background: rgba(91,91,214,.07); }
     .int-source-link.visit-cta:hover { background: rgba(91,91,214,.16); border-color: rgba(91,91,214,.7); }
     .int-source-link.offer-cta { color: #4caf7d; border-color: rgba(76,175,125,.35); background: rgba(76,175,125,.07); }
@@ -1561,9 +1561,6 @@
       .int-col { padding: 0; }
       .int-col.col-meta { display: none !important; }
 
-      /* ── Bouton traité masqué sur mobile (remplacé par badge statut) ── */
-      .int-col.col-traite { display: none !important; }
-
       /* ── Section lead ── */
       .int-col.col-lead {
         padding: 14px 16px 11px 16px;
@@ -1629,6 +1626,7 @@
         cursor: pointer; transition: background .12s;
       }
       .int-mob-pipeline-btn:active { background: rgba(255,255,255,.06); }
+      .int-mob-pipeline-btn.traiter { color: var(--dim); }
       .int-mob-pipeline-btn.visit  { color: #5B5BD6; }
       .int-mob-pipeline-btn.offer  { color: #4caf7d; }
       .int-mob-pipeline-btn.mandat { color: #E07A10; }
@@ -2805,8 +2803,7 @@
   <div class="int-list-wrap">
     <div class="int-list">
       <div class="int-list-head">
-        <div class="int-list-head-cell col-traite">Pipeline</div>
-        <div class="int-list-head-cell">Lead</div>
+        <div class="int-list-head-cell">PIPELINE LEAD</div>
         <div class="int-list-head-cell">Projet / Réalisation</div>
         <div class="int-list-head-cell col-meta">Founder · Date</div>
         <div class="int-list-head-cell">Actions</div>
@@ -5970,14 +5967,15 @@ function _buildInterestRow(ev) {
   let mobPipelineBtn = '';
   if (isProjet) {
     const visitBtn = `<button class="int-source-link visit-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
+    const traiterBtn = `<button class="int-source-link traiter-cta" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">À traiter ›</button>`;
     if (pipeline === 'untreated' || pipeline === 'treated' || pipeline === 'sans_suite') {
-      pipelineCta = visitBtn;
-      mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
+      pipelineCta = traiterBtn;
+      mobPipelineBtn = `<button class="int-mob-pipeline-btn traiter" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">À traiter ›</button>`;
     } else if (pipeline === 'visite_non_concluante') {
       pipelineCta = visitBtn;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn visit" onclick="showVisitPopover('${evIdSafe}','${pipeline}',this)">Visite ›</button>`;
     } else if (pipeline === 'visite_concluante') {
-      pipelineCta = `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
+      pipelineCta = visitBtn + `<button class="int-source-link offer-cta" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
       mobPipelineBtn = `<button class="int-mob-pipeline-btn offer" onclick="openOfferModal('${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}')">Offre ›</button>`;
     } else if (pipeline === 'offre_envoyee') {
       pipelineCta = `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
@@ -5993,15 +5991,6 @@ function _buildInterestRow(ev) {
   const isNonConcluante = pipeline === 'visite_non_concluante';
   const isSansSuite     = pipeline === 'sans_suite';
   return `<div class="int-list-item ${treated || isSansSuite ? 'is-treated' : ''} ${isNonConcluante ? 'is-non-concluante' : ''}" id="int-row-${evIdSafe}">
-
-    <!-- Toggle traité (bouton circulaire) -->
-    <div class="int-col col-traite">
-      <button class="int-treat-btn ${treated ? 'is-pub' : 'is-draft'}"
-        title="${treated ? 'Marquer non traité' : 'Marquer traité'}"
-        onclick="toggleInterestTreated('${evIdSafe}', ${!treated})">
-        ${treated ? SVG_CHECK : SVG_CLOCK}
-      </button>
-    </div>
 
     <!-- Lead info -->
     <div class="int-col col-lead">
