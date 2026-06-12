@@ -4360,25 +4360,25 @@ function promoteToShowroom() {
   const afterImgs  = [...np3dImages];
   const beforeImgs = [...npImages];
 
+  // resetShowroomForm() inside openShowroomEdit clears srAfterImages/srBeforeImages
+  // synchronously — we re-populate immediately after so nothing can clear them again.
   openShowroomEdit(null);
 
-  setTimeout(() => {
-    const sv = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
-    sv('sr-name',        title);
-    sv('sr-arr',         arr);
-    sv('sr-surface',     surface);
-    sv('sr-desc-longue', desc);
-    sv('sr-dpe',         dpe);
-    sv('sr-loyer',       loyer);
-    sv('sr-travaux',     travaux);
-    sv('sr-prix',        prix);
-    sv('sr-responsible', resp);
-    srAfterImages  = afterImgs;
-    srBeforeImages = beforeImgs;
-    renderSrImageGrid('after');
-    renderSrImageGrid('before');
-    recalcSr();
-  }, 120);
+  const sv = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+  sv('sr-name',        title);
+  sv('sr-arr',         arr);
+  sv('sr-surface',     surface);
+  sv('sr-desc-longue', desc);
+  sv('sr-dpe',         dpe);
+  sv('sr-loyer',       loyer);
+  sv('sr-travaux',     travaux);
+  sv('sr-prix',        prix);
+  sv('sr-responsible', resp);
+  srAfterImages  = afterImgs;
+  srBeforeImages = beforeImgs;
+  renderSrImageGrid('after');
+  renderSrImageGrid('before');
+  recalcSr();
 }
 
 // Marquage des équipements cochés
