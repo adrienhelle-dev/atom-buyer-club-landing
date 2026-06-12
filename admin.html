@@ -902,9 +902,33 @@
     .np-field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .np-field-help { font-size: 11px; color: var(--dim); font-style: italic; margin-top: -2px; }
 
-    .np-toggle { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
-    .np-toggle input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
-    .np-toggle label { font-size: 14px; color: var(--cream); cursor: pointer; }
+    .np-toggle { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+    .np-toggle input[type=checkbox] { display: none; }
+    .np-toggle input[type=checkbox] + label {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; color: var(--cream); cursor: pointer; user-select: none;
+      position: relative;
+    }
+    .np-toggle input[type=checkbox] + label::before {
+      content: ''; flex-shrink: 0;
+      width: 40px; height: 22px; border-radius: 11px;
+      background: var(--bg3); border: 1px solid var(--border);
+      transition: background .2s, border-color .2s;
+    }
+    .np-toggle input[type=checkbox] + label::after {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--dim);
+      left: 3px; top: 50%; transform: translateY(-50%);
+      transition: left .2s, background .2s;
+      pointer-events: none;
+    }
+    .np-toggle input[type=checkbox]:checked + label::before {
+      background: rgba(184,151,90,.25); border-color: var(--gold);
+    }
+    .np-toggle input[type=checkbox]:checked + label::after {
+      left: 21px; background: var(--gold);
+    }
 
     .np-prefix { position: relative; }
     .np-prefix input { padding-right: 32px; }
