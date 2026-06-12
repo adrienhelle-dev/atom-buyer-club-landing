@@ -1963,8 +1963,8 @@
         <option value="email">Email</option>
         <option value="showroom">Showroom</option>
         <option value="fiche_projet">Page projet</option>
-        <option value="seloger-petit-danton">SeLoger · Petit Danton</option>
-        <option value="organic">Organique</option>
+        <option value="seloger">SeLoger</option>
+        <option value="organic">Landing</option>
       </select>
       <select class="filter-select" id="status-filter" onchange="applyLeadFilters()">
         <option value="">Statut</option>
@@ -3321,12 +3321,12 @@ const SRC_LABELS = {
   facebook:     'Facebook Ads',
   meta:         'Meta Ads',
   email:        'Email',
-  organic:      'Organique',
+  organic:      'Landing',      // arrivée directe sur la landing, sans UTM
+  landing:      'Landing',      // alias (la page envoie page:'landing')
   fiche_projet: 'Page projet',  // lead venu d'une page projet sans UTM payant
   projet:       'Page projet',  // alias court
   showroom:     'Showroom',
   seloger:      'SeLoger',
-  'seloger-petit-danton': 'SeLoger · Petit Danton',
 };
 const SRC_CLASS  = {
   google:       'badge-google',
@@ -3335,18 +3335,20 @@ const SRC_CLASS  = {
   meta:         'badge-meta',
   email:        'badge-default',
   organic:      'badge-organic',
+  landing:      'badge-organic',
   fiche_projet: 'badge-projet',
   projet:       'badge-projet',
   showroom:     'badge-showroom',
   seloger:      'badge-default',
-  'seloger-petit-danton': 'badge-default',
 };
-// Ensemble des sources groupées sous "Organique" dans les stats (pas dans l'affichage)
-const ORGANIC_SRC_KEYS = new Set(['organic']);
+// Sources groupées sous "Landing" dans les stats/filtres (pas dans l'affichage)
+const ORGANIC_SRC_KEYS = new Set(['organic', 'landing']);
 function normalizeSrc(src) {
   if (!src) return null;
   const s = src.toLowerCase();
-  return ORGANIC_SRC_KEYS.has(s) ? 'organic' : s;
+  if (ORGANIC_SRC_KEYS.has(s))   return 'organic';
+  if (s.startsWith('seloger'))   return 'seloger'; // consolide tous les imports SeLoger
+  return s;
 }
 const STATUS_OPTS = [
   { v: 'nouveau',  l: 'Nouveau',      c: '#7a7874' },
@@ -5029,8 +5031,9 @@ function renderTable(leads) {
   const fSource = document.getElementById('src-filter')?.value || '';
   const fStatus = document.getElementById('status-filter')?.value || '';
   const fSearch = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
-  if (fSource === 'organic')           filtered = filtered.filter(l => l.utm_source === 'organic');
+  if (fSource === 'organic')           filtered = filtered.filter(l => ['organic', 'landing'].includes((l.utm_source || '').toLowerCase()));
   else if (fSource === 'fiche_projet') filtered = filtered.filter(l => ['fiche_projet', 'projet'].includes(l.utm_source));
+  else if (fSource === 'seloger')      filtered = filtered.filter(l => (l.utm_source || '').toLowerCase().startsWith('seloger'));
   else if (fSource)                    filtered = filtered.filter(l => l.utm_source === fSource);
   if (fStatus) filtered = filtered.filter(l => l.status === fStatus);
   if (fSearch) filtered = filtered.filter(l =>
@@ -5590,8 +5593,16 @@ function srCoverUrl(item) {
 
 function srcBadge(src) {
   if (!src) return '<span class="muted">—</span>';
-  const cls = SRC_CLASS[src.toLowerCase()] || 'badge-default';
-  const lbl = SRC_LABELS[src.toLowerCase()] || src;
+  const s = src.toLowerCase();
+  // Imports SeLoger : libellé auto "SeLoger · Nom De L'Appart" (la vignette garde
+  // la distinction par import, même si le filtre les consolide sous "SeLoger")
+  if (s.startsWith('seloger')) {
+    const rest = s.replace(/^seloger[-_]?/, '').replace(/[-_]+/g, ' ').trim();
+    const lbl = rest ? `SeLoger · ${rest.replace(/\b\w/g, c => c.toUpperCase())}` : 'SeLoger';
+    return `<span class="badge badge-default">${lbl}</span>`;
+  }
+  const cls = SRC_CLASS[s] || 'badge-default';
+  const lbl = SRC_LABELS[s] || src;
   return `<span class="badge ${cls}">${lbl}</span>`;
 }
 

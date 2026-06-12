@@ -2,14 +2,14 @@ const { supabase } = require('../lib/supabase');
 const { ADMIN_EMAILS } = require('../lib/auth');
 const { getFounder } = require('../lib/founders');
 const { computeScore } = require('../lib/scoring');
-const { notifyHotLead, notifyInterest } = require('../lib/notify');
+const { notifyHotLead, notifyInterest, notifyAdsLead, isAdsLead } = require('../lib/notify');
 const { handleTelegramUpdate } = require('../lib/telegram-ingest');
 const { Resend } = require('resend');
 
 const TIMING = { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' };
 const FIN    = { comptant: 'Comptant', emprunt: 'Emprunt bancaire' };
 const BUDGET = { 'moins-150k': '< 150 k€', '150-250k': '150–250 k€', '250-400k': '250–400 k€', '400-600k': '400–600 k€', '600k-1m': '600 k€–1 M€', 'plus-1m': '> 1 M€' };
-const SOURCE = { google: 'Google Ads', instagram: 'Instagram Ads', facebook: 'Facebook Ads', meta: 'Meta Ads', tiktok: 'TikTok Ads', linkedin: 'LinkedIn Ads', bing: 'Bing Ads', email: 'Email', organic: 'Organique', showroom: 'Showroom', projet: 'Page projet', fiche_projet: 'Page projet', projets: 'Page projets', landing: 'Landing directe' };
+const SOURCE = { google: 'Google Ads', instagram: 'Instagram Ads', facebook: 'Facebook Ads', meta: 'Meta Ads', tiktok: 'TikTok Ads', linkedin: 'LinkedIn Ads', bing: 'Bing Ads', email: 'Email', organic: 'Landing', showroom: 'Showroom', projet: 'Page projet', fiche_projet: 'Page projet', projets: 'Page projets', landing: 'Landing' };
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -174,8 +174,9 @@ module.exports = async function handler(req, res) {
   }
 
   // ── Notif Telegram intérêt — une seule, même si CTA réalisation + projet lié ──
+  const score = computeScore(leadData);
   if (interestParts.length) {
-    try { await notifyInterest(leadData, interestParts.join(' · ')); }
+    try { await notifyInterest(leadData, interestParts.join(' · '), score); }
     catch (e) { console.error('Telegram intérêt erreur:', e?.message || e); }
   }
 
@@ -204,14 +205,13 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // ── Notif Telegram lead chaud (score ≥ 8, nouveau lead hors intérêt projet) ──
-  // L'intérêt projet a déjà sa propre notif ci-dessus → on évite le doublon.
-  if (!isUpdate && !projectId) {
-    const score = computeScore(leadData);
-    if (score >= 8) {
-      try { await notifyHotLead(leadData, score); }
-      catch (e) { console.error('Telegram hot lead erreur:', e?.message || e); }
-    }
+  // ── Notif Telegram nouveau lead (hors intérêt, qui a déjà sa notif ci-dessus) ──
+  // Lead ads → toujours notifié (score + origine). Sinon, seuil lead chaud (score ≥ 8).
+  if (!isUpdate && !interestParts.length) {
+    try {
+      if (isAdsLead(leadData))  await notifyAdsLead(leadData, score);
+      else if (score >= 8)      await notifyHotLead(leadData, score);
+    } catch (e) { console.error('Telegram nouveau lead erreur:', e?.message || e); }
   }
 
   return res.status(200).json({ ok: true, updated: isUpdate, lead_id: leadId });

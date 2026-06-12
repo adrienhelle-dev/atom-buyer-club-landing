@@ -179,10 +179,12 @@ module.exports = async function handler(req, res) {
 
     let q = supabase.from('leads').select('*', { count: 'exact' }).order('created_at', { ascending: false });
 
-    // "organic" = source organique pure uniquement
+    // "organic" = arrivée directe sur la landing (utm 'organic' ou 'landing')
     // "fiche_projet" = leads venus d'une page projet sans UTM payant
-    if (source === 'organic')      q = q.eq('utm_source', 'organic');
+    // "seloger" = consolide tous les imports SeLoger (utm_source 'seloger-*')
+    if (source === 'organic')      q = q.in('utm_source', ['organic', 'landing']);
     else if (source === 'fiche_projet') q = q.in('utm_source', ['fiche_projet', 'projet']);
+    else if (source === 'seloger') q = q.ilike('utm_source', 'seloger%');
     else if (source)               q = q.eq('utm_source', source);
     if (status) q = q.eq('status', status);
     if (search) {
