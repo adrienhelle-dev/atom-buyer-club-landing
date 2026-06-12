@@ -1449,11 +1449,13 @@
       box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; min-width: 190px; z-index: 9999;
     }
     .visit-popover-item {
-      display: block; width: 100%; text-align: left; padding: 10px 14px;
+      display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 10px 14px;
       background: none; border: none; border-bottom: 1px solid rgba(255,255,255,.05);
       color: var(--cream); font-size: 12px; font-family: var(--sans); cursor: pointer;
       transition: background .12s;
     }
+    .visit-popover-item .pp-ico { display: inline-flex; flex-shrink: 0; color: var(--dim); }
+    .visit-popover-item:hover .pp-ico { color: var(--gold); }
     .visit-popover-item:last-child { border-bottom: none; }
     .visit-popover-item:hover { background: rgba(255,255,255,.06); }
     .visit-popover-item.concluante { color: #5B5BD6; }
@@ -1531,7 +1533,7 @@
     .offer-modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     .offer-modal-cancel { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 9px 18px; color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color .12s, border-color .12s; }
     .offer-modal-cancel:hover { color: var(--cream); border-color: var(--dim); }
-    .offer-modal-submit { background: var(--gold); color: var(--bg); border: none; border-radius: 7px; padding: 9px 20px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
+    .offer-modal-submit { background: var(--gold); color: var(--bg); border: none; border-radius: 7px; padding: 9px 20px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .15s; display: inline-flex; align-items: center; gap: 7px; }
     .offer-modal-submit:hover { opacity: .88; }
     .offer-modal-submit:disabled { opacity: .45; cursor: not-allowed; }
 
@@ -2962,7 +2964,7 @@
       </div>
 
       <div class="om-section">
-        <span class="om-notaire-toggle" onclick="toggleNotaireFields()">⚙️ Notaire — Maître Nicolas Chauris <span style="opacity:.6">(modifier)</span></span>
+        <span class="om-notaire-toggle" onclick="toggleNotaireFields()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>Notaire — Maître Nicolas Chauris <span style="opacity:.6">(modifier)</span></span>
         <div class="offer-modal-notaire-fields" id="offer-notaire-fields">
           <div class="om-grid" style="margin-top:10px">
             <div class="om-field">
@@ -2988,8 +2990,8 @@
 
     <div class="offer-modal-footer">
       <button class="offer-modal-cancel" onclick="closeOfferModal()">Annuler</button>
-      <button class="offer-modal-submit secondary" id="offer-dl-btn" onclick="submitOffer('download')">📥 Télécharger</button>
-      <button class="offer-modal-submit" id="offer-send-btn" onclick="submitOffer('email')">📧 Envoyer</button>
+      <button class="offer-modal-submit secondary" id="offer-dl-btn" onclick="submitOffer('download')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Télécharger</button>
+      <button class="offer-modal-submit" id="offer-send-btn" onclick="submitOffer('email')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Envoyer</button>
     </div>
   </div>
 </div>
@@ -3054,8 +3056,8 @@
 
     <div class="offer-modal-footer">
       <button class="offer-modal-cancel" onclick="closeMandatModal()">Annuler</button>
-      <button class="offer-modal-submit secondary" id="mandat-dl-btn" onclick="submitMandat('download')">📥 Télécharger</button>
-      <button class="offer-modal-submit" id="mandat-send-btn" onclick="submitMandat('email')">📧 Envoyer</button>
+      <button class="offer-modal-submit secondary" id="mandat-dl-btn" onclick="submitMandat('download')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Télécharger</button>
+      <button class="offer-modal-submit" id="mandat-send-btn" onclick="submitMandat('email')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Envoyer</button>
     </div>
   </div>
 </div>
@@ -6481,10 +6483,7 @@ async function openOfferModal(interestId, projectId, leadName, projectName) {
   document.getElementById('offer-lead-name').textContent    = leadName;
   document.getElementById('offer-project-name').textContent = projectName;
   document.getElementById('offer-modal-alert').classList.remove('on');
-  const _oDl = document.getElementById('offer-dl-btn');
-  const _oSend = document.getElementById('offer-send-btn');
-  if (_oDl)   _oDl.textContent   = '📥 Télécharger';
-  if (_oSend) _oSend.textContent = '📧 Envoyer';
+  _resetDocBtns('offer');
 
   // Pré-remplir : prix projet + infos acheteur connues
   const proj = projectsCache.find(p => p.id === projectId);
@@ -6510,7 +6509,7 @@ async function submitOffer(delivery) {
   const alertEl = document.getElementById('offer-modal-alert');
   const activeBtn = delivery === 'download' ? dlBtn : sendBtn;
   dlBtn.disabled = true; sendBtn.disabled = true;
-  activeBtn.textContent = '⏳ Génération…';
+  activeBtn.textContent = 'Génération…';
   alertEl.classList.remove('on');
 
   try {
@@ -6546,7 +6545,7 @@ async function submitOffer(delivery) {
     alertEl.textContent = 'Erreur : ' + (e.message || e);
     alertEl.classList.add('on');
     dlBtn.disabled = false; sendBtn.disabled = false;
-    dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
+    _resetDocBtns('offer');
   }
 }
 
@@ -6557,10 +6556,7 @@ async function openMandatModal(interestId, projectId, leadName, projectName) {
   document.getElementById('mandat-lead-name').textContent    = leadName;
   document.getElementById('mandat-project-name').textContent = projectName;
   document.getElementById('mandat-modal-alert').classList.remove('on');
-  const _mDl = document.getElementById('mandat-dl-btn');
-  const _mSend = document.getElementById('mandat-send-btn');
-  if (_mDl)   _mDl.textContent   = '📥 Télécharger';
-  if (_mSend) _mSend.textContent = '📧 Envoyer';
+  _resetDocBtns('mandat');
   document.getElementById('mandat-commission').value = '8900';
 
   const ev = interestsCache.find(e => e.id === interestId);
@@ -6580,7 +6576,7 @@ async function submitMandat(delivery) {
   const alertEl = document.getElementById('mandat-modal-alert');
   const activeBtn = delivery === 'download' ? dlBtn : sendBtn;
   dlBtn.disabled = true; sendBtn.disabled = true;
-  activeBtn.textContent = '⏳ Génération…';
+  activeBtn.textContent = 'Génération…';
   alertEl.classList.remove('on');
 
   try {
@@ -6611,8 +6607,21 @@ async function submitMandat(delivery) {
     alertEl.textContent = 'Erreur : ' + (e.message || e);
     alertEl.classList.add('on');
     dlBtn.disabled = false; sendBtn.disabled = false;
-    dlBtn.textContent = '📥 Télécharger'; sendBtn.textContent = '📧 Envoyer';
+    _resetDocBtns('mandat');
   }
+}
+
+/* Icônes line-style des actions documents */
+const ICO_DL   = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const ICO_SEND = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`;
+const ICO_EDIT = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+
+/* Restaure les boutons Télécharger / Envoyer d'un modal */
+function _resetDocBtns(prefix) {
+  const dl   = document.getElementById(prefix + '-dl-btn');
+  const send = document.getElementById(prefix + '-send-btn');
+  if (dl)   dl.innerHTML   = ICO_DL + 'Télécharger';
+  if (send) send.innerHTML = ICO_SEND + 'Envoyer';
 }
 
 function showDocPopover(evId, docType, btn) {
@@ -6620,8 +6629,8 @@ function showDocPopover(evId, docType, btn) {
   const ev = interestsCache.find(e => e.id === evId);
   const emailedAt = docType === 'offre' ? ev?.content?.offer_emailed_at : ev?.content?.mandat_emailed_at;
   const items = [
-    { label: '📥 Télécharger le PDF', action: () => openPdf(evId, docType) },
-    { label: emailedAt ? '📧 Renvoyer par email' : '📧 Envoyer par email', action: () => resendPdf(evId, docType) },
+    { icon: ICO_DL,   label: 'Télécharger le PDF', action: () => openPdf(evId, docType) },
+    { icon: ICO_SEND, label: emailedAt ? 'Renvoyer par email' : 'Envoyer par email', action: () => resendPdf(evId, docType) },
   ];
   // Modifier les paramètres et régénérer le PDF
   if (ev?.lead) {
@@ -6629,14 +6638,14 @@ function showDocPopover(evId, docType, btn) {
     const projectId = ev.content?.project_id || '';
     const srcName   = _interestSource(ev).name;
     const openModal = docType === 'offre' ? openOfferModal : openMandatModal;
-    items.push({ label: '✏️ Modifier et régénérer', action: () => openModal(evId, projectId, leadName, srcName) });
+    items.push({ icon: ICO_EDIT, label: 'Modifier et régénérer', action: () => openModal(evId, projectId, leadName, srcName) });
   }
   const pop = document.createElement('div');
   pop.className = 'visit-popover';
   items.forEach(it => {
     const b = document.createElement('button');
     b.className = 'visit-popover-item';
-    b.textContent = it.label;
+    b.innerHTML = `<span class="pp-ico">${it.icon}</span>${it.label}`;
     b.onclick = e => { e.stopPropagation(); pop.remove(); it.action(); };
     pop.appendChild(b);
   });
