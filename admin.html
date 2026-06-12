@@ -7397,7 +7397,7 @@ function renderShowroomGrid() {
       ondrop="srDrop(event,'${item.id}')"` : ''}
       onclick="srCardClick('${item.id}')">
       ${srCoverUrl(item)
-        ? `<img class="sr-card-cover" src="${esc(srCoverUrl(item))}" alt="${esc(item.name)}" loading="lazy"/>`
+        ? `<img class="sr-card-cover" src="${esc(srCoverUrl(item))}" alt="${esc(item.name)}" loading="lazy" draggable="false"/>`
         : `<div class="sr-card-cover-placeholder">🏠</div>`}
       <div class="sr-card-body">
         <p class="sr-card-name">${esc(item.name)}</p>
