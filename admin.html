@@ -101,6 +101,12 @@
 
     /* Topbar — gelé avec la nav dans .top-freeze (la liste scrolle dessous) */
     .top-freeze { position: sticky; top: 0; z-index: 90; }
+    /* Vue Leads : stats + recherche + filtres gelés sous le header.
+       --freeze-h = hauteur mesurée de .top-freeze (ResizeObserver) */
+    .leads-freeze {
+      position: sticky; top: var(--freeze-h, 96px); z-index: 80;
+      background: var(--bg); box-shadow: 0 6px 14px -8px rgba(0,0,0,.55);
+    }
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
       padding: 16px 28px; background: var(--bg2); border-bottom: 1px solid var(--border);
@@ -1886,6 +1892,7 @@
 
   <!-- ══ VUE LEADS ═════════════════════════════════════════════ -->
   <div class="view" id="view-leads">
+  <div class="leads-freeze">
   <!-- Stats -->
   <div class="stats">
     <div class="stat"><div class="stat-value" id="s-total">—</div><div class="stat-label">Total leads</div></div>
@@ -1943,6 +1950,7 @@
       </select>
     </div>
   </div>
+  </div><!-- /.leads-freeze -->
 
   <!-- Table -->
   <div class="table-wrap">
@@ -3452,6 +3460,17 @@ function showView(view) {
 }
 
 window.addEventListener('hashchange', handleRoute);
+
+// Mesure la hauteur du header gelé → offset sticky du bloc stats/filtres (vue Leads).
+// ResizeObserver couvre le resize ET l'apparition du dashboard après login (hauteur 0 → réelle).
+{
+  const freezeEl = document.querySelector('.top-freeze');
+  if (freezeEl && window.ResizeObserver) {
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--freeze-h', freezeEl.offsetHeight + 'px');
+    }).observe(freezeEl);
+  }
+}
 
 /* ── Vue Projets ────────────────────────────────────────────── */
 const PROJECT_STATUS = {
