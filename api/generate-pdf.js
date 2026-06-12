@@ -437,13 +437,22 @@ ${p.images_3d?.length > 1 ? `
 }
 
 const AMEU_LABELS = {
-  lit_double:      '🛏 Lit double',
-  cuisine_equipee: '🍳 Cuisine équipée',
-  douche:          '🚿 Salle de bain avec douche',
-  wc_separes:      '🚽 WC séparés',
-  table:           '🍽 Table à manger',
-  rangements:      '🗄 Rangements intégrés',
-  internet:        '📶 Internet inclus',
+  lit_double:      'Lit double & literie',
+  occultation:     'Rideaux occultants',
+  table:           'Table à manger & assises',
+  bureau:          'Espace bureau',
+  rangements:      'Rangements intégrés',
+  luminaires:      'Luminaires',
+  cuisine_equipee: 'Cuisine équipée',
+  plaques:         'Plaques de cuisson',
+  four_micro:      'Four / micro-ondes',
+  refrigerateur:   'Réfrigérateur & freezer',
+  vaisselle:       'Vaisselle & ustensiles',
+  douche:          "Salle d'eau avec douche",
+  wc_separes:      'WC séparés',
+  lave_linge:      'Lave-linge',
+  tv:              'Télévision',
+  internet:        'Internet fibre inclus',
 };
 
 function buildAmeuItems(ameu) {

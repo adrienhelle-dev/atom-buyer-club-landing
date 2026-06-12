@@ -908,12 +908,19 @@
     }
 
     /* Section 4 — checkboxes équipement */
-    .np-eq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
-    .np-eq-item { display: flex; align-items: center; gap: 9px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); cursor: pointer; transition: border-color .15s; }
+    .np-eq-group { margin-top: 18px; }
+    .np-eq-group-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 9px;
+    }
+    .np-eq-group-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(184,151,90,.25), transparent); }
+    .np-eq-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 8px; }
+    .np-eq-item { display: flex; align-items: center; gap: 9px; padding: 9px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); cursor: pointer; transition: border-color .15s, background .15s; }
     .np-eq-item:hover { border-color: rgba(184,151,90,.4); }
-    .np-eq-item.checked { border-color: var(--gold); background: rgba(184,151,90,.07); }
-    .np-eq-item input { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
-    .np-eq-item span { font-size: 13px; color: var(--cream); }
+    .np-eq-item.checked { border-color: rgba(184,151,90,.55); background: rgba(184,151,90,.07); }
+    .np-eq-item input { width: 15px; height: 15px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
+    .np-eq-item span { font-size: 13px; color: var(--cream); line-height: 1.3; }
 
     /* Section 5 — Admin & statut */
     .np-vis-row {
@@ -1035,7 +1042,7 @@
       .np-header { padding: 16px; flex-wrap: wrap; }
       .np-grid-2, .np-grid-3 { grid-template-columns: 1fr; }
       .np-field.span-2, .np-field.span-3 { grid-column: span 1; }
-      .np-eq-grid { grid-template-columns: 1fr; }
+      .np-eq-items { grid-template-columns: 1fr; }
     }
 
     /* ── Projets compatibles (dans drawer lead) ──────────────── */
@@ -2226,14 +2233,38 @@
             <textarea id="np-ameublement-desc" placeholder="Détaille les éléments fournis avec le bien…"></textarea>
           </div>
           <label style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Équipements inclus</label>
-          <div class="np-eq-grid" id="np-eq-grid">
-            <label class="np-eq-item"><input type="checkbox" data-eq="lit_double"><span>🛏 Lit double</span></label>
-            <label class="np-eq-item"><input type="checkbox" data-eq="cuisine_equipee"><span>🍳 Cuisine équipée</span></label>
-            <label class="np-eq-item"><input type="checkbox" data-eq="douche"><span>🚿 Salle de bain avec douche</span></label>
-            <label class="np-eq-item"><input type="checkbox" data-eq="wc_separes"><span>🚽 WC séparés</span></label>
-            <label class="np-eq-item"><input type="checkbox" data-eq="table"><span>🍽 Table à manger</span></label>
-            <label class="np-eq-item"><input type="checkbox" data-eq="rangements"><span>🗄 Rangements intégrés</span></label>
-            <label class="np-eq-item"><input type="checkbox" data-eq="internet"><span>📶 Internet inclus</span></label>
+          <div id="np-eq-grid">
+            <div class="np-eq-group">
+              <div class="np-eq-group-title">Séjour & couchage</div>
+              <div class="np-eq-items">
+                <label class="np-eq-item"><input type="checkbox" data-eq="lit_double"><span>Lit double & literie</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="occultation"><span>Rideaux occultants</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="table"><span>Table à manger & assises</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="bureau"><span>Espace bureau</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="rangements"><span>Rangements intégrés</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="luminaires"><span>Luminaires</span></label>
+              </div>
+            </div>
+            <div class="np-eq-group">
+              <div class="np-eq-group-title">Cuisine</div>
+              <div class="np-eq-items">
+                <label class="np-eq-item"><input type="checkbox" data-eq="cuisine_equipee"><span>Cuisine équipée</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="plaques"><span>Plaques de cuisson</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="four_micro"><span>Four / micro-ondes</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="refrigerateur"><span>Réfrigérateur & freezer</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="vaisselle"><span>Vaisselle & ustensiles</span></label>
+              </div>
+            </div>
+            <div class="np-eq-group">
+              <div class="np-eq-group-title">Salle d'eau & services</div>
+              <div class="np-eq-items">
+                <label class="np-eq-item"><input type="checkbox" data-eq="douche"><span>Salle d'eau avec douche</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="wc_separes"><span>WC séparés</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="lave_linge"><span>Lave-linge</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="tv"><span>Télévision</span></label>
+                <label class="np-eq-item"><input type="checkbox" data-eq="internet"><span>Internet fibre inclus</span></label>
+              </div>
+            </div>
           </div>
         </div>
 

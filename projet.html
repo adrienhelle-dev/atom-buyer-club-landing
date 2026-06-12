@@ -89,6 +89,19 @@
     .spec-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
     .spec-value { font-size: 15px; color: var(--cream); font-weight: 500; }
 
+    /* Équipements inclus */
+    .eq-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px 22px; margin-top: 14px;
+    }
+    .eq-card-title {
+      font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 14px;
+    }
+    .eq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 18px; }
+    .eq-item { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--cream-dim); }
+    .eq-item svg { color: var(--gold); flex-shrink: 0; }
+
     /* DPE */
     .dpe-badges { display: inline-flex; gap: 6px; }
     .dpe-badge {
@@ -298,7 +311,11 @@
 
       <section class="section" id="section-ameublement" style="display:none">
         <h2 class="section-title">Ameublement</h2>
-        <p id="ameublement-text"></p>
+        <p id="ameublement-text" style="display:none"></p>
+        <div class="eq-card" id="eq-card" style="display:none">
+          <div class="eq-card-title">Équipements inclus</div>
+          <div class="eq-grid" id="eq-grid"></div>
+        </div>
       </section>
     </div>
 
@@ -610,9 +627,40 @@ function render() {
   ).join('');
 
   // Ameublement
-  if (project.ameublement_desc) {
-    document.getElementById('ameublement-text').textContent = project.ameublement_desc;
+  const AMEU_LABELS = {
+    lit_double:      'Lit double & literie',
+    occultation:     'Rideaux occultants',
+    table:           'Table à manger & assises',
+    bureau:          'Espace bureau',
+    rangements:      'Rangements intégrés',
+    luminaires:      'Luminaires',
+    cuisine_equipee: 'Cuisine équipée',
+    plaques:         'Plaques de cuisson',
+    four_micro:      'Four / micro-ondes',
+    refrigerateur:   'Réfrigérateur & freezer',
+    vaisselle:       'Vaisselle & ustensiles',
+    douche:          "Salle d'eau avec douche",
+    wc_separes:      'WC séparés',
+    lave_linge:      'Lave-linge',
+    tv:              'Télévision',
+    internet:        'Internet fibre inclus',
+  };
+  const EQ_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  const ameu   = project.ameublement || {};
+  const eqKeys = Object.keys(AMEU_LABELS).filter(k => ameu[k]);
+  if (project.ameublement_desc || eqKeys.length) {
     document.getElementById('section-ameublement').style.display = 'block';
+    if (project.ameublement_desc) {
+      const t = document.getElementById('ameublement-text');
+      t.textContent = project.ameublement_desc;
+      t.style.display = 'block';
+    }
+    if (eqKeys.length) {
+      document.getElementById('eq-grid').innerHTML = eqKeys
+        .map(k => `<div class="eq-item">${EQ_CHECK}${AMEU_LABELS[k]}</div>`)
+        .join('');
+      document.getElementById('eq-card').style.display = 'block';
+    }
   }
 
   // Finances
