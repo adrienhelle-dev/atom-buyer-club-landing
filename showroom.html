@@ -624,7 +624,6 @@
     const rows = [];
     if (item.total_all_in)    rows.push({ l: 'Total investi',      v: fmt(item.total_all_in) + ' €' });
     if (item.rendement_brut)  rows.push({ l: 'Rendement',          v: item.rendement_brut + ' %', gold: true });
-    if (item.mensualite_type) rows.push({ l: 'Mensualité type',    v: fmt(item.mensualite_type) + ' €' });
     const statut = item.statut_location;
     const locType = item.locataire_type;
     if (!rows.length && !statut) { card.style.display = 'none'; return; }
