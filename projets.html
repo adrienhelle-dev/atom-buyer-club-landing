@@ -590,7 +590,6 @@
       const meta  = [surf, etage, metro].filter(Boolean).join(' · ');
 
       const total = p.total_all_in ? fmt(p.total_all_in) + ' €' : '—';
-      const loyer = p.loyer_atom   ? fmt(p.loyer_atom)   + ' €/mois' : '—';
       const rdt   = p.rendement_brut ? p.rendement_brut + ' %' : '—';
 
       return `
@@ -606,10 +605,6 @@
               <div class="proj-fin-cell">
                 <div class="proj-fin-val">${total}</div>
                 <div class="proj-fin-label">Total all-in</div>
-              </div>
-              <div class="proj-fin-cell">
-                <div class="proj-fin-val gold">${loyer}</div>
-                <div class="proj-fin-label">Loyer mensuel</div>
               </div>
               <div class="proj-fin-cell">
                 <div class="proj-fin-val gold">${rdt}</div>
@@ -830,7 +825,6 @@
     if (proj.budget_travaux) rows.push({ l: 'Travaux',            v: fmt(proj.budget_travaux) + ' €' });
     if (proj.budget_meuble)  rows.push({ l: 'Ameublement',        v: fmt(proj.budget_meuble) + ' €' });
     if (proj.total_all_in)   rows.push({ l: 'Total all-in',       v: fmt(proj.total_all_in) + ' €', gold: true });
-    if (proj.loyer_atom)     rows.push({ l: 'Loyer mensuel',      v: fmt(proj.loyer_atom) + ' €/mois', green: true });
     if (proj.mensualite)     rows.push({ l: 'Mensualité (25 ans, 10% apport)', v: fmt(proj.mensualite) + ' €/mois' });
     if (proj.rendement_brut) rows.push({ l: 'Rendement',          v: proj.rendement_brut + ' %', gold: true });
 
