@@ -2727,12 +2727,8 @@
               </div>
               <span class="np-field-help">Les vedettes sont épinglées en tête du showroom public, avant toutes les autres réalisations.</span>
             </div>
-            <div class="np-field">
-              <label for="sr-ordre">Ordre d'affichage</label>
-              <input type="number" id="sr-ordre" value="0"/>
-              <span class="np-field-help">Ou glisse-dépose les cartes depuis la liste Showroom</span>
-            </div>
-            <div class="np-field">
+            <input type="hidden" id="sr-ordre" value="0"/>
+            <div class="np-field span-2">
               <label for="sr-responsible">Responsable Atom</label>
               <select id="sr-responsible">
                 <option value="">— Non assigné —</option>
@@ -7284,6 +7280,7 @@ function srCardClick(id) {
 }
 function srDragStart(e, id) {
   _srDragId = id; _srDragged = true;
+  try { e.dataTransfer.setData('text/plain', id); } catch {} // requis pour initier le drag
   e.dataTransfer.effectAllowed = 'move';
   e.currentTarget.classList.add('dragging');
 }
