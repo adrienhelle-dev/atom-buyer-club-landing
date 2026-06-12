@@ -2630,14 +2630,15 @@
           <h3 class="np-section-title">Éléments financiers</h3>
           <div class="np-grid-2">
             <div class="np-field">
-              <label for="sr-prix">Prix acquisition (€ FAI)</label>
+              <label for="sr-prix">Acquisition (prix + honoraires + notaire)</label>
               <div class="np-prefix">
                 <input type="number" id="sr-prix" oninput="recalcSr()" placeholder="150 000"/>
                 <span class="np-prefix-suffix">€</span>
               </div>
+              <span class="np-field-help">Coût total côté acquisition, frais inclus — base du rendement</span>
             </div>
             <div class="np-field">
-              <label for="sr-travaux">Budget travaux (€)</label>
+              <label for="sr-travaux">Travaux & ameublement (€)</label>
               <div class="np-prefix">
                 <input type="number" id="sr-travaux" oninput="recalcSr()" placeholder="30 000"/>
                 <span class="np-prefix-suffix">€</span>
@@ -4354,9 +4355,13 @@ function promoteToShowroom() {
   const desc    = g('np-description');
   const dpe     = g('np-dpe-apres');
   const loyer   = g('np-loyer');
-  const travaux = g('np-budget-travaux');
-  const prix    = g('np-price-fai');
   const resp    = g('np-responsible');
+  // Alignement du rendement avec la page projet : la réalisation doit porter le
+  // MÊME investissement all-in (prix + honoraires + notaire + travaux + meublé).
+  // On répartit dans les 2 champs : acquisition = prix FAI + frais ; travaux = travaux + meublé.
+  const n = id => { const v = parseFloat(g(id)); return isNaN(v) ? 0 : v; };
+  const prix    = String(n('np-price-fai') + n('np-fees-atom') + n('np-fees-notaire') || '');
+  const travaux = String(n('np-budget-travaux') + n('np-budget-meuble') || '');
   const afterImgs  = [...np3dImages];
   const beforeImgs = [...npImages];
 
