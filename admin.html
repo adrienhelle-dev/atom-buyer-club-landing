@@ -99,11 +99,11 @@
     .view { display: none; }
     .view.active { display: block; }
 
-    /* Topbar */
+    /* Topbar — gelé avec la nav dans .top-freeze (la liste scrolle dessous) */
+    .top-freeze { position: sticky; top: 0; z-index: 90; }
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
       padding: 16px 28px; background: var(--bg2); border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 10;
     }
     .topbar-left { display: flex; align-items: center; gap: 20px; }
     .topbar-left svg { width: 60px; height: auto; }
@@ -1087,7 +1087,6 @@
     .project-item  { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color .15s, background .15s; }
     .project-item:hover   { border-color: rgba(184,151,90,.4); }
     .project-item.selected { border-color:var(--gold); background:rgba(184,151,90,.07); }
-    .project-icon  { font-size:22px; }
     .project-info  { flex:1; }
     .project-title { font-size:13px; font-weight:500; color:var(--cream); }
     .project-addr  { font-size:11px; color:var(--dim); margin-top:2px; }
@@ -1107,20 +1106,50 @@
     .email-compose-modal input::placeholder  { color: var(--dim); opacity: .5; }
 
     /* ── Modals send fiche / send leads ────────────────────────── */
-    .send-modal { max-width:520px; padding:20px 24px 20px; }
-    .send-modal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+    .send-modal { max-width:520px; padding:0; display:flex; flex-direction:column; overflow:hidden; max-height:85vh; }
+    .send-modal-header { display:flex; justify-content:space-between; align-items:flex-start; padding:20px 24px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
     .send-modal-tag { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); font-weight:500; margin:0 0 4px; }
     .send-modal-sub { font-size:13px; color:var(--dim); margin:0; }
     .send-modal-close { background:none; border:none; color:var(--dim); font-size:20px; cursor:pointer; padding:2px; line-height:1; transition:color .15s; }
     .send-modal-close:hover { color:var(--cream); }
-    .send-modal-divider { height:1px; background:var(--border); margin-bottom:14px; }
+    .send-modal-scroll { overflow-y:auto; flex:1; min-height:0; padding:16px 24px 18px; -webkit-overflow-scrolling:touch; }
     .send-modal-label { font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin:0 0 8px; display:block; }
     .send-modal-msg { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
-    .send-modal-textarea { width:100%; box-sizing:border-box; background:none; border:none; outline:none; resize:none; font-family:var(--sans); font-size:13px; color:var(--cream); line-height:1.7; min-height:72px; padding:0; }
+    .send-modal-textarea { width:100%; box-sizing:border-box; background:none; border:none; outline:none; resize:none; font-family:var(--sans); font-size:13px; color:var(--cream); line-height:1.7; min-height:60px; padding:0; }
     .send-modal-textarea::placeholder { color:var(--dim); opacity:.5; }
-    .send-modal-footer { display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-top:18px; padding-top:14px; border-top:1px solid var(--border); }
+    .send-preview { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+    .send-preview-box {
+      background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+      padding:16px 18px; font-size:13px; color:var(--cream-dim, #C7C2BB); line-height:1.7; white-space:pre-line;
+    }
+    .send-preview-box .pv-note {
+      display:block; font-style:italic; color:var(--cream);
+      border-left:2px solid var(--gold); padding:2px 0 2px 12px; margin:10px 0;
+    }
+    .send-preview-box .pv-cta {
+      display:inline-block; margin-top:12px; padding:8px 14px; border-radius:7px;
+      background:rgba(184,151,90,.13); border:1px solid rgba(184,151,90,.3);
+      color:var(--gold); font-size:12px; font-weight:500; font-style:normal;
+    }
+    .send-modal-footer {
+      display:flex; align-items:center; gap:12px; flex-shrink:0;
+      padding:14px 24px; border-top:1px solid var(--border); background:var(--bg2);
+    }
+    .send-modal-footer .fiche-status { flex:1; margin:0; text-align:left; min-height:0; font-size:12px; }
     .send-modal-cancel { background:none; border:none; font-family:var(--sans); font-size:13px; color:var(--dim); cursor:pointer; padding:6px 4px; transition:color .15s; }
     .send-modal-cancel:hover { color:var(--cream); }
+    .send-modal-footer .btn-send-fiche { flex:0 0 auto; padding:12px 22px; }
+    .lead-avatar {
+      width:28px; height:28px; border-radius:50%; flex-shrink:0;
+      background:rgba(184,151,90,.1); border:1px solid rgba(184,151,90,.25);
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:600; letter-spacing:.04em; color:var(--gold);
+    }
+    @media (max-width: 640px) {
+      .fiche-overlay { padding:0; align-items:flex-end; }
+      .send-modal { max-width:100%; max-height:92vh; border-radius:14px 14px 0 0; border-bottom:none; }
+      .send-modal-footer { padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
+    }
     .project-empty { text-align:center; padding:24px; color:var(--dim); font-size:13px; }
 
     /* ── Sticky Score col on mobile ────────────────────────── */
@@ -1822,6 +1851,7 @@
 
 <!-- ══ DASHBOARD ══════════════════════════════════════════════ -->
 <div id="dashboard">
+  <div class="top-freeze">
   <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
@@ -1852,6 +1882,7 @@
       Assets <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
     </a>
   </nav>
+  </div><!-- /.top-freeze -->
 
   <!-- ══ VUE LEADS ═════════════════════════════════════════════ -->
   <div class="view" id="view-leads">
@@ -2833,18 +2864,19 @@
       </div>
       <button class="send-modal-close" onclick="closeFicheModal()">✕</button>
     </div>
-    <div class="send-modal-divider"></div>
-    <p class="send-modal-label">Projet à envoyer</p>
-    <div class="project-list" id="project-list"><div class="project-empty">Chargement…</div></div>
-    <div class="send-modal-msg">
-      <p class="send-modal-label">Note personnalisée <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></p>
-      <textarea id="fiche-message" class="send-modal-textarea" placeholder="Ex : on en a parlé la semaine dernière, voilà la fiche complète…"></textarea>
+    <div class="send-modal-scroll">
+      <p class="send-modal-label">Projet à envoyer</p>
+      <div class="project-list" id="project-list"><div class="project-empty">Chargement…</div></div>
+      <div class="send-modal-msg">
+        <p class="send-modal-label">Note personnalisée <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></p>
+        <textarea id="fiche-message" class="send-modal-textarea" placeholder="Ex : on en a parlé la semaine dernière, voilà la fiche complète…"></textarea>
+      </div>
     </div>
     <div class="send-modal-footer">
+      <p class="fiche-status" id="fiche-status"></p>
       <button class="send-modal-cancel" onclick="closeFicheModal()">Annuler</button>
       <button class="btn-send-fiche" id="btn-send-fiche" onclick="sendFiche()">Envoyer par email</button>
     </div>
-    <p class="fiche-status" id="fiche-status"></p>
   </div>
 </div>
 
@@ -2858,18 +2890,23 @@
       </div>
       <button class="send-modal-close" onclick="closeSendLeadsModal()">✕</button>
     </div>
-    <div class="send-modal-divider"></div>
-    <p class="send-modal-label">Leads compatibles</p>
-    <div class="project-list" id="send-leads-list"><div class="project-empty">Chargement…</div></div>
-    <div class="send-modal-msg" id="send-leads-msg-wrap">
-      <p class="send-modal-label">Note personnalisée <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></p>
-      <textarea id="send-leads-message" class="send-modal-textarea" placeholder="Ex : on en a parlé la semaine dernière, voilà la fiche complète…"></textarea>
+    <div class="send-modal-scroll">
+      <p class="send-modal-label">Leads compatibles</p>
+      <div class="project-list" id="send-leads-list"><div class="project-empty">Chargement…</div></div>
+      <div class="send-modal-msg" id="send-leads-msg-wrap">
+        <p class="send-modal-label">Note personnalisée <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></p>
+        <textarea id="send-leads-message" class="send-modal-textarea" oninput="updateSendPreview()" placeholder="Ex : on en a parlé la semaine dernière, voilà la fiche complète…"></textarea>
+      </div>
+      <div class="send-preview" id="send-leads-preview" style="display:none">
+        <p class="send-modal-label" id="send-leads-preview-label">Aperçu</p>
+        <div class="send-preview-box" id="send-leads-preview-box"></div>
+      </div>
     </div>
     <div class="send-modal-footer">
+      <p class="fiche-status" id="send-leads-status"></p>
       <button class="send-modal-cancel" onclick="closeSendLeadsModal()">Annuler</button>
       <button class="btn-send-fiche" id="btn-send-leads" disabled>Envoyer par email</button>
     </div>
-    <p class="fiche-status" id="send-leads-status"></p>
   </div>
 </div>
 
@@ -5577,7 +5614,7 @@ async function openFicheModal(preSelectProjectId = null) {
   document.getElementById('fiche-message').value = '';
   document.getElementById('fiche-status').textContent = '';
   document.getElementById('btn-send-fiche').disabled = true;
-  document.getElementById('btn-send-fiche').textContent = '📄 Envoyer par email';
+  document.getElementById('btn-send-fiche').textContent = 'Envoyer par email';
   document.getElementById('fiche-overlay').classList.add('on');
   const projectList = document.getElementById('project-list');
   projectList.innerHTML = '<div class="project-empty">Chargement…</div>';
@@ -5590,10 +5627,10 @@ async function openFicheModal(preSelectProjectId = null) {
   }
   projectList.innerHTML = projects.map(p => `
     <div class="project-item" data-id="${esc(p.id)}" onclick="selectProject('${esc(p.id)}')">
-      <span class="project-icon">🏠</span>
+      <span class="lead-avatar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 22V12h6v10"/></svg></span>
       <div class="project-info">
         <div class="project-title">${esc(p.title || p.titre || 'Sans titre')}</div>
-        ${(p.address || p.adresse) ? `<div class="project-addr">📍 ${esc(p.address || p.adresse)}</div>` : ''}
+        ${(p.address || p.adresse) ? `<div class="project-addr">${esc(p.address || p.adresse)}</div>` : ''}
         ${p.total_all_in ? `<div class="project-prix">${fmtEuro(p.total_all_in)}</div>` : ''}
         ${p.pdf_url ? `<a class="project-pdf-link" href="${esc(p.pdf_url)}" target="_blank" onclick="event.stopPropagation()">Aperçu PDF ↗</a>` : ''}
       </div>
@@ -5638,13 +5675,14 @@ function openSendToLeadsModal(projectId, mode = 'email') {
   document.getElementById('send-leads-tag').textContent  = isWa ? 'WhatsApp' : 'Envoyer la fiche';
   document.getElementById('send-leads-sub').textContent    = `Projet : "${title}"`;
   document.getElementById('send-leads-message').value      = '';
-  document.getElementById('send-leads-msg-wrap').style.display = isWa ? 'none' : '';
+  document.getElementById('send-leads-preview').style.display = 'none';
+  document.getElementById('send-leads-preview-label').textContent = isWa ? 'Aperçu du message' : 'Aperçu de l’email';
   document.getElementById('send-leads-status').textContent = '';
   document.getElementById('send-leads-status').style.color = 'var(--dim)';
 
   const btn = document.getElementById('btn-send-leads');
   btn.disabled  = true;
-  btn.textContent = isWa ? '💬 Ouvrir WhatsApp' : '📄 Envoyer par email';
+  btn.textContent = isWa ? 'Ouvrir sur WhatsApp' : 'Envoyer par email';
   btn.style.background = isWa ? 'rgba(37,211,102,.15)' : '';
   btn.style.color      = isWa ? '#25d366' : '';
   btn.onclick = isWa ? () => openWaForSelectedLead() : () => sendFicheToLead();
@@ -5660,7 +5698,7 @@ function openSendToLeadsModal(projectId, mode = 'email') {
 
   listEl.innerHTML = matching.map(l => `
     <div class="project-item" data-lead-id="${esc(l.id)}" onclick="selectLeadForFiche('${esc(l.id)}')">
-      <span class="project-icon">👤</span>
+      <span class="lead-avatar">${esc(((l.prenom || '')[0] || '') + ((l.nom || '')[0] || '')).toUpperCase()}</span>
       <div class="project-info">
         <div class="project-title">${esc(l.prenom)} ${esc(l.nom)}</div>
         <div class="project-addr">${esc(l.email)} · ${TIMING[l.timing] || l.timing || '—'} · ${FIN[l.financement] || l.financement || '—'}</div>
@@ -5676,6 +5714,47 @@ function selectLeadForFiche(leadId) {
     el.classList.toggle('selected', el.dataset.leadId === leadId)
   );
   document.getElementById('btn-send-leads').disabled = false;
+  updateSendPreview();
+}
+
+// Texte WhatsApp avec note personnalisée insérée avant la signature
+function waTextWithNote(project, leadId) {
+  let text = waProjectText(project, leadId);
+  const note = document.getElementById('send-leads-message').value.trim();
+  if (note) {
+    text = text.includes('\n\nBonne journée !')
+      ? text.replace('\n\nBonne journée !', `\n\n${note}\n\nBonne journée !`)
+      : text + '\n\n' + note;
+  }
+  return text;
+}
+
+// Aperçu live du message (WA) ou de l'email (fiche) pour le lead sélectionné
+function updateSendPreview() {
+  const wrap = document.getElementById('send-leads-preview');
+  const box  = document.getElementById('send-leads-preview-box');
+  const lead    = leadsCache.find(l => l.id === sendLeadsSelectedLead);
+  const project = projectsCache.find(p => p.id === sendLeadsProjectId);
+  if (!lead || !project) { wrap.style.display = 'none'; return; }
+
+  if (sendLeadsMode === 'whatsapp') {
+    box.textContent = waTextWithNote(project, lead.id);
+  } else {
+    const note  = document.getElementById('send-leads-message').value.trim();
+    const chips = [
+      project.surface_carrez ? `${project.surface_carrez} m²` : null,
+      project.arrondissement || null,
+      project.rendement_brut ? `Rendement ${project.rendement_brut}%` : null,
+    ].filter(Boolean).join(' · ');
+    box.innerHTML =
+      `Bonjour ${esc(lead.prenom)},`
+      + (note ? `<span class="pv-note">${esc(note).replace(/\n/g, '<br>')}</span>` : '<br><br>')
+      + `Nous avons sélectionné pour vous une opportunité immobilière qui correspond à votre projet.`
+      + `<br><br><strong style="color:var(--cream)">${esc(project.title || 'Projet')}</strong>`
+      + (chips ? `<br><span style="font-size:12px;color:var(--dim)">${esc(chips)}</span>` : '')
+      + `<br><span class="pv-cta">Voir la fiche complète →</span>`;
+  }
+  wrap.style.display = '';
 }
 
 function closeSendLeadsModal() {
@@ -5700,7 +5779,7 @@ function openWaForSelectedLead() {
     document.getElementById('send-leads-status').style.color = 'var(--red)';
     return;
   }
-  const text = waProjectText(project, lead.id);
+  const text = waTextWithNote(project, lead.id);
   trackCta(lead.id, 'whatsapp', { context: 'projet', project_id: project.id, title: project.title });
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   closeSendLeadsModal();
@@ -5800,17 +5879,17 @@ async function sendFicheToLead(force) {
     resData = await res.json().catch(() => ({}));
   } catch (e) {
     console.error('sendFicheToLead fetch error:', e);
-    statusEl.textContent = '❌ Erreur réseau — réessaie';
+    statusEl.textContent = 'Erreur réseau — réessaie';
     statusEl.style.color = 'var(--red)';
-    btn.disabled = false; btn.textContent = '📄 Envoyer par email';
+    btn.disabled = false; btn.textContent = 'Envoyer par email';
     return;
   }
 
-  btn.textContent = '📄 Envoyer par email';
+  btn.textContent = 'Envoyer par email';
 
   // ─── 200 : succès ─────────────────────────────────────────────
   if (httpStatus === 200) {
-    statusEl.textContent = '✅ Fiche envoyée !';
+    statusEl.textContent = 'Fiche envoyée';
     statusEl.style.color = 'var(--green)';
     refreshDrawerAfterSend(sendLeadsSelectedLead, resData);
     setTimeout(closeSendLeadsModal, 1600);
@@ -5820,7 +5899,7 @@ async function sendFicheToLead(force) {
   // ─── 409 : déjà envoyée récemment ─────────────────────────────
   if (httpStatus === 409) {
     const h = resData.hours_ago ?? '—';
-    statusEl.innerHTML = `<span style="color:var(--gold)">⚠️ Fiche déjà envoyée il y a ${h}h</span>`;
+    statusEl.innerHTML = `<span style="color:var(--gold)">Fiche déjà envoyée il y a ${h}h</span>`;
     btn.disabled = false;
     btn.textContent = 'Renvoyer quand même →';
     btn.style.background = 'rgba(184,151,90,.15)';
@@ -5834,7 +5913,7 @@ async function sendFicheToLead(force) {
   }
 
   // ─── Autre erreur ──────────────────────────────────────────────
-  statusEl.textContent = '❌ ' + (resData.error || resData.detail || `Erreur ${httpStatus || 'inconnue'}`);
+  statusEl.textContent = resData.error || resData.detail || `Erreur ${httpStatus || 'inconnue'}`;
   statusEl.style.color = 'var(--red)';
   btn.disabled = false;
 }
@@ -5862,16 +5941,16 @@ async function sendFiche(force) {
     resData = await res.json().catch(() => ({}));
   } catch (e) {
     console.error('sendFiche fetch error:', e);
-    statusEl.textContent = '❌ Erreur réseau — réessaie';
+    statusEl.textContent = 'Erreur réseau — réessaie';
     statusEl.style.color = 'var(--red)';
-    btn.disabled = false; btn.textContent = '📄 Envoyer par email';
+    btn.disabled = false; btn.textContent = 'Envoyer par email';
     return;
   }
 
-  btn.textContent = '📄 Envoyer par email';
+  btn.textContent = 'Envoyer par email';
 
   if (httpStatus === 200) {
-    statusEl.textContent = '✅ Fiche envoyée !';
+    statusEl.textContent = 'Fiche envoyée';
     statusEl.style.color = 'var(--green)';
     refreshDrawerAfterSend(currentLead.id, resData);
     setTimeout(closeFicheModal, 1600);
@@ -5880,7 +5959,7 @@ async function sendFiche(force) {
 
   if (httpStatus === 409) {
     const h = resData.hours_ago ?? '—';
-    statusEl.innerHTML = `<span style="color:var(--gold)">⚠️ Déjà envoyée il y a ${h}h</span>`;
+    statusEl.innerHTML = `<span style="color:var(--gold)">Déjà envoyée il y a ${h}h</span>`;
     btn.disabled = false;
     btn.textContent = 'Renvoyer quand même →';
     btn.style.background = 'rgba(184,151,90,.15)';
@@ -5893,7 +5972,7 @@ async function sendFiche(force) {
     return;
   }
 
-  statusEl.textContent = '❌ ' + (resData.error || resData.detail || `Erreur ${httpStatus || 'inconnue'}`);
+  statusEl.textContent = resData.error || resData.detail || `Erreur ${httpStatus || 'inconnue'}`;
   statusEl.style.color = 'var(--red)';
   btn.disabled = false;
 }
