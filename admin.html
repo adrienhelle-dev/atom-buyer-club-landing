@@ -7353,8 +7353,8 @@ function renderShowroomGrid() {
   filtered.sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0)
     || new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-  // Réordonnancement possible seulement en vue « Tous » sans filtre ni recherche
-  const canReorder = srActiveTab === 'all' && !arr && !style && !search;
+  // Réordonnancement possible seulement en vue « Tous » (srActiveTab vide) sans filtre ni recherche
+  const canReorder = !srActiveTab && !arr && !style && !search;
   _srVisibleOrder = filtered.map(i => i.id);
 
   if (!filtered.length) {
