@@ -507,6 +507,10 @@ ${text}`;
       const insert = computeShowroomFinancials({});
       WRITE_FIELDS.forEach(k => { if (k in b) insert[k] = b[k]; });
       Object.assign(insert, computeShowroomFinancials(insert));
+      // Cover par défaut : 1ère photo « Après » si aucun cover fourni
+      if (!insert.image_cover && Array.isArray(insert.images_after) && insert.images_after.length) {
+        insert.image_cover = insert.images_after[0];
+      }
 
       const { data, error } = await supabase.from('showroom_items').insert([insert]).select().single();
       if (error) return res.status(500).json({ error: 'db_error', detail: error.message, code: error.code });
@@ -536,6 +540,11 @@ ${text}`;
       const updates = {};
       WRITE_FIELDS.forEach(k => { if (k in b) updates[k] = b[k]; });
       Object.assign(updates, computeShowroomFinancials(updates));
+      // Cover par défaut : 1ère photo « Après » si le cover est explicitement vidé
+      if ('image_cover' in updates && !updates.image_cover
+          && Array.isArray(updates.images_after) && updates.images_after.length) {
+        updates.image_cover = updates.images_after[0];
+      }
 
       const { data, error } = await supabase.from('showroom_items').update(updates).eq('id', id).select().single();
       if (error) return res.status(500).json({ error: 'db_error', detail: error.message });

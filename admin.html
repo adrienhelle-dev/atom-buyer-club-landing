@@ -4376,6 +4376,12 @@ function promoteToShowroom() {
   sv('sr-responsible', resp);
   srAfterImages  = afterImgs;
   srBeforeImages = beforeImgs;
+  // Cover = 1ère photo « Après » (sinon la card publique reste sans visuel)
+  if (afterImgs.length) {
+    const coverInp = document.getElementById('sr-cover');
+    if (coverInp) coverInp.value = afterImgs[0].url;
+    updateSrCoverPreview();
+  }
   renderSrImageGrid('after');
   renderSrImageGrid('before');
   recalcSr();
