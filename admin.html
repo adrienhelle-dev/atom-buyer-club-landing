@@ -822,6 +822,11 @@
     .btn-del-cancel { flex: 1; padding: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); color: var(--cream); font-family: var(--sans); font-size: 14px; cursor: pointer; }
     .btn-del-confirm { flex: 1; padding: 12px; background: var(--red); border: none; border-radius: var(--r); color: white; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
     .btn-del-confirm:hover { opacity: .85; }
+    .btn-del-confirm:disabled, .btn-del-confirm:disabled:hover { opacity: .35; cursor: not-allowed; }
+    .del-confirm-check { display: flex; align-items: center; gap: 10px; justify-content: center; font-size: 13px; color: var(--cream-dim); margin-bottom: 20px; cursor: pointer; user-select: none; }
+    .del-confirm-check input { width: 16px; height: 16px; accent-color: var(--red); cursor: pointer; }
+    .sr-delete-btn { display: none; align-items: center; gap: 6px; background: none; border: none; color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; padding: 6px 2px; transition: color .15s; }
+    .sr-delete-btn:hover { color: var(--red); }
 
     .match-badge {
       display: inline-flex; align-items: center; gap: 5px;
@@ -2086,6 +2091,24 @@
     </div>
   </div>
 
+  <!-- ══ DELETE RÉALISATION MODAL ══════════════════════════════ -->
+  <div class="del-proj-overlay" id="del-sr-overlay" onclick="if(event.target===this)closeDelShowroomModal()">
+    <div class="del-proj-modal">
+      <div class="del-proj-icon">🗑</div>
+      <div class="del-proj-title">Supprimer cette réalisation ?</div>
+      <div class="del-proj-name" id="del-sr-name">—</div>
+      <p class="del-proj-warn">Action <strong>définitive</strong> — la réalisation disparaît du showroom public et ne peut pas être restaurée.</p>
+      <label class="del-confirm-check">
+        <input type="checkbox" id="del-sr-confirm-chk" onchange="document.getElementById('btn-del-sr-confirm').disabled = !this.checked"/>
+        Je confirme la suppression définitive
+      </label>
+      <div class="del-proj-btns">
+        <button class="btn-del-cancel" onclick="closeDelShowroomModal()">Annuler</button>
+        <button class="btn-del-confirm" id="btn-del-sr-confirm" onclick="confirmDeleteShowroom()" disabled>Supprimer définitivement</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ VUE NOUVEAU PROJET ════════════════════════════════════ -->
   <div class="view" id="view-new-project">
     <div class="np-header">
@@ -2722,6 +2745,10 @@
         <div class="np-footer">
           <div class="np-footer-left">
             <span id="sr-status-badge" class="sr-statut-pill draft">Brouillon</span>
+            <button type="button" class="sr-delete-btn" id="sr-delete-btn" onclick="openDelShowroomModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              Supprimer
+            </button>
           </div>
           <div class="np-footer-right">
             <button class="btn-secondary" onclick="saveShowroomItem('brouillon')">Enregistrer brouillon</button>
@@ -4397,6 +4424,48 @@ function srImportFromProject(projectId) {
   if (equip.length) eqEl.value = equip.join('\n');
   if (carac.length) caEl.value = carac.join('\n');
   if (typeof setSrBtnDirty === 'function') setSrBtnDirty(true);
+}
+
+// ── Suppression d'une réalisation (double validation) ──────────
+let _delShowroomId = null;
+function openDelShowroomModal() {
+  if (!editingShowroomId) return;
+  _delShowroomId = editingShowroomId;
+  const item = (showroomCache || []).find(i => i.id === editingShowroomId);
+  document.getElementById('del-sr-name').textContent = item?.name || 'Cette réalisation';
+  document.getElementById('del-sr-confirm-chk').checked = false;
+  document.getElementById('btn-del-sr-confirm').disabled = true;
+  document.getElementById('del-sr-overlay').classList.add('on');
+}
+function closeDelShowroomModal() {
+  document.getElementById('del-sr-overlay').classList.remove('on');
+  _delShowroomId = null;
+}
+async function confirmDeleteShowroom() {
+  if (!_delShowroomId) return;
+  const btn = document.getElementById('btn-del-sr-confirm');
+  btn.disabled = true; btn.textContent = 'Suppression…';
+  let res;
+  try {
+    res = await fetch(`/api/showroom?id=${_delShowroomId}`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Supprimer définitivement';
+    alert('Erreur réseau — ' + e.message); return;
+  }
+  if (res.status === 401) { logout(); return; }
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    btn.disabled = false; btn.textContent = 'Supprimer définitivement';
+    alert('Erreur : ' + (d.error || d.detail || `HTTP ${res.status}`)); return;
+  }
+  const savedId = _delShowroomId;
+  closeDelShowroomModal();
+  btn.textContent = 'Supprimer définitivement';
+  showroomCache = (showroomCache || []).filter(i => i.id !== savedId);
+  editingShowroomId = null;
+  setRoute('showroom');
 }
 
 function promoteToShowroom() {
@@ -7329,6 +7398,8 @@ function resetShowroomForm() {
   const subEl   = document.getElementById('sr-page-sub');
   if (titleEl) titleEl.textContent = editingShowroomId ? 'Modifier la réalisation' : 'Nouvelle réalisation';
   if (subEl)   subEl.textContent   = editingShowroomId ? 'Mets à jour les informations puis enregistre' : 'Complète les informations puis publie';
+  // Bouton supprimer : édition uniquement (jamais à la création)
+  { const delBtn = document.getElementById('sr-delete-btn'); if (delBtn) delBtn.style.display = editingShowroomId ? 'inline-flex' : 'none'; }
   showSrSection(1);
   recalcSr();
   setSrBtnDirty(true); // toujours actif : nouvelle réalisation ET édition
