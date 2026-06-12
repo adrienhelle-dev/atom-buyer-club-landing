@@ -911,6 +911,37 @@
     .np-eq-item input { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
     .np-eq-item span { font-size: 13px; color: var(--cream); }
 
+    /* Section 5 — Admin & statut */
+    .np-vis-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 14px 16px; margin-bottom: 24px; gap: 16px;
+    }
+    .np-vis-left { display: flex; align-items: center; gap: 12px; }
+    .np-vis-left svg { color: var(--dim); flex-shrink: 0; }
+    .np-vis-label { font-size: 13px; color: var(--cream); line-height: 1; }
+    .np-vis-sub { font-size: 11px; color: var(--dim); margin-top: 4px; }
+    .np-vis-row input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
+    .promote-card {
+      background: linear-gradient(135deg, rgba(184,151,90,.07) 0%, rgba(184,151,90,.03) 100%);
+      border: 1px solid rgba(184,151,90,.25); border-radius: 12px; padding: 20px 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .promote-card-info { display: flex; align-items: center; gap: 14px; }
+    .promote-card-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(184,151,90,.12); border: 1px solid rgba(184,151,90,.22);
+      display: flex; align-items: center; justify-content: center; color: var(--gold);
+    }
+    .promote-card-title { font-size: 14px; font-weight: 500; color: var(--cream); margin-bottom: 4px; }
+    .promote-card-sub { font-size: 12px; color: var(--dim); line-height: 1.45; max-width: 340px; }
+    .promote-btn {
+      padding: 10px 18px; background: rgba(184,151,90,.1); border: 1px solid rgba(184,151,90,.3);
+      border-radius: var(--r); color: var(--gold); font-family: var(--sans); font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: background .15s, border-color .15s; white-space: nowrap;
+    }
+    .promote-btn:hover { background: rgba(184,151,90,.2); border-color: var(--gold); }
+
     /* Footer */
     .np-footer {
       border-top: 1px solid var(--border); padding: 18px 28px;
@@ -1998,6 +2029,7 @@
           <button class="np-tab" data-section="2" onclick="showNpSection(2)">2. Financiers</button>
           <button class="np-tab" data-section="3" onclick="showNpSection(3)">3. Visuels</button>
           <button class="np-tab" data-section="4" onclick="showNpSection(4)">4. Ameublement</button>
+          <button class="np-tab" data-section="5" onclick="showNpSection(5)">5. Admin et statut</button>
         </div>
 
         <!-- Section 1 — Infos générales -->
@@ -2065,15 +2097,6 @@
             <div class="np-field span-2">
               <label for="np-description">Description</label>
               <textarea id="np-description" maxlength="500" placeholder="Description courte du bien (max 500 caractères)"></textarea>
-            </div>
-            <div class="np-field span-2">
-              <label for="np-responsible">Admin responsable du projet</label>
-              <select id="np-responsible">
-                <option value="">— Non assigné —</option>
-                <option value="adrien.helle@atom-capital.fr">Adrien Helle</option>
-                <option value="alexandre.kiman@atom-capital.fr">Alexandre Kiman</option>
-                <option value="thierry.vignal@atom-capital.fr">Thierry Vignal</option>
-              </select>
             </div>
           </div>
         </div>
@@ -2210,6 +2233,54 @@
           </div>
         </div>
 
+        <!-- Section 5 — Admin & statut -->
+        <div class="np-section" data-section="5">
+          <h3 class="np-section-title">Administration</h3>
+          <div class="np-grid-2" style="margin-bottom:24px">
+            <div class="np-field">
+              <label for="np-responsible">Admin responsable</label>
+              <select id="np-responsible">
+                <option value="">— Non assigné —</option>
+                <option value="adrien.helle@atom-capital.fr">Adrien Helle</option>
+                <option value="alexandre.kiman@atom-capital.fr">Alexandre Kiman</option>
+                <option value="thierry.vignal@atom-capital.fr">Thierry Vignal</option>
+              </select>
+            </div>
+            <div class="np-field">
+              <label for="np-status">Statut</label>
+              <select id="np-status">
+                <option value="brouillon">Brouillon</option>
+                <option value="disponible" selected>Disponible</option>
+                <option value="en_cours">Sous promesse Atom</option>
+                <option value="vendu">Vendu par Atom</option>
+                <option value="archive">Archivé</option>
+              </select>
+            </div>
+          </div>
+          <div class="np-vis-row">
+            <div class="np-vis-left">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <div>
+                <div class="np-vis-label">Visible sur le site public</div>
+                <div class="np-vis-sub">Apparaît sur join.atombuyerclub.fr/projets</div>
+              </div>
+            </div>
+            <input type="checkbox" id="np-public">
+          </div>
+          <div class="promote-card" id="promote-card-wrap" style="display:none">
+            <div class="promote-card-info">
+              <div class="promote-card-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+              <div>
+                <div class="promote-card-title">Basculer en réalisation</div>
+                <div class="promote-card-sub">Crée une fiche Showroom pré-remplie avec les données de ce projet — photos, surface, finances, description.</div>
+              </div>
+            </div>
+            <button class="promote-btn" onclick="promoteToShowroom()">Créer la réalisation →</button>
+          </div>
+        </div>
+
         <!-- Leads intéressés (affiché uniquement en mode édition) -->
         <div id="np-interested-section" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:20px">
           <p style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:12px">Leads ayant déclaré un intérêt</p>
@@ -2217,17 +2288,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="np-footer">
-          <div class="np-footer-left">
-            <select class="filter-select" id="np-status" style="padding:9px 30px 9px 12px">
-              <option value="brouillon">Brouillon</option>
-              <option value="disponible" selected>Disponible</option>
-              <option value="en_cours">Sous promesse Atom</option>
-              <option value="vendu">Vendu par Atom</option>
-              <option value="archive">Archivé</option>
-            </select>
-            <label class="np-toggle"><input type="checkbox" id="np-public"><label for="np-public" style="font-size:13px;color:var(--dim)">Visible sur le site public</label></label>
-          </div>
+        <div class="np-footer" style="justify-content:flex-end">
           <div class="np-footer-right">
             <button class="btn-secondary" onclick="saveProject('brouillon')">Enregistrer brouillon</button>
             <button class="btn-primary" id="btn-save-project" onclick="saveProject()">Enregistrer</button>
@@ -4044,9 +4105,11 @@ function resetNewProjectForm() {
   renderImagePreviews();
   render3dPreviews();
   renderPlan2dPreview();
-  // Cache la section intérêts (mode création)
+  // Cache la section intérêts + la carte promote (mode création)
   const intSec = document.getElementById('np-interested-section');
   if (intSec) intSec.style.display = 'none';
+  const promCard = document.getElementById('promote-card-wrap');
+  if (promCard) promCard.style.display = 'none';
   // Titre selon le mode (édition vs création)
   updateNpTitle();
   // Reset section visible
@@ -4126,6 +4189,9 @@ function populateProjectForm(p) {
   setVal('np-ameublement-desc', p.ameublement_desc);
   setVal('np-responsible',      p.responsible_admin || '');
   setVal('np-status',           p.status || 'disponible');
+  // Affiche la carte "Basculer en réalisation" uniquement en mode édition
+  const promCard = document.getElementById('promote-card-wrap');
+  if (promCard) promCard.style.display = '';
   // Checkboxes
   document.getElementById('np-elevator').checked = !!p.has_elevator;
   document.getElementById('np-public').checked   = !!p.public_visible;
@@ -4151,8 +4217,44 @@ function setVal(id, v) {
 }
 
 function showNpSection(n) {
-  document.querySelectorAll('.np-tab').forEach(t => t.classList.toggle('active', +t.dataset.section === n));
-  document.querySelectorAll('.np-section').forEach(s => s.classList.toggle('active', +s.dataset.section === n));
+  document.querySelectorAll('.np-tab:not(.sr-tab)').forEach(t => t.classList.toggle('active', +t.dataset.section === n));
+  document.querySelectorAll('.np-section:not(.sr-section)').forEach(s => s.classList.toggle('active', +s.dataset.section === n));
+}
+
+function promoteToShowroom() {
+  if (!editingProjectId) return;
+  const g = id => document.getElementById(id)?.value || '';
+  const title   = g('np-title');
+  const arr     = g('np-arr');
+  const surface = g('np-surface');
+  const desc    = g('np-description');
+  const dpe     = g('np-dpe-apres');
+  const loyer   = g('np-loyer');
+  const travaux = g('np-budget-travaux');
+  const prix    = g('np-price-fai');
+  const resp    = g('np-responsible');
+  const afterImgs  = [...np3dImages];
+  const beforeImgs = [...npImages];
+
+  openShowroomEdit(null);
+
+  setTimeout(() => {
+    const sv = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+    sv('sr-name',        title);
+    sv('sr-arr',         arr);
+    sv('sr-surface',     surface);
+    sv('sr-desc-longue', desc);
+    sv('sr-dpe',         dpe);
+    sv('sr-loyer',       loyer);
+    sv('sr-travaux',     travaux);
+    sv('sr-prix',        prix);
+    sv('sr-responsible', resp);
+    srAfterImages  = afterImgs;
+    srBeforeImages = beforeImgs;
+    renderSrImageGrid('after');
+    renderSrImageGrid('before');
+    recalcSr();
+  }, 120);
 }
 
 // Marquage des équipements cochés
