@@ -4360,6 +4360,22 @@ function promoteToShowroom() {
   const afterImgs  = [...np3dImages];
   const beforeImgs = [...npImages];
 
+  // ── Caractéristiques structurées : on ne perd pas étage / ascenseur / métro / DPE ──
+  const carac = [];
+  const floor = g('np-floor');
+  if (floor) carac.push(`${floor}e étage`);
+  carac.push(document.getElementById('np-elevator')?.checked ? 'Avec ascenseur' : 'Sans ascenseur');
+  const metroName = g('np-metro-name'), metroDist = g('np-metro-dist');
+  if (metroName) carac.push(`Métro ${metroName}${metroDist ? ` · ${metroDist} m` : ''}`);
+  const dpeAvant = g('np-dpe-avant');
+  if (dpeAvant && dpe)      carac.push(`DPE ${dpeAvant} → ${dpe} après rénovation`);
+  else if (dpe)            carac.push(`DPE ${dpe}`);
+
+  // ── Équipements : reprend les cases « Ameublement » cochées (libellés lisibles) ──
+  const equip = [...document.querySelectorAll('#np-eq-grid input[data-eq]:checked')]
+    .map(cb => cb.closest('label')?.querySelector('span')?.textContent.trim())
+    .filter(Boolean);
+
   // resetShowroomForm() inside openShowroomEdit clears srAfterImages/srBeforeImages
   // synchronously — we re-populate immediately after so nothing can clear them again.
   openShowroomEdit(null);
@@ -4374,6 +4390,8 @@ function promoteToShowroom() {
   sv('sr-travaux',     travaux);
   sv('sr-prix',        prix);
   sv('sr-responsible', resp);
+  sv('sr-equipements',     equip.join('\n'));
+  sv('sr-caracteristiques', carac.join('\n'));
   srAfterImages  = afterImgs;
   srBeforeImages = beforeImgs;
   // Cover = 1ère photo « Après » (sinon la card publique reste sans visuel)
@@ -5431,6 +5449,15 @@ function fmtDateFull(d) {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Cover d'une réalisation : cover explicite, sinon 1ère photo Après, sinon Avant.
+// Fallback au rendu → robuste même si image_cover n'est pas renseigné en base.
+function srCoverUrl(item) {
+  return item.image_cover
+    || (item.images_after  && item.images_after[0])
+    || (item.images_before && item.images_before[0])
+    || '';
 }
 
 function srcBadge(src) {
@@ -7175,8 +7202,8 @@ function renderShowroomGrid() {
 
   grid.innerHTML = filtered.map(item => `
     <div class="sr-card" onclick="openShowroomEdit('${item.id}')">
-      ${item.image_cover
-        ? `<img class="sr-card-cover" src="${esc(item.image_cover)}" alt="${esc(item.name)}" loading="lazy"/>`
+      ${srCoverUrl(item)
+        ? `<img class="sr-card-cover" src="${esc(srCoverUrl(item))}" alt="${esc(item.name)}" loading="lazy"/>`
         : `<div class="sr-card-cover-placeholder">🏠</div>`}
       <div class="sr-card-body">
         <p class="sr-card-name">${esc(item.name)}</p>

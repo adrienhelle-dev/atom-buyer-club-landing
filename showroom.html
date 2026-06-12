@@ -516,8 +516,8 @@
     }
     grid.innerHTML = items.map(item => `
       <a class="card" href="/realisation/${esc(item.slug)}">
-        ${item.image_cover
-          ? `<img class="card-img" src="${esc(item.image_cover)}" alt="${esc(item.name)}" loading="lazy"/>`
+        ${srCoverUrl(item)
+          ? `<img class="card-img" src="${esc(srCoverUrl(item))}" alt="${esc(item.name)}" loading="lazy"/>`
           : `<div class="card-img-placeholder">🏠</div>`}
         <div class="card-body">
           ${item.style ? `<p class="card-style">${esc(item.style)}</p>` : ''}
@@ -803,6 +803,13 @@
   // ── Helpers ─────────────────────────────────────────────────
   function fmt(n) { return Number(n).toLocaleString('fr-FR'); }
   function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  // Cover : cover explicite, sinon 1ère photo Après, sinon Avant (fallback au rendu).
+  function srCoverUrl(item) {
+    return item.image_cover
+      || (item.images_after  && item.images_after[0])
+      || (item.images_before && item.images_before[0])
+      || '';
+  }
 
   window.addEventListener('popstate', () => {
     const parts = location.pathname.split('/').filter(Boolean);
