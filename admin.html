@@ -740,6 +740,8 @@
       display: flex; align-items: center; justify-content: center; gap: 4px;
       text-decoration: none;
     }
+    .pc-action svg { display: block; flex-shrink: 0; }
+    .pc-count { font-size: 11px; font-weight: 600; color: var(--green); line-height: 1; }
     .pc-action:last-child { border-right: none; }
     .pc-action:hover { color: var(--cream); background: rgba(255,255,255,.04); }
     .pc-action.pc-send:hover { color: var(--green); background: rgba(76,175,125,.07); }
@@ -752,7 +754,9 @@
     /* Mini-menu de choix d'envoi (WhatsApp / Email) sur les cards projet */
     .send-menu { position: fixed; z-index: 300; background: #1d1810; border: 1px solid #3a3322; border-radius: 8px; padding: 4px; display: none; flex-direction: column; min-width: 156px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
     .send-menu.on { display: flex; }
-    .send-menu button { background: none; border: none; color: var(--cream); text-align: left; padding: 9px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .send-menu button { background: none; border: none; color: var(--cream); text-align: left; padding: 9px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
+    .send-menu button svg { color: var(--dim); flex-shrink: 0; }
+    .send-menu button:hover svg { color: var(--gold); }
     .send-menu button:hover { background: rgba(255,255,255,.06); }
 
     /* ── Status tabs ─────────────────────────────────────────── */
@@ -3547,6 +3551,14 @@ function waProjectText(p, leadId = null) {
   return `Hello, c'est ${adminPrenom} de chez Atom.\n\nJ'ai un bien dispo qui pourrait t'intéresser — ${details}.${loyerLine}${ctaLine}\n\nBonne journée !`;
 }
 
+// Icônes line-art des actions de card projet (style corpo, trait fin, monochrome)
+const PC_ICO_LINK = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>`;
+const PC_ICO_SEND = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
+const PC_ICO_PDF  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`;
+const PC_ICO_DEL  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+const PC_ICO_USERS = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+const PC_ICO_STAR  = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+
 function projectCard(p) {
   const img    = p.images_3d?.[0] || p.images?.[0] || null;
   const status = PROJECT_STATUS[p.status] || PROJECT_STATUS.disponible;
@@ -3568,14 +3580,14 @@ function projectCard(p) {
       <div class="project-card-img${img ? '' : ' empty'}">
         ${img ? `<img src="${esc(img)}" alt="${esc(p.title || '')}" loading="lazy"/>` : '🏠'}
         <span class="project-card-status ${status.cls}">${status.label}</span>
-        ${intCount > 0 ? `<span class="project-card-int">⭐ ${intCount}</span>` : ''}
+        ${intCount > 0 ? `<span class="project-card-int">${PC_ICO_STAR} ${intCount}</span>` : ''}
       </div>
       <div class="project-card-body">
         ${metaTop ? `<div class="project-card-arr">${esc(metaTop)}</div>` : ''}
         <div class="project-card-title">${esc(p.title || 'Sans titre')}</div>
         <div class="project-card-sub">
           ${matchCount > 0
-            ? `<span style="color:var(--green);font-size:10px">👥 ${matchCount} lead${matchCount > 1 ? 's' : ''}</span>`
+            ? `<span style="color:var(--green);font-size:10px">${PC_ICO_USERS} ${matchCount} lead${matchCount > 1 ? 's' : ''}</span>`
             : `<span style="opacity:.4;font-size:10px">Aucun lead</span>`}
           ${respInit ? `<span style="opacity:.5">·</span><span style="font-size:10px">${esc(respInit)}</span>` : ''}
           ${metaSub ? `<span style="opacity:.5">·</span><span style="font-size:10px">${esc(metaSub)}</span>` : ''}
@@ -3592,10 +3604,10 @@ function projectCard(p) {
         </div>
       </div>
       <div class="project-card-actions" onclick="event.stopPropagation()">
-        ${slug ? `<a class="pc-action${p.public_visible ? '' : ' pc-voir-draft'}" href="/projet/${esc(slug)}" target="_blank" title="${p.public_visible ? 'Voir →' : 'Aperçu'}">↗</a>` : ''}
-        <button class="pc-action pc-send" onclick="openSendMenu(event, '${esc(p.id)}')" title="Envoyer aux leads compatibles (WhatsApp ou email)">📨${matchCount > 0 ? ` ${matchCount}` : ''}</button>
-        <button class="pc-action pc-pdf" onclick="downloadPdf('${esc(p.id)}', this)" title="Générer la fiche PDF">📄</button>
-        <button class="pc-action pc-del" onclick="openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">✕</button>
+        ${slug ? `<a class="pc-action${p.public_visible ? '' : ' pc-voir-draft'}" href="/projet/${esc(slug)}" target="_blank" title="${p.public_visible ? 'Voir →' : 'Aperçu'}">${PC_ICO_LINK}</a>` : ''}
+        <button class="pc-action pc-send" onclick="openSendMenu(event, '${esc(p.id)}')" title="Envoyer aux leads compatibles (WhatsApp ou email)">${PC_ICO_SEND}${matchCount > 0 ? `<span class="pc-count">${matchCount}</span>` : ''}</button>
+        <button class="pc-action pc-pdf" onclick="downloadPdf('${esc(p.id)}', this)" title="Générer la fiche PDF">${PC_ICO_PDF}</button>
+        <button class="pc-action pc-del" onclick="openDelProjectModal('${esc(p.id)}', '${esc(p.title || 'Sans titre')}', '${esc(p.status || '')}')" title="Supprimer">${PC_ICO_DEL}</button>
       </div>
     </div>`;
 }
@@ -3608,7 +3620,9 @@ function openSendMenu(ev, projectId) {
   if (!_sendMenuEl) {
     _sendMenuEl = document.createElement('div');
     _sendMenuEl.className = 'send-menu';
-    _sendMenuEl.innerHTML = '<button data-act="wa">💬 WhatsApp</button><button data-act="email">✉️ Email (fiche)</button>';
+    _sendMenuEl.innerHTML =
+      `<button data-act="wa"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>WhatsApp</button>`
+      + `<button data-act="email"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>Email (fiche)</button>`;
     document.body.appendChild(_sendMenuEl);
     document.addEventListener('click', closeSendMenu);
     window.addEventListener('scroll', closeSendMenu, true);
@@ -3623,7 +3637,7 @@ function openSendMenu(ev, projectId) {
 
 async function downloadPdf(projectId, btn) {
   const original = btn.innerHTML;
-  btn.innerHTML = '⌛ Génération…';
+  btn.innerHTML = 'Génération…';
   btn.disabled = true;
   try {
     const res = await fetch(`/api/generate-pdf?id=${projectId}`, {
