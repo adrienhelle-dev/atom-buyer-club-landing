@@ -2564,6 +2564,13 @@
               <label for="sr-desc-longue">Description longue</label>
               <textarea id="sr-desc-longue" rows="5"></textarea>
             </div>
+            <div class="np-field span-2">
+              <label for="sr-import-sel">Reprendre les équipements d'un projet</label>
+              <select id="sr-import-sel" onchange="srImportFromProject(this.value)">
+                <option value="">Choisir un projet…</option>
+              </select>
+              <span class="np-field-help">Remplit les deux blocs ci-dessous avec l'ameublement coché + étage / ascenseur / métro / DPE du projet</span>
+            </div>
             <div class="np-field">
               <label for="sr-equipements">Équipements (un par ligne)</label>
               <textarea id="sr-equipements" rows="5" placeholder="Lit double&#10;Cuisine équipée&#10;Salle de bain&#10;Smart TV"></textarea>
@@ -4346,6 +4353,52 @@ function showNpSection(n) {
   document.querySelectorAll('.np-section:not(.sr-section)').forEach(s => s.classList.toggle('active', +s.dataset.section === n));
 }
 
+// Libellés ameublement (mêmes clés que les cases #np-eq-grid)
+const AMEU_LABELS = {
+  lit_double: 'Lit double & literie', occultation: 'Rideaux occultants',
+  table: 'Table à manger & assises', bureau: 'Espace bureau',
+  rangements: 'Rangements intégrés', luminaires: 'Luminaires',
+  cuisine_equipee: 'Cuisine équipée', plaques: 'Plaques de cuisson',
+  four_micro: 'Four / micro-ondes', refrigerateur: 'Réfrigérateur & freezer',
+  vaisselle: 'Vaisselle & ustensiles', douche: "Salle d'eau avec douche",
+  wc_separes: 'WC séparés', lave_linge: 'Lave-linge',
+  tv: 'Télévision', internet: 'Internet fibre inclus',
+};
+// Équipements (libellés lisibles) à partir de l'objet ameublement {clé: bool}
+function srEquipFromAmeublement(am) {
+  if (!am || typeof am !== 'object') return [];
+  return Object.keys(AMEU_LABELS).filter(k => am[k]).map(k => AMEU_LABELS[k]);
+}
+// Caractéristiques structurées (étage, ascenseur, métro, DPE) depuis un projet
+function srCaracFromProject(p) {
+  const c = [];
+  if (p.floor) c.push(`${p.floor}e étage`);
+  c.push(p.has_elevator ? 'Avec ascenseur' : 'Sans ascenseur');
+  if (p.metro_name) c.push(`Métro ${p.metro_name}${p.metro_distance ? ` · ${p.metro_distance} m` : ''}`);
+  if (p.dpe_avant && p.dpe_apres) c.push(`DPE ${p.dpe_avant} → ${p.dpe_apres} après rénovation`);
+  else if (p.dpe_apres)           c.push(`DPE ${p.dpe_apres}`);
+  return c;
+}
+
+// Importe les équipements + caractéristiques d'un projet dans le formulaire réalisation
+function srImportFromProject(projectId) {
+  const sel = document.getElementById('sr-import-sel');
+  const id  = projectId || sel?.value;
+  if (sel) sel.value = '';
+  if (!id) return;
+  const p = (_srAvailableProjects || []).find(x => x.id === id);
+  if (!p) return;
+  const equip = srEquipFromAmeublement(p.ameublement);
+  const carac = srCaracFromProject(p);
+  const eqEl = document.getElementById('sr-equipements');
+  const caEl = document.getElementById('sr-caracteristiques');
+  if ((eqEl.value.trim() || caEl.value.trim()) &&
+      !confirm('Remplacer le contenu actuel des équipements et caractéristiques ?')) return;
+  if (equip.length) eqEl.value = equip.join('\n');
+  if (carac.length) caEl.value = carac.join('\n');
+  if (typeof setSrBtnDirty === 'function') setSrBtnDirty(true);
+}
+
 function promoteToShowroom() {
   if (!editingProjectId) return;
   const g = id => document.getElementById(id)?.value || '';
@@ -4365,21 +4418,18 @@ function promoteToShowroom() {
   const afterImgs  = [...np3dImages];
   const beforeImgs = [...npImages];
 
-  // ── Caractéristiques structurées : on ne perd pas étage / ascenseur / métro / DPE ──
-  const carac = [];
-  const floor = g('np-floor');
-  if (floor) carac.push(`${floor}e étage`);
-  carac.push(document.getElementById('np-elevator')?.checked ? 'Avec ascenseur' : 'Sans ascenseur');
-  const metroName = g('np-metro-name'), metroDist = g('np-metro-dist');
-  if (metroName) carac.push(`Métro ${metroName}${metroDist ? ` · ${metroDist} m` : ''}`);
-  const dpeAvant = g('np-dpe-avant');
-  if (dpeAvant && dpe)      carac.push(`DPE ${dpeAvant} → ${dpe} après rénovation`);
-  else if (dpe)            carac.push(`DPE ${dpe}`);
-
-  // ── Équipements : reprend les cases « Ameublement » cochées (libellés lisibles) ──
-  const equip = [...document.querySelectorAll('#np-eq-grid input[data-eq]:checked')]
-    .map(cb => cb.closest('label')?.querySelector('span')?.textContent.trim())
-    .filter(Boolean);
+  // ── Équipements + caractéristiques (mêmes helpers que l'import manuel) ──
+  const ameu = {};
+  document.querySelectorAll('#np-eq-grid input[data-eq]').forEach(cb => { ameu[cb.dataset.eq] = cb.checked; });
+  const equip = srEquipFromAmeublement(ameu);
+  const carac = srCaracFromProject({
+    floor:          g('np-floor'),
+    has_elevator:   document.getElementById('np-elevator')?.checked,
+    metro_name:     g('np-metro-name'),
+    metro_distance: g('np-metro-dist'),
+    dpe_avant:      g('np-dpe-avant'),
+    dpe_apres:      dpe,
+  });
 
   // resetShowroomForm() inside openShowroomEdit clears srAfterImages/srBeforeImages
   // synchronously — we re-populate immediately after so nothing can clear them again.
@@ -7443,11 +7493,13 @@ async function loadAvailableProjects() {
   const res = await fetch('/api/projects', { headers: { Authorization: `Bearer ${token}` } });
   const { projects } = await res.json().catch(() => ({ projects: [] }));
   _srAvailableProjects = projects || [];
-  sel.innerHTML = '<option value="">+ Associer un projet…</option>' +
-    _srAvailableProjects
-      .sort((a, b) => (a.title||'').localeCompare(b.title||''))
-      .map(p => `<option value="${p.id}">${esc(p.title || p.slug)} — ${p.arrondissement || '?'}${p.status === 'disponible' ? ' ✦' : ''}</option>`)
-      .join('');
+  const opts = _srAvailableProjects
+    .sort((a, b) => (a.title||'').localeCompare(b.title||''))
+    .map(p => `<option value="${p.id}">${esc(p.title || p.slug)} — ${p.arrondissement || '?'}${p.status === 'disponible' ? ' ✦' : ''}</option>`)
+    .join('');
+  sel.innerHTML = '<option value="">+ Associer un projet…</option>' + opts;
+  const importSel = document.getElementById('sr-import-sel');
+  if (importSel) importSel.innerHTML = '<option value="">Choisir un projet…</option>' + opts;
   _srRenderLinkedChips();
 }
 
