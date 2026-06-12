@@ -121,9 +121,11 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ item: { ...data, linked_projects } });
       }
 
-      // Liste
+      // Liste — vedettes d'abord (épinglées en tête), puis ordre manuel, puis date
       let q = supabase.from('showroom_items').select('*')
-        .order('ordre', { ascending: true }).order('created_at', { ascending: false });
+        .order('is_featured', { ascending: false })
+        .order('ordre', { ascending: true })
+        .order('created_at', { ascending: false });
       if (!isAdmin) q = q.eq('is_published', true);
 
       const { data, error } = await q;
@@ -219,6 +221,21 @@ module.exports = async function handler(req, res) {
         catch (e) { console.error('Telegram showroom interest erreur:', e?.message || e); }
 
         return res.status(200).json({ ok: true });
+      }
+
+      // ── Réordonnancement (drag & drop admin) ──────────────────
+      if (_b.action === 'reorder') {
+        const auth = verifyToken(tokenFromReq(req));
+        if (!auth) return res.status(401).json({ error: 'Non autorisé' });
+        const order = Array.isArray(_b.order) ? _b.order : [];
+        if (!order.length) return res.status(400).json({ error: 'order_required' });
+        for (const o of order) {
+          if (!o || !o.id) continue;
+          await supabase.from('showroom_items')
+            .update({ ordre: Number(o.ordre) || 0 })
+            .eq('id', o.id);
+        }
+        return res.status(200).json({ ok: true, count: order.length });
       }
 
       if (_b.action === 'update_all') {

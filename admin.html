@@ -1300,6 +1300,12 @@
     .sr-card-meta { font-size: 12px; color: var(--dim); margin: 0 0 10px; }
     .sr-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .sr-badge-featured { background: rgba(184,151,90,.15); color: var(--gold); border: 1px solid rgba(184,151,90,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
+    .sr-card.dragging { opacity: .4; }
+    .sr-card.drag-over { outline: 2px dashed var(--gold); outline-offset: 2px; }
+    .sr-card[draggable=true] { cursor: grab; }
+    .sr-card[draggable=true]:active { cursor: grabbing; }
+    .sr-reorder-hint { grid-column: 1/-1; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); padding: 0 0 4px; }
+    .sr-reorder-hint svg { flex-shrink: 0; opacity: .7; }
     .sr-badge-draft    { background: rgba(122,120,116,.12); color: var(--dim); border: 1px solid var(--border); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
     .sr-badge-pub      { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.3); border-radius: 20px; font-size: 10px; padding: 2px 8px; }
     .sr-badge-interest { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.35); border-radius: 20px; font-size: 10px; padding: 2px 8px; font-weight:500; }
@@ -2567,8 +2573,8 @@
               <label for="sr-style">Style architectural</label>
               <select id="sr-style">
                 <option value="">—</option>
-                <option>Contemporain</option><option>Loft</option><option>Haussmannien</option>
-                <option>Design</option><option>Industriel</option><option>Minimaliste</option>
+                <option>Minimaliste</option><option>Boiserie</option><option>Contemporain</option>
+                <option>Parisien</option><option>Moderne</option><option>Loft</option><option>Duplex</option>
               </select>
             </div>
             <div class="np-field">
@@ -2717,12 +2723,14 @@
             <div class="np-field span-2">
               <div class="np-toggle">
                 <input type="checkbox" id="sr-featured"/>
-                <label for="sr-featured">Mise en avant (featured)</label>
+                <label for="sr-featured">Mise en avant (vedette)</label>
               </div>
+              <span class="np-field-help">Les vedettes sont épinglées en tête du showroom public, avant toutes les autres réalisations.</span>
             </div>
             <div class="np-field">
               <label for="sr-ordre">Ordre d'affichage</label>
               <input type="number" id="sr-ordre" value="0"/>
+              <span class="np-field-help">Ou glisse-dépose les cartes depuis la liste Showroom</span>
             </div>
             <div class="np-field">
               <label for="sr-responsible">Responsable Atom</label>
@@ -7267,6 +7275,50 @@ function setSrTab(el, tab) {
   renderShowroomGrid();
 }
 
+// ── Drag & drop : réordonnancement des réalisations ────────────
+let _srVisibleOrder = [];
+let _srDragId = null, _srDragged = false;
+function srCardClick(id) {
+  if (_srDragged) { _srDragged = false; return; } // clic parasite après un drag
+  openShowroomEdit(id);
+}
+function srDragStart(e, id) {
+  _srDragId = id; _srDragged = true;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function srDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.sr-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+  setTimeout(() => { _srDragged = false; }, 60);
+}
+function srDragOver(e, el) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (el && !el.classList.contains('dragging')) el.classList.add('drag-over');
+}
+function srDrop(e, targetId) {
+  e.preventDefault();
+  if (!_srDragId || _srDragId === targetId) return;
+  const order = [..._srVisibleOrder];
+  const from = order.indexOf(_srDragId), to = order.indexOf(targetId);
+  if (from < 0 || to < 0) return;
+  order.splice(to, 0, order.splice(from, 1)[0]);
+  // Réassigne ordre = position visible sur tout le cache concerné
+  order.forEach((id, i) => { const it = showroomCache.find(x => x.id === id); if (it) it.ordre = i; });
+  renderShowroomGrid();
+  srPersistOrder(order);
+}
+async function srPersistOrder(ids) {
+  try {
+    await fetch('/api/showroom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'reorder', order: ids.map((id, i) => ({ id, ordre: i })) }),
+    });
+  } catch (e) { console.error('reorder failed', e); }
+}
+
 function renderShowroomGrid() {
   const grid   = document.getElementById('showroom-grid');
   const search = (document.getElementById('sr-search')?.value || '').toLowerCase().trim();
@@ -7299,6 +7351,15 @@ function renderShowroomGrid() {
     return true;
   });
 
+  // Ordre admin = ordre manuel pur (drag & drop). Les vedettes ne remontent
+  // qu'au rendu public ; ici on reste WYSIWYG pour le glisser-déposer.
+  filtered.sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0)
+    || new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+  // Réordonnancement possible seulement en vue « Tous » sans filtre ni recherche
+  const canReorder = srActiveTab === 'all' && !arr && !style && !search;
+  _srVisibleOrder = filtered.map(i => i.id);
+
   if (!filtered.length) {
     const msg = !showroomCache.length
       ? `<p style="font-size:32px;margin:0 0 12px">🏠</p><p style="margin:0">Aucune réalisation. <a href="#" onclick="openShowroomEdit(null);return false" style="color:var(--gold)">Créer la première →</a></p>`
@@ -7324,8 +7385,20 @@ function renderShowroomGrid() {
       } catch {}
     });
 
-  grid.innerHTML = filtered.map(item => `
-    <div class="sr-card" onclick="openShowroomEdit('${item.id}')">
+  const hint = canReorder ? `
+    <div class="sr-reorder-hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+      Glisse-dépose les cartes pour définir l'ordre d'affichage. Les vedettes restent en tête côté public.
+    </div>` : '';
+
+  grid.innerHTML = hint + filtered.map(item => `
+    <div class="sr-card" ${canReorder ? `draggable="true"
+      ondragstart="srDragStart(event,'${item.id}')"
+      ondragend="srDragEnd(event)"
+      ondragover="srDragOver(event,this)"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="srDrop(event,'${item.id}')"` : ''}
+      onclick="srCardClick('${item.id}')">
       ${srCoverUrl(item)
         ? `<img class="sr-card-cover" src="${esc(srCoverUrl(item))}" alt="${esc(item.name)}" loading="lazy"/>`
         : `<div class="sr-card-cover-placeholder">🏠</div>`}
