@@ -118,7 +118,7 @@
     }
     .nav-dd-item:hover { background: var(--bg3); }
     .nav-dd-item.active { background: rgba(184,151,90,.14); color: var(--gold); }
-    .nav-dd-item-ico { font-size: 15px; line-height: 1; flex-shrink: 0; }
+    .nav-dd-item-ico { color: var(--gold); flex-shrink: 0; display: block; }
     .nav-dd-item-ext { margin-left: auto; opacity: .5; }
     .view { display: none; }
     /* ── Onglet Assets : registres mandats / acquéreurs ─────── */
@@ -1992,14 +1992,17 @@
       </button>
       <div class="nav-dd-menu" id="assets-menu" role="menu">
         <button class="nav-dd-item" role="menuitem" onclick="goAssets('mandats')">
-          <span class="nav-dd-item-ico">📋</span> Registre des mandats
+          <svg class="nav-dd-item-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg>
+          Registre des mandats
         </button>
         <a class="nav-dd-item" role="menuitem" href="https://atom-buyer-club.vercel.app/admin/assets" target="_blank" rel="noopener" onclick="closeAssetsMenu()">
-          <span class="nav-dd-item-ico">📈</span> Suivi de performances
+          <svg class="nav-dd-item-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-5"/><path d="M19 8v3h-3"/></svg>
+          Suivi de performances
           <svg class="nav-dd-item-ext" width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
         </a>
         <button class="nav-dd-item" role="menuitem" onclick="goAssets('acquereurs')">
-          <span class="nav-dd-item-ico">🤝</span> Suivi des acquéreurs
+          <svg class="nav-dd-item-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Suivi des acquéreurs
         </button>
       </div>
     </div>
