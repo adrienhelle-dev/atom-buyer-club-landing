@@ -868,7 +868,7 @@ async function handleMandatUpdate(req, res, b, payload) {
 // ── action: deverser_registre ── attribue le numéro de registre (CTA) ───────
 async function handleDeverserRegistre(req, res, b, payload) {
   if (!b.mandat_id) return res.status(400).json({ error: 'mandat_id requis' });
-  const { data: m } = await supabase.from('mandats').select('id, registre_numero').eq('id', b.mandat_id).maybeSingle();
+  const { data: m } = await supabase.from('mandats').select('id, registre_numero, interest_event_id').eq('id', b.mandat_id).maybeSingle();
   if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
   if (m.registre_numero) return res.status(200).json({ ok: true, registre_numero: m.registre_numero, already: true });
 
@@ -880,6 +880,15 @@ async function handleDeverserRegistre(req, res, b, payload) {
   const { error } = await supabase.from('mandats')
     .update({ registre_numero: next, registre_at: new Date().toISOString() }).eq('id', b.mandat_id);
   if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+
+  // Persiste le n° dans l'événement d'intérêt lié (pour l'affichage onglet Intérêts)
+  if (m.interest_event_id) {
+    const { data: ev } = await supabase.from('lead_events').select('content').eq('id', m.interest_event_id).maybeSingle();
+    if (ev) {
+      let c = {}; try { c = ev.content ? (typeof ev.content === 'string' ? JSON.parse(ev.content) : ev.content) : {}; } catch {}
+      await supabase.from('lead_events').update({ content: { ...c, registre_numero: next } }).eq('id', m.interest_event_id);
+    }
+  }
   return res.status(200).json({ ok: true, registre_numero: next });
 }
 

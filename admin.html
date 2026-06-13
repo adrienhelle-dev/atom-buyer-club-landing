@@ -7077,6 +7077,25 @@ function renderInterestsTable() {
   _updateInterestsBadge();
 }
 
+// Déversement au registre depuis l'onglet Intérêts (étape finale après mandat généré)
+async function deverserFromInterest(evId, mandatId) {
+  if (!mandatId) { showToast('Mandat introuvable — régénère le mandat', 'error'); return; }
+  try {
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'deverser_registre', mandat_id: mandatId }),
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    if (!res.ok || !data.ok) { showToast(data.detail || data.error || 'Échec du déversement', 'error'); return; }
+    const ev = interestsCache.find(e => String(e.id) === String(evId));
+    if (ev) ev.content = { ...(ev.content || {}), registre_numero: data.registre_numero };
+    renderInterestsTable();
+    showToast(`Déversé au registre — n°${data.registre_numero}`, 'success');
+  } catch (e) { showToast('Erreur réseau', 'error'); }
+}
+
 function _buildInterestRow(ev) {
   const lead     = ev.lead;
   const treated  = !!(ev.content?.treated);
@@ -7146,20 +7165,30 @@ function _buildInterestRow(ev) {
       const offerDone  = !!(ev.content?.offer_sent_at);
       const mandatDone = !!(ev.content?.mandat_sent_at);
       const modalArgs  = `'${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}'`;
+      const mandatId  = ev.content?.mandat_id || '';
+      const regNo     = ev.content?.registre_numero;
+      // Étape finale : une fois le mandat généré (vert), on déverse au registre.
+      const deverserCta = mandatDone
+        ? (regNo
+            ? `<span class="int-source-link" style="color:var(--gold);cursor:default" title="Au registre">Registre n°${regNo}</span>`
+            : `<button class="int-source-link generate-cta" onclick="deverserFromInterest('${evIdSafe}','${mandatId}')">Déverser au registre ›</button>`)
+        : '';
       pipelineCta =
         (offerDone
           ? `<button class="int-source-link offer-cta" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
           : `<button class="int-source-link generate-cta" onclick="openOfferModal(${modalArgs})">Offre ›</button>`)
         + (mandatDone
           ? `<button class="int-source-link mandat-cta" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`
-          : `<button class="int-source-link generate-cta" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`);
+          : `<button class="int-source-link generate-cta" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`)
+        + deverserCta;
       mobPipelineBtn =
         (offerDone
           ? `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
           : `<button class="int-mob-pipeline-btn generate" onclick="openOfferModal(${modalArgs})">Offre ›</button>`)
         + (mandatDone
           ? `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`
-          : `<button class="int-mob-pipeline-btn generate" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`);
+          : `<button class="int-mob-pipeline-btn generate" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`)
+        + (mandatDone && !regNo ? `<button class="int-mob-pipeline-btn generate" onclick="deverserFromInterest('${evIdSafe}','${mandatId}')">Déverser au registre ›</button>` : (regNo ? `<button class="int-mob-pipeline-btn mandat-done" style="cursor:default">Registre n°${regNo}</button>` : ''));
     }
   }
 
