@@ -16,7 +16,6 @@ const path = require('path');
 const { supabase } = require('../lib/supabase');
 
 const DRY = process.argv.includes('--dry');
-const NEXT_NUMERO = 160; // prochain n° auto après import (159 = dernier signé)
 
 const norm = s => (s || '').toString().trim().toLowerCase();
 
@@ -74,6 +73,7 @@ async function main() {
     const leadId = await findOrCreateLead(m, leadCache);
     const mandat = {
       numero: m.numero,
+      registre_numero: m.numero,   // déjà déversé au registre (historique)
       lead_id: DRY ? null : leadId,
       project_id: null,
       source: 'import_microsurfaces',
@@ -106,13 +106,7 @@ async function main() {
     created++;
   }
   console.log(`✅ ${created} mandats importés · ${leadCache.size} leads acquéreurs (créés ou réutilisés)`);
-
-  // 3. Réaligne la séquence des numéros → prochain auto = 160
-  if (!DRY) {
-    const { error } = await supabase.rpc('reset_mandats_numero_seq', { next_val: NEXT_NUMERO });
-    if (error) console.warn('⚠️  reset séquence échoué (à faire manuellement):', error.message);
-    else console.log(`🔢 séquence réalignée → prochain mandat = n°${NEXT_NUMERO}`);
-  }
+  console.log('🔢 numéros de registre 101→159 attribués · prochain déversement = 160 (max+1)');
 }
 
 main().then(() => process.exit(0)).catch(e => { console.error('❌', e.message); process.exit(1); });
