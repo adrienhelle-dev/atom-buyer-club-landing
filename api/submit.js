@@ -102,6 +102,7 @@ module.exports = async function handler(req, res) {
   // Les libellés d'intérêt s'accumulent ici pour n'envoyer QU'UNE notif Telegram
   // par soumission (une page réalisation envoie souvent CTA showroom + projet lié).
   const interestParts = [];
+  let _projResponsible = null; // responsable du projet (si intérêt projet)
 
   // ── Log showroom CTA dans la timeline du lead ──────────────────
   if (isShowroomCta && leadId) {
@@ -129,6 +130,7 @@ module.exports = async function handler(req, res) {
       .select('title, responsible_admin')
       .eq('id', projectId)
       .single();
+    if (proj?.responsible_admin) _projResponsible = proj.responsible_admin;
 
     // Log dans la timeline — awaited (fire & forget n'est pas fiable en serverless)
     await supabase.from('lead_events').insert([{
@@ -174,9 +176,11 @@ module.exports = async function handler(req, res) {
   }
 
   // ── Notif Telegram intérêt — une seule, même si CTA réalisation + projet lié ──
+  // responsibleEmail : responsable du projet (prioritaire) ou du lead existant
   const score = computeScore(leadData);
   if (interestParts.length) {
-    try { await notifyInterest(leadData, interestParts.join(' · '), score); }
+    const responsibleEmail = _projResponsible || (isUpdate ? await fetchAssignedTo(leadId) : null);
+    try { await notifyInterest(leadData, interestParts.join(' · '), score, responsibleEmail); }
     catch (e) { console.error('Telegram intérêt erreur:', e?.message || e); }
   }
 
@@ -216,6 +220,15 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({ ok: true, updated: isUpdate, lead_id: leadId });
 };
+
+// Récupère le responsable assigné d'un lead existant (pour le DM d'intérêt).
+async function fetchAssignedTo(leadId) {
+  if (!leadId) return null;
+  try {
+    const { data } = await supabase.from('leads').select('assigned_to').eq('id', leadId).maybeSingle();
+    return data?.assigned_to || null;
+  } catch { return null; }
+}
 
 // ─── Templates email ────────────────────────────────────────────
 function row(label, value) {
