@@ -5741,10 +5741,19 @@ function toggleAssetsMenu(e) {
 function positionAssetsMenu() {
   const btn = document.getElementById('nav-assets-btn');
   const menu = document.getElementById('assets-menu');
+  // S'assure que l'onglet (dernier de la nav scrollable) est bien visible
+  try { btn.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch {}
   const r = btn.getBoundingClientRect();
   menu.style.top = (r.bottom + 2) + 'px';
-  const w = menu.offsetWidth || 230;
-  menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+  if (window.innerWidth <= 640) {
+    // Mobile : panneau ancré au bord droit (toujours à l'écran, indépendant du scroll de la nav)
+    menu.style.left = 'auto';
+    menu.style.right = '8px';
+  } else {
+    menu.style.right = 'auto';
+    const w = menu.offsetWidth || 230;
+    menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+  }
 }
 function closeAssetsMenu()   { document.getElementById('nav-assets')?.classList.remove('open'); }
 function goAssets(view)      { closeAssetsMenu(); setRoute(view); }
