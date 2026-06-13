@@ -329,6 +329,7 @@
       <div class="fin-row"><span class="fin-key">Mobilier</span><span class="fin-val" id="fin-meuble">—</span></div>
       <div class="fin-row fin-total"><span class="fin-key">Total</span><span class="fin-val fin-val-big" id="fin-total">—</span></div>
       <div style="margin-top:18px">
+        <div class="fin-row" id="fin-loyer-row" style="display:none"><span class="fin-key">Loyer / mois</span><span class="fin-val" id="fin-loyer">—</span></div>
         <div class="fin-row"><span class="fin-key">Mensualité*</span><span class="fin-val" id="fin-mensu">—</span></div>
         <div class="fin-row"><span class="fin-key">Rendement</span><span class="fin-val" id="fin-rendement">—</span></div>
       </div>
@@ -670,6 +671,10 @@ function render() {
   setText('fin-travaux',   fmtEur(project.budget_travaux));
   setText('fin-meuble',    fmtEur(project.budget_meuble));
   setText('fin-total',     fmtEur(project.total_all_in));
+  if (project.loyer_atom) {
+    setText('fin-loyer', fmtEur(project.loyer_atom) + '/mois');
+    document.getElementById('fin-loyer-row').style.display = '';
+  }
   setText('fin-mensu',     project.mensualite ? fmtEur(project.mensualite) + '/mois' : '—');
   setText('fin-rendement', project.rendement_brut ? project.rendement_brut + ' %' : '—');
 
