@@ -179,6 +179,10 @@ module.exports = async function handler(req, res) {
 
     let q = supabase.from('leads').select('*', { count: 'exact' }).order('created_at', { ascending: false });
 
+    // Exclut les acquéreurs importés du registre (mandants Excel) — ils ne sont
+    // pas de vrais leads d'acquisition (pas de tél/mail, pas passés par la landing).
+    q = q.not('is_acquereur', 'is', true);
+
     // "organic" = arrivée directe sur la landing (utm 'organic' ou 'landing')
     // "fiche_projet" = leads venus d'une page projet sans UTM payant
     // "seloger" = consolide tous les imports SeLoger (utm_source 'seloger-*')

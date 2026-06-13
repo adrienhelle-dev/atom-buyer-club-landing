@@ -163,6 +163,36 @@
     .acq-dr-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
     .acq-dr-row span:first-child { color: var(--dim); }
     .acq-dr-row span:last-child { color: var(--cream); text-align: right; }
+    /* Badges d'état (couleur registre) */
+    .m-stat-actif   { background: rgba(76,175,125,.16);  color: var(--green); }
+    .m-stat-tombe   { background: rgba(217,150,80,.16);  color: #d99650; }
+    .m-stat-inactif { background: rgba(122,120,116,.18); color: var(--dim); }
+    .m-badge-noreg  { background: rgba(184,151,90,.12);  color: var(--gold); font-size:11px; padding:3px 9px; border-radius:20px; }
+    /* Toggle vue liste/cartes */
+    .acq-viewtoggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .acq-vt-btn { background: var(--bg3); border: none; padding: 7px 10px; color: var(--dim); cursor: pointer; display: flex; align-items: center; transition: background .12s, color .12s; }
+    .acq-vt-btn + .acq-vt-btn { border-left: 1px solid var(--border); }
+    .acq-vt-btn.active { background: rgba(184,151,90,.18); color: var(--gold); }
+    /* Vue liste acquéreurs */
+    .acq-grid.as-list { display: block; }
+    .acq-list-tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
+    .acq-list-tbl thead th { text-align: left; padding: 10px 12px; font-size: 10px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .acq-list-tbl tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+    .acq-list-tbl tbody tr:hover { background: var(--bg2); }
+    .acq-list-tbl td { padding: 11px 12px; color: var(--cream); vertical-align: middle; }
+    /* Switches & contrôles drawer dossier */
+    .acq-sw { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--cream); }
+    .acq-sw-input { font-size: 13px; }
+    .acq-toggle-row { display: flex; gap: 8px; margin: 4px 0 14px; }
+    .acq-tg { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: all .12s; }
+    .acq-tg.on-actif   { background: rgba(76,175,125,.16); border-color: var(--green); color: var(--green); }
+    .acq-tg.on-tombe   { background: rgba(217,150,80,.16); border-color: #d99650; color: #d99650; }
+    .acq-edit-inp { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; color: var(--cream); font-family: var(--sans); font-size: 13px; }
+    .acq-edit-inp:focus { outline: none; border-color: var(--gold); }
+    .acq-btn-line { width: 100%; padding: 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg3); color: var(--cream); font-family: var(--sans); font-size: 13.5px; font-weight: 500; cursor: pointer; margin-top: 8px; transition: border-color .12s, background .12s; }
+    .acq-btn-line:hover { border-color: var(--gold); }
+    .acq-btn-gold { background: var(--gold); border-color: var(--gold); color: #1a1a1a; font-weight: 600; }
+    .acq-btn-gold:disabled { opacity: .4; cursor: not-allowed; }
     .view.active { display: block; }
 
     /* Topbar — gelé avec la nav dans .top-freeze (la liste scrolle dessous) */
@@ -3201,7 +3231,7 @@
   <div class="asset-table-wrap">
     <table class="asset-table" id="mandats-table">
       <thead><tr>
-        <th>N°</th><th>Mandant</th><th>Bien</th><th>Prix offre</th><th>Honoraires</th><th>Statut</th><th>Documents</th><th>Créé</th>
+        <th>N°</th><th>Mandant</th><th>Bien</th><th>Prix HAI</th><th>Honoraires</th><th>État</th><th>Documents</th><th>Date</th>
       </tr></thead>
       <tbody id="mandats-tbody"><tr><td colspan="8" class="asset-msg">Chargement…</td></tr></tbody>
     </table>
@@ -3216,6 +3246,14 @@
       <p class="asset-sub" id="acq-sub">—</p>
     </div>
     <div class="asset-head-actions">
+      <div class="acq-viewtoggle">
+        <button id="acq-view-list"  class="acq-vt-btn active" onclick="setAcqView('list')" title="Vue liste">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+        <button id="acq-view-cards" class="acq-vt-btn" onclick="setAcqView('cards')" title="Vue cartes">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+      </div>
       <input type="text" id="acq-search" class="asset-search" placeholder="Rechercher nom, bien…" oninput="renderAcquereursTable()"/>
       <button class="asset-refresh" onclick="loadAcquereurs()" title="Actualiser">↻</button>
     </div>
@@ -3236,7 +3274,7 @@
 <!-- ══ MODAL ENVOI NOTAIRE ══════════════════════════════════════ -->
 <div class="del-proj-overlay" id="notaire-overlay" onclick="if(event.target===this)closeNotaireModal()">
   <div class="del-proj-modal" style="max-width:440px">
-    <div class="del-proj-icon" style="background:rgba(184,151,90,.15)">📨</div>
+    <div class="del-proj-icon" style="color:var(--gold)"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></div>
     <div class="del-proj-title">Envoyer le dossier au notaire</div>
     <div id="notaire-recap" style="text-align:left;font-size:13px;color:var(--dim);margin:14px 0 6px;line-height:1.7"></div>
     <p class="del-proj-warn" style="background:rgba(184,151,90,.08);border-color:rgba(184,151,90,.25)">Un email avec les pièces jointes sera envoyé à <strong id="notaire-dest">—</strong>, associés Atom en copie. <span id="notaire-id-warn"></span></p>
@@ -5773,6 +5811,27 @@ function mandatStatutBadge(s) {
   const [lbl, cls] = map[s] || [s || '—', 'm-stat-abandon'];
   return `<span class="m-stat ${cls}">${esc(lbl)}</span>`;
 }
+// État du mandat (couleur registre) : actif (vert) / annulé (orange) / inactif (gris)
+function etatBadge(etat) {
+  const map = { actif:['Actif','m-stat-actif'], tombe:['Annulé','m-stat-tombe'], inactif:['Inactif','m-stat-inactif'] };
+  const [lbl, cls] = map[etat] || ['Actif','m-stat-actif'];
+  return `<span class="m-stat ${cls}">${esc(lbl)}</span>`;
+}
+// Arrondissement déduit du CP (75010 → 10e), sinon CP brut
+function arrondLabel(m) {
+  if (m.project?.arrondissement) return m.project.arrondissement;
+  const cp = (m.adresse_cp || '').toString();
+  if (/^75\d{3}$/.test(cp)) { const n = parseInt(cp.slice(3), 10); return n === 1 ? '1er' : n + 'e'; }
+  return cp || '';
+}
+// Libellé du bien : projet du site, sinon adresse historique (num + rue)
+function bienLabel(m) {
+  const base = m.project?.address || m.project?.title || [m.adresse_num, m.adresse_rue].filter(Boolean).join(' ');
+  const arr = arrondLabel(m);
+  return (base || '—') + (arr ? ` · ${arr}` : '');
+}
+// N° affiché = numéro de registre (déversé) ou indicateur "à déverser"
+function regNum(m) { return m.registre_numero != null ? String(m.registre_numero) : null; }
 
 // ── Registre des mandats ──
 let _mandatsCache = [];
@@ -5791,24 +5850,25 @@ function renderMandatsTable() {
   const tb = document.getElementById('mandats-tbody');
   const q = (document.getElementById('mandats-search')?.value || '').toLowerCase().trim();
   let rows = _mandatsCache;
-  if (q) rows = rows.filter(m => [m.numero, m.lead?.prenom, m.lead?.nom, m.project?.address, m.project?.title].join(' ').toLowerCase().includes(q));
+  if (q) rows = rows.filter(m => [m.registre_numero, m.lead?.prenom, m.lead?.nom, m.adresse_rue, m.project?.address, m.project?.title].join(' ').toLowerCase().includes(q));
   document.getElementById('mandats-sub').textContent =
-    `${_mandatsCache.length} mandat${_mandatsCache.length>1?'s':''}` + (q ? ` · ${rows.length} affiché${rows.length>1?'s':''}` : '');
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="8" class="asset-msg">Aucun mandat.</td></tr>'; return; }
+    `${_mandatsCache.length} mandat${_mandatsCache.length>1?'s':''} au registre` + (q ? ` · ${rows.length} affiché${rows.length>1?'s':''}` : '');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="8" class="asset-msg">Aucun mandat au registre.</td></tr>'; return; }
   tb.innerHTML = rows.map(m => {
-    const mandant = `${esc(m.lead?.prenom||'')} ${esc(m.lead?.nom||'')}`.trim() || '—';
-    const bien = esc(m.project?.address || m.project?.title || '—');
-    const offre  = m.offre_pdf_url  ? `<a class="m-doc-link" href="${esc(m.offre_pdf_url)}" target="_blank" rel="noopener">Offre</a>`  : `<span class="m-doc-link muted">Offre</span>`;
-    const mandat = m.mandat_pdf_url ? `<a class="m-doc-link" href="${esc(m.mandat_pdf_url)}" target="_blank" rel="noopener">Mandat</a>` : `<span class="m-doc-link muted">Mandat</span>`;
+    const mandant = `${esc(m.lead?.prenom||'')} ${esc((m.lead?.nom||'').toUpperCase())}`.trim() || '—';
+    const offre  = m.offre_pdf_url  ? `<a class="m-doc-link" href="${esc(m.offre_pdf_url)}" target="_blank" rel="noopener">Offre</a>`  : '';
+    const mandat = m.mandat_pdf_url ? `<a class="m-doc-link" href="${esc(m.mandat_pdf_url)}" target="_blank" rel="noopener">Mandat</a>` : '';
+    const acte   = m.acte_pdf_url   ? `<a class="m-doc-link" href="${esc(m.acte_pdf_url)}" target="_blank" rel="noopener">Acte</a>` : '';
+    const docs = [offre, mandat, acte].filter(Boolean).join('') || '<span class="muted" style="font-size:12px">—</span>';
     return `<tr>
-      <td><strong>${esc(String(m.numero||'—'))}</strong></td>
+      <td><strong>${esc(regNum(m) || '—')}</strong></td>
       <td>${mandant}</td>
-      <td class="muted">${bien}</td>
-      <td>${fmtMoney(m.prix_offre)}</td>
+      <td class="muted">${esc(bienLabel(m))}</td>
+      <td>${fmtMoney(m.prix_hai)}</td>
       <td>${fmtMoney(m.commission)}</td>
-      <td>${mandatStatutBadge(m.statut)}</td>
-      <td style="white-space:nowrap">${offre}${mandat}</td>
-      <td class="muted">${fmtDateShort(m.created_at)}</td>
+      <td>${etatBadge(m.etat)}</td>
+      <td style="white-space:nowrap">${docs}</td>
+      <td class="muted">${m.date_mandat ? fmtDateShort(m.date_mandat) : fmtDateShort(m.created_at)}</td>
     </tr>`;
   }).join('');
 }
@@ -5826,26 +5886,63 @@ async function loadAcquereurs() {
     renderAcquereursTable();
   } catch (e) { grid.innerHTML = '<div class="asset-msg" style="grid-column:1/-1">Erreur de chargement.</div>'; }
 }
-function renderAcquereursTable() {
-  const grid = document.getElementById('acq-grid');
+let _acqView = 'list';
+function setAcqView(v) {
+  _acqView = v;
+  document.getElementById('acq-view-list')?.classList.toggle('active', v === 'list');
+  document.getElementById('acq-view-cards')?.classList.toggle('active', v === 'cards');
+  renderAcquereursTable();
+}
+function _acqFiltered() {
   const q = (document.getElementById('acq-search')?.value || '').toLowerCase().trim();
   let rows = _acqCache;
-  if (q) rows = rows.filter(m => [m.lead?.prenom, m.lead?.nom, m.project?.address, m.project?.title].join(' ').toLowerCase().includes(q));
+  if (q) rows = rows.filter(m => [m.lead?.prenom, m.lead?.nom, m.adresse_rue, m.project?.address, m.project?.title, m.registre_numero].join(' ').toLowerCase().includes(q));
   document.getElementById('acq-sub').textContent =
-    `${_acqCache.length} acquéreur${_acqCache.length>1?'s':''} sous offre/mandat` + (q ? ` · ${rows.length} affiché${rows.length>1?'s':''}` : '');
-  if (!rows.length) { grid.innerHTML = '<div class="asset-msg" style="grid-column:1/-1">Aucun acquéreur sous offre pour l\'instant.</div>'; return; }
-  grid.innerHTML = rows.map((m, i) => {
+    `${_acqCache.length} dossier${_acqCache.length>1?'s':''} acquéreur` + (q ? ` · ${rows.length} affiché${rows.length>1?'s':''}` : '');
+  return rows;
+}
+function renderAcquereursTable() {
+  const grid = document.getElementById('acq-grid');
+  const rows = _acqFiltered();
+  if (!rows.length) { grid.className = 'acq-grid as-list'; grid.innerHTML = '<div class="asset-msg">Aucun dossier acquéreur.</div>'; return; }
+
+  if (_acqView === 'list') {
+    grid.className = 'acq-grid as-list';
+    grid.innerHTML = `<div style="overflow-x:auto"><table class="acq-list-tbl">
+      <thead><tr><th>N°</th><th>Acquéreur</th><th>Bien</th><th>Honoraires</th><th>État</th><th>Docs</th><th>Notaire</th><th>Fees</th></tr></thead>
+      <tbody>${rows.map((m, i) => {
+        const l = m.lead || {};
+        const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
+        const reg = regNum(m) ? `<strong>${regNum(m)}</strong>` : '<span class="m-badge-noreg">à déverser</span>';
+        const dot = ok => `<span class="acq-doc-dot ${ok?'acq-doc-ok':'acq-doc-no'}" title="${ok?'présent':'manquant'}"></span>`;
+        return `<tr onclick="openAcqDrawer(${_acqCache.indexOf(m)})">
+          <td>${reg}</td>
+          <td>${name}</td>
+          <td class="muted">${esc(bienLabel(m))}</td>
+          <td>${fmtMoney(m.commission)}</td>
+          <td>${etatBadge(m.etat)}</td>
+          <td style="white-space:nowrap">${dot(!!m.offre_pdf_url)}${dot(!!m.mandat_pdf_url)}${dot(!!m.promesse_pdf_url)}${dot(!!m.acte_pdf_url)}</td>
+          <td>${m.dossier_notaire_envoye ? '<span class="m-stat m-stat-actif">envoyé</span>' : '<span class="muted" style="font-size:12px">—</span>'}</td>
+          <td>${m.fees_paid ? '<span class="m-stat m-stat-actif">payés</span>' : '<span class="muted" style="font-size:12px">—</span>'}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+    return;
+  }
+
+  // Vue cartes
+  grid.className = 'acq-grid';
+  grid.innerHTML = rows.map(m => {
     const l = m.lead || {};
     const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
-    const bien = esc(m.project?.address || m.project?.title || '—');
-    const dot = (ok) => `<span class="acq-doc-dot ${ok?'acq-doc-ok':'acq-doc-no'}"></span>`;
-    return `<div class="acq-card" onclick="openAcqDrawer(${i})">
+    const dot = ok => `<span class="acq-doc-dot ${ok?'acq-doc-ok':'acq-doc-no'}"></span>`;
+    const reg = regNum(m) ? `n°${regNum(m)}` : '<span class="m-badge-noreg">à déverser</span>';
+    return `<div class="acq-card" onclick="openAcqDrawer(${_acqCache.indexOf(m)})">
       <div class="acq-card-top">
-        <div><p class="acq-card-name">${name}</p><p class="acq-card-bien">${bien}</p></div>
-        ${mandatStatutBadge(m.statut)}
+        <div><p class="acq-card-name">${name}</p><p class="acq-card-bien">${esc(bienLabel(m))}</p></div>
+        ${etatBadge(m.etat)}
       </div>
-      <div class="acq-card-row"><span class="acq-card-prix">${fmtMoney(m.prix_offre)}</span>&nbsp;· Mandat n°${esc(String(m.numero||'—'))}</div>
-      <div class="acq-card-row">${dot(!!m.offre_pdf_url)} Offre&nbsp;&nbsp; ${dot(!!m.mandat_pdf_url)} Mandat&nbsp;&nbsp; ${dot(!!l.pj_identite_url)} Pièce ID</div>
+      <div class="acq-card-row"><span class="acq-card-prix">${fmtMoney(m.commission)}</span>&nbsp;· ${reg}</div>
+      <div class="acq-card-row">${dot(!!m.offre_pdf_url)} Offre&nbsp; ${dot(!!m.mandat_pdf_url)} Mandat&nbsp; ${dot(!!m.promesse_pdf_url)} Promesse&nbsp; ${dot(!!m.acte_pdf_url)} Acte</div>
     </div>`;
   }).join('');
 }
@@ -5858,17 +5955,25 @@ function openAcqDrawer(i) {
   _acqCurrent = m;
   const l = m.lead || {};
   const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
-  const bien = esc(m.project?.address || m.project?.title || '—');
   const situ = { celibataire:'Célibataire', marie:'Marié·e', pacse:'Pacsé·e', divorce:'Divorcé·e' }[l.situation_familiale] || '—';
   const struct = { personnel:'En nom propre', sci:'SCI'+(l.nom_structure?' '+esc(l.nom_structure):''), sas:'SAS'+(l.nom_structure?' '+esc(l.nom_structure):'') }[l.achat_structure] || '—';
   const row = (k,v) => `<div class="acq-dr-row"><span>${k}</span><span>${v||'—'}</span></div>`;
   const docLink = (url, lbl) => url ? `<a class="m-doc-link" href="${esc(url)}" target="_blank" rel="noopener">${lbl} ↗</a>` : `<span class="m-doc-link muted">${lbl} —</span>`;
   const canSend = !!(m.offre_pdf_url && m.mandat_pdf_url);
+  const inReg = m.registre_numero != null;
   const conjoint = (l.situation_familiale==='marie'||l.situation_familiale==='pacse')&&l.conjoint_prenom
     ? row('Co-acquéreur', `${esc(l.conjoint_prenom)} ${esc((l.conjoint_nom||'').toUpperCase())}`) : '';
+  const headNum = inReg ? `Mandat n°${m.registre_numero}` : 'Non déversé au registre';
   document.getElementById('acq-drawer-content').innerHTML = `
     <h2 style="font-family:var(--serif);font-size:24px;margin:0 0 2px;color:var(--cream)">${name}</h2>
-    <p style="color:var(--dim);font-size:13px;margin:0 0 20px">${bien} · Mandat n°${esc(String(m.numero||'—'))}</p>
+    <p style="color:var(--dim);font-size:13px;margin:0 0 16px">${esc(bienLabel(m))} · ${headNum}</p>
+
+    <p class="acq-dr-h">État du mandat</p>
+    <div class="acq-toggle-row">
+      <button class="acq-tg ${m.etat==='actif'?'on-actif':''}"  onclick="setMandatEtat('actif')">Actif</button>
+      <button class="acq-tg ${m.etat==='tombe'?'on-tombe':''}"  onclick="setMandatEtat('tombe')">Annulé</button>
+    </div>
+
     <div class="acq-dr-section">
       <p class="acq-dr-h">Acquéreur</p>
       ${row('Né·e le', fmtDateShort(l.date_naissance))}
@@ -5876,31 +5981,106 @@ function openAcqDrawer(i) {
       ${row('Situation', situ)}
       ${conjoint}
       ${row('Acquisition', struct)}
-      ${row('Email', l.email?`<a href="mailto:${esc(l.email)}" style="color:var(--gold)">${esc(l.email)}</a>`:'—')}
-      ${row('Téléphone', esc(l.tel||''))}
-    </div>
-    <div class="acq-dr-section">
-      <p class="acq-dr-h">Bien & offre</p>
-      ${row('Prix d\'offre', fmtMoney(m.prix_offre))}
-      ${row('Honoraires Atom', fmtMoney(m.commission))}
-      ${row('Statut', mandatStatutBadge(m.statut))}
-    </div>
-    <div class="acq-dr-section">
-      <p class="acq-dr-h">Documents</p>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-        ${docLink(m.offre_pdf_url,'Offre')}${docLink(m.mandat_pdf_url,'Mandat')}${docLink(l.pj_identite_url,'Pièce ID')}
+      <div style="margin-top:8px;display:grid;gap:6px">
+        <input class="acq-edit-inp" id="acq-edit-email" value="${esc(l.email||'')}" placeholder="Email à compléter"/>
+        <input class="acq-edit-inp" id="acq-edit-tel" value="${esc(l.tel||'')}" placeholder="Téléphone à compléter"/>
+        <button class="acq-btn-line" onclick="saveMandantContact()">Enregistrer email / téléphone</button>
       </div>
     </div>
+
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Bien & honoraires</p>
+      ${row('Adresse', esc(bienLabel(m)))}
+      ${row('Prix HAI', fmtMoney(m.prix_hai))}
+      ${row('Honoraires Atom', fmtMoney(m.commission))}
+    </div>
+
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Suivi</p>
+      <label class="acq-sw"><span>Dossier envoyé au notaire</span>
+        <input type="checkbox" ${m.dossier_notaire_envoye?'checked':''} onchange="setMandatFlag('dossier_notaire_envoye', this.checked)"/></label>
+      <label class="acq-sw"><span>Honoraires payés</span>
+        <input type="checkbox" ${m.fees_paid?'checked':''} onchange="setMandatFlag('fees_paid', this.checked)"/></label>
+      <div class="acq-sw"><span>Date de promesse</span>
+        <input type="date" class="acq-edit-inp acq-sw-input" style="width:auto" value="${m.date_promesse||''}" onchange="setMandatField('date_promesse', this.value)"/></div>
+      <div class="acq-sw"><span>Délai de réalisation</span>
+        <input type="text" class="acq-edit-inp acq-sw-input" style="width:140px" value="${esc(m.delai_realisation||'')}" placeholder="ex. 3 mois" onchange="setMandatField('delai_realisation', this.value)"/></div>
+    </div>
+
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Documents</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px">
+        ${docLink(m.offre_pdf_url,'Offre')}${docLink(m.mandat_pdf_url,'Mandat')}${docLink(l.pj_identite_url,'Pièce ID')}${docLink(m.promesse_pdf_url,'Promesse')}${docLink(m.acte_pdf_url,'Acte')}
+      </div>
+      <input type="file" id="acq-up-promesse" accept="application/pdf" style="display:none" onchange="uploadMandatDoc('promesse', this)"/>
+      <input type="file" id="acq-up-acte"     accept="application/pdf" style="display:none" onchange="uploadMandatDoc('acte', this)"/>
+      <div style="display:flex;gap:8px">
+        <button class="acq-btn-line" onclick="document.getElementById('acq-up-promesse').click()">Uploader la promesse (PDF)</button>
+        <button class="acq-btn-line" onclick="document.getElementById('acq-up-acte').click()">Uploader l'acte (PDF)</button>
+      </div>
+    </div>
+
     <div class="acq-dr-section">
       <p class="acq-dr-h">Notaire confrère (acquéreur)</p>
       ${row('Étude', esc(m.notaire_nom||''))}
       ${row('Email', esc(m.notaire_email||''))}
     </div>
-    <button onclick="openNotaireModal()" ${canSend?'':'disabled'} style="width:100%;padding:13px;border-radius:9px;border:none;background:${canSend?'var(--gold)':'var(--bg3)'};color:${canSend?'#1a1a1a':'var(--dim)'};font-family:var(--sans);font-size:14px;font-weight:600;cursor:${canSend?'pointer':'not-allowed'};margin-top:6px">📨 Envoyer le dossier au notaire</button>
+
+    ${!inReg ? `<button class="acq-btn-line acq-btn-gold" onclick="deverserRegistre()">Déverser dans le registre</button>` : ''}
+    <button class="acq-btn-line acq-btn-gold" onclick="openNotaireModal()" ${canSend?'':'disabled'}>Envoyer le dossier au notaire</button>
     ${canSend?'':'<p style="font-size:12px;color:var(--dim);text-align:center;margin:8px 0 0">Offre + mandat requis avant l\'envoi.</p>'}`;
   document.getElementById('acq-drawer-overlay').classList.add('on');
 }
 function closeAcqDrawer() { document.getElementById('acq-drawer-overlay').classList.remove('on'); }
+
+// ── Actions dossier acquéreur ──
+function _acqReopen() { openAcqDrawer(_acqCache.indexOf(_acqCurrent)); renderAcquereursTable(); }
+async function _mandatPost(body, okMsg) {
+  try {
+    const res = await fetch('/api/offers', { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` }, body: JSON.stringify(body) });
+    if (res.status === 401) { logout(); return null; }
+    const data = await res.json();
+    if (!res.ok || !data.ok) { showToast(data.detail || data.error || 'Échec', 'error'); return null; }
+    if (okMsg) showToast(okMsg, 'success');
+    return data;
+  } catch (e) { showToast('Erreur réseau', 'error'); return null; }
+}
+async function setMandatEtat(etat) {
+  const m = _acqCurrent; if (!m) return;
+  if (await _mandatPost({ action:'mandat_update', mandat_id:m.id, etat }, etat==='tombe'?'Mandat marqué annulé':'Mandat marqué actif')) { m.etat = etat; _acqReopen(); }
+}
+async function setMandatFlag(field, val) {
+  const m = _acqCurrent; if (!m) return;
+  if (await _mandatPost({ action:'mandat_update', mandat_id:m.id, [field]: val }, 'Enregistré')) { m[field] = val; renderAcquereursTable(); }
+}
+async function setMandatField(field, val) {
+  const m = _acqCurrent; if (!m) return;
+  if (await _mandatPost({ action:'mandat_update', mandat_id:m.id, [field]: val }, 'Enregistré')) m[field] = val;
+}
+async function saveMandantContact() {
+  const m = _acqCurrent; if (!m) return;
+  const email = document.getElementById('acq-edit-email').value.trim();
+  const tel   = document.getElementById('acq-edit-tel').value.trim();
+  if (await _mandatPost({ action:'mandat_update', mandat_id:m.id, lead:{ email, tel } }, 'Coordonnées enregistrées')) {
+    m.lead = { ...(m.lead||{}), email, tel };
+  }
+}
+async function deverserRegistre() {
+  const m = _acqCurrent; if (!m) return;
+  const data = await _mandatPost({ action:'deverser_registre', mandat_id:m.id }, null);
+  if (data) { m.registre_numero = data.registre_numero; showToast(`Déversé au registre — n°${data.registre_numero}`, 'success'); _acqReopen(); }
+}
+function uploadMandatDoc(kind, input) {
+  const file = input.files?.[0]; if (!file) return;
+  const m = _acqCurrent; if (!m) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    showToast('Envoi du document…', 'info');
+    const data = await _mandatPost({ action:'mandat_doc', mandat_id:m.id, kind, content: reader.result, filename: file.name }, `${kind==='promesse'?'Promesse':'Acte'} uploadé`);
+    if (data) { m[kind==='promesse'?'promesse_pdf_url':'acte_pdf_url'] = data.url; _acqReopen(); }
+  };
+  reader.readAsDataURL(file);
+}
 
 // ── Modal envoi notaire ──
 function openNotaireModal() {
@@ -5909,7 +6089,7 @@ function openNotaireModal() {
   const l = m.lead || {};
   const hasId = !!l.pj_identite_url;
   document.getElementById('notaire-recap').innerHTML =
-    `<div>Mandat <strong style="color:var(--cream)">n°${esc(String(m.numero||'—'))}</strong> · ${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}</div>
+    `<div>Mandat <strong style="color:var(--cream)">n°${esc(String(m.registre_numero ?? '—'))}</strong> · ${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}</div>
      <div>Pièces jointes : Offre, Mandat${hasId?', Pièce ID':''}</div>`;
   document.getElementById('notaire-dest').textContent = 'linda.rebib.13190@notaires.fr';
   document.getElementById('notaire-id-warn').innerHTML = hasId ? '' : '<br/>⚠️ Aucune pièce d\'identité au dossier — elle ne sera pas jointe.';

@@ -408,9 +408,10 @@ module.exports = async function handler(req, res) {
 
   // ── action: notaire_recap ── envoi du dossier de vente au clerc de notaire ──
   // Prend mandat_id (pas interest_id) → traité avant le contrôle ci-dessous.
-  if (action === 'notaire_recap') {
-    return handleNotaireRecap(req, res, b, payload);
-  }
+  if (action === 'notaire_recap')     return handleNotaireRecap(req, res, b, payload);
+  if (action === 'mandat_update')     return handleMandatUpdate(req, res, b, payload);
+  if (action === 'deverser_registre') return handleDeverserRegistre(req, res, b, payload);
+  if (action === 'mandat_doc')        return handleMandatDoc(req, res, b, payload);
 
   if (!action || !interest_id) return res.status(400).json({ error: 'action et interest_id requis' });
 
@@ -690,25 +691,27 @@ module.exports = async function handler(req, res) {
 async function handleRegistry(req, res) {
   const which = req.query.registry;
 
+  const FULL = 'id, numero, registre_numero, registre_at, statut, etat, source, commission, prix_offre, prix_hai, offre_pdf_url, mandat_pdf_url, promesse_pdf_url, acte_pdf_url, docusign_envelope_id, date_mandat, date_fin_mandat, type_mandat, commission_partie, nature_bien, adresse_num, adresse_rue, adresse_cp, adresse_ville, mandant_domiciliation, mandant_sci, date_promesse, delai_realisation, fees_paid, dossier_notaire_envoye, notaire_nom, notaire_email, notaire_adresse, notaire_tel, created_by, created_at, lead:leads(id, prenom, nom, email, tel, date_naissance, adresse_residence, situation_familiale, conjoint_prenom, conjoint_nom, conjoint_dob, achat_structure, nom_structure, pj_identite_url), project:projects(id, title, address, arrondissement, surface_carrez, floor)';
+
   if (which === 'mandats') {
-    // Registre des mandats : tous les mandats, mandant + bien rattachés.
+    // Registre = mandats déversés (registre_numero NOT NULL), triés par n° décroissant.
     const { data, error } = await supabase
-      .from('mandats')
-      .select('id, numero, statut, commission, prix_offre, offre_pdf_url, mandat_pdf_url, docusign_envelope_id, created_by, created_at, notaire_nom, lead:leads(id, prenom, nom, email, tel), project:projects(id, title, address, arrondissement)')
-      .order('numero', { ascending: false })
-      .limit(2000);
+      .from('mandats').select(FULL)
+      .not('registre_numero', 'is', null)
+      .order('registre_numero', { ascending: false })
+      .limit(3000);
     if (error) { console.error('[registry mandats]', error); return res.status(500).json({ error: 'db_error' }); }
     return res.status(200).json({ ok: true, mandats: data || [] });
   }
 
   if (which === 'acquereurs') {
-    // Acquéreurs = leads avec au moins une offre générée. Un dossier par mandat.
+    // Acquéreurs = tous les dossiers rattachés à un lead (déversés ou non).
     const { data, error } = await supabase
-      .from('mandats')
-      .select('id, numero, statut, commission, prix_offre, offre_pdf_url, mandat_pdf_url, docusign_envelope_id, notaire_nom, notaire_email, notaire_adresse, notaire_tel, created_by, created_at, lead:leads(id, prenom, nom, email, tel, date_naissance, adresse_residence, situation_familiale, conjoint_prenom, conjoint_nom, conjoint_dob, achat_structure, nom_structure, pj_identite_url), project:projects(id, title, address, arrondissement, surface_carrez, floor)')
-      .not('offre_pdf_url', 'is', null)
+      .from('mandats').select(FULL)
+      .not('lead_id', 'is', null)
+      .order('registre_numero', { ascending: false, nullsFirst: true })
       .order('created_at', { ascending: false })
-      .limit(2000);
+      .limit(3000);
     if (error) { console.error('[registry acquereurs]', error); return res.status(500).json({ error: 'db_error' }); }
     return res.status(200).json({ ok: true, acquereurs: data || [] });
   }
@@ -833,4 +836,69 @@ async function handleNotaireRecap(req, res, b, payload) {
   }
 
   return res.status(200).json({ ok: true, sent_to: NOTAIRE_CLERC_EMAIL, cc: ccList, attachments: attachments.length, id_joined: idJoined });
+}
+
+// ── action: mandat_update ── édition d'un mandat + infos mandant ────────────
+const MANDAT_FIELDS = ['etat','statut','fees_paid','dossier_notaire_envoye','prix_hai','prix_offre','commission','nature_bien','adresse_num','adresse_rue','adresse_cp','adresse_ville','type_mandat','commission_partie','delai_realisation','mandant_domiciliation','mandant_sci','notaire_nom','notaire_email','notaire_adresse','notaire_tel'];
+const MANDAT_DATE_FIELDS = ['date_mandat','date_fin_mandat','date_promesse'];
+const LEAD_FIELDS = ['prenom','nom','email','tel','adresse_residence'];
+
+async function handleMandatUpdate(req, res, b, payload) {
+  if (!b.mandat_id) return res.status(400).json({ error: 'mandat_id requis' });
+  const { data: m } = await supabase.from('mandats').select('id, lead_id').eq('id', b.mandat_id).maybeSingle();
+  if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
+
+  const patch = {};
+  for (const k of MANDAT_FIELDS)      if (k in b) patch[k] = b[k] === '' ? null : b[k];
+  for (const k of MANDAT_DATE_FIELDS) if (k in b) patch[k] = b[k] || null;
+  if (Object.keys(patch).length) {
+    const { error } = await supabase.from('mandats').update(patch).eq('id', b.mandat_id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+  }
+
+  // Édition des coordonnées du mandant (lead lié)
+  if (b.lead && m.lead_id) {
+    const lp = {};
+    for (const k of LEAD_FIELDS) if (k in b.lead) lp[k] = b.lead[k];
+    if (Object.keys(lp).length) await supabase.from('leads').update(lp).eq('id', m.lead_id);
+  }
+  return res.status(200).json({ ok: true });
+}
+
+// ── action: deverser_registre ── attribue le numéro de registre (CTA) ───────
+async function handleDeverserRegistre(req, res, b, payload) {
+  if (!b.mandat_id) return res.status(400).json({ error: 'mandat_id requis' });
+  const { data: m } = await supabase.from('mandats').select('id, registre_numero').eq('id', b.mandat_id).maybeSingle();
+  if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
+  if (m.registre_numero) return res.status(200).json({ ok: true, registre_numero: m.registre_numero, already: true });
+
+  // Prochain numéro = max(registre_numero)+1, plancher 160
+  const { data: top } = await supabase.from('mandats').select('registre_numero')
+    .not('registre_numero', 'is', null).order('registre_numero', { ascending: false }).limit(1).maybeSingle();
+  const next = Math.max(160, (top?.registre_numero || 159) + 1);
+
+  const { error } = await supabase.from('mandats')
+    .update({ registre_numero: next, registre_at: new Date().toISOString() }).eq('id', b.mandat_id);
+  if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+  return res.status(200).json({ ok: true, registre_numero: next });
+}
+
+// ── action: mandat_doc ── upload PDF promesse / acte ────────────────────────
+async function handleMandatDoc(req, res, b, payload) {
+  if (!b.mandat_id || !b.kind || !b.content) return res.status(400).json({ error: 'mandat_id, kind, content requis' });
+  if (!['promesse', 'acte'].includes(b.kind)) return res.status(400).json({ error: 'kind invalide' });
+  const { data: m } = await supabase.from('mandats').select('id, lead_id').eq('id', b.mandat_id).maybeSingle();
+  if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
+
+  try {
+    const buf = Buffer.from(String(b.content).replace(/^data:[^,]+,/, ''), 'base64');
+    const path = `${m.lead_id || m.id}/${b.kind}-${Date.now()}.pdf`;
+    const url = await uploadPdf(buf, path);
+    const col = b.kind === 'promesse' ? 'promesse_pdf_url' : 'acte_pdf_url';
+    await supabase.from('mandats').update({ [col]: url }).eq('id', b.mandat_id);
+    return res.status(200).json({ ok: true, url, kind: b.kind });
+  } catch (e) {
+    console.error('[mandat_doc]', e?.message || e);
+    return res.status(500).json({ error: 'upload_echoue', detail: e?.message || String(e) });
+  }
 }
