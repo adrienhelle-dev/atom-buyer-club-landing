@@ -96,7 +96,73 @@
     }
     .nav-tab:hover { color: var(--cream); }
     .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    /* Menu déroulant onglet Assets */
+    .nav-dd { position: relative; display: inline-flex; }
+    .nav-dd > .nav-tab { display: inline-flex; align-items: center; gap: 6px; }
+    .nav-dd-chev { transition: transform .18s; }
+    .nav-dd.open .nav-dd-chev { transform: rotate(180deg); }
+    .nav-dd-menu {
+      position: fixed; z-index: 200; /* fixed → échappe à l'overflow-x:auto de .nav-tabs */
+      min-width: 230px; padding: 6px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.5);
+      display: none; flex-direction: column; gap: 2px;
+    }
+    .nav-dd.open .nav-dd-menu { display: flex; }
+    .nav-dd-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 7px; cursor: pointer;
+      background: none; border: none; text-align: left; width: 100%;
+      color: var(--cream); font-family: var(--sans); font-size: 13px; text-decoration: none;
+      transition: background .12s;
+    }
+    .nav-dd-item:hover { background: var(--bg3); }
+    .nav-dd-item.active { background: rgba(184,151,90,.14); color: var(--gold); }
+    .nav-dd-item-ico { font-size: 15px; line-height: 1; flex-shrink: 0; }
+    .nav-dd-item-ext { margin-left: auto; opacity: .5; }
     .view { display: none; }
+    /* ── Onglet Assets : registres mandats / acquéreurs ─────── */
+    .asset-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 24px 28px 16px; flex-wrap: wrap; }
+    .asset-title { font-family: var(--serif); font-size: 26px; font-weight: 500; color: var(--cream); margin: 0; }
+    .asset-sub { font-size: 13px; color: var(--dim); margin: 4px 0 0; }
+    .asset-head-actions { display: flex; align-items: center; gap: 8px; }
+    .asset-search { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 13px; color: var(--cream); font-family: var(--sans); font-size: 13px; min-width: 220px; }
+    .asset-search:focus { outline: none; border-color: var(--gold); }
+    .asset-refresh { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--dim); font-size: 14px; cursor: pointer; transition: color .15s, border-color .15s; }
+    .asset-refresh:hover { color: var(--gold); border-color: var(--gold); }
+    .asset-table-wrap { overflow-x: auto; padding: 0 28px 28px; }
+    .asset-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+    .asset-table thead th { text-align: left; padding: 10px 12px; font-size: 10px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .asset-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    .asset-table tbody tr:hover { background: var(--bg2); }
+    .asset-table td { padding: 12px; color: var(--cream); vertical-align: middle; }
+    .asset-msg { text-align: center; padding: 40px; color: var(--dim); }
+    .m-doc-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--gold); text-decoration: none; padding: 3px 8px; border: 1px solid rgba(184,151,90,.3); border-radius: 6px; margin-right: 4px; transition: background .12s; }
+    .m-doc-link:hover { background: rgba(184,151,90,.12); }
+    .m-doc-link.muted { color: var(--dim); border-color: var(--border); pointer-events: none; opacity: .5; }
+    .m-stat { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+    .m-stat-offre   { background: rgba(184,151,90,.14); color: var(--gold); }
+    .m-stat-mandat  { background: rgba(66,133,244,.15); color: #6fa8ff; }
+    .m-stat-signe   { background: rgba(76,175,125,.16); color: var(--green); }
+    .m-stat-abandon { background: rgba(122,120,116,.15); color: var(--dim); }
+    /* Cartes acquéreurs */
+    .acq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 0 28px 28px; }
+    .acq-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; cursor: pointer; transition: border-color .18s, transform .2s; }
+    .acq-card:hover { border-color: rgba(184,151,90,.5); transform: translateY(-2px); }
+    .acq-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .acq-card-name { font-size: 15px; font-weight: 600; color: var(--cream); margin: 0; }
+    .acq-card-bien { font-size: 12px; color: var(--dim); margin: 2px 0 0; }
+    .acq-card-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); margin-top: 8px; }
+    .acq-doc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .acq-doc-ok { background: var(--green); }
+    .acq-doc-no { background: #4a4843; }
+    .acq-card-prix { font-size: 14px; color: var(--gold); font-weight: 600; }
+    /* Drawer dossier */
+    .acq-dr-section { margin: 0 0 20px; }
+    .acq-dr-h { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 0 0 8px; }
+    .acq-dr-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .acq-dr-row span:first-child { color: var(--dim); }
+    .acq-dr-row span:last-child { color: var(--cream); text-align: right; }
     .view.active { display: block; }
 
     /* Topbar — gelé avec la nav dans .top-freeze (la liste scrolle dessous) */
@@ -1919,9 +1985,24 @@
     <button class="nav-tab" data-view="interets" onclick="setRoute('interets')">
       Intérêts<span class="nav-tab-badge" id="interets-tab-badge" style="display:none"></span>
     </button>
-    <a class="nav-tab" id="nav-assets" href="https://atom-buyer-club.vercel.app/admin/assets" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;opacity:.7">
-      Assets <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
-    </a>
+    <div class="nav-dd" id="nav-assets">
+      <button class="nav-tab" id="nav-assets-btn" onclick="toggleAssetsMenu(event)" aria-haspopup="true">
+        Assets
+        <svg class="nav-dd-chev" width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="nav-dd-menu" id="assets-menu" role="menu">
+        <button class="nav-dd-item" role="menuitem" onclick="goAssets('mandats')">
+          <span class="nav-dd-item-ico">📋</span> Registre des mandats
+        </button>
+        <a class="nav-dd-item" role="menuitem" href="https://atom-buyer-club.vercel.app/admin/assets" target="_blank" rel="noopener" onclick="closeAssetsMenu()">
+          <span class="nav-dd-item-ico">📈</span> Suivi de performances
+          <svg class="nav-dd-item-ext" width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10L10 2M10 2H5M10 2v5"/></svg>
+        </a>
+        <button class="nav-dd-item" role="menuitem" onclick="goAssets('acquereurs')">
+          <span class="nav-dd-item-ico">🤝</span> Suivi des acquéreurs
+        </button>
+      </div>
+    </div>
   </nav>
   </div><!-- /.top-freeze -->
 
@@ -3102,6 +3183,67 @@
 
 </div>
 
+<!-- ══ VUE — REGISTRE DES MANDATS ═══════════════════════════════ -->
+<div class="view" id="view-mandats">
+  <div class="asset-head">
+    <div>
+      <h2 class="asset-title">Registre des mandats</h2>
+      <p class="asset-sub" id="mandats-sub">—</p>
+    </div>
+    <div class="asset-head-actions">
+      <input type="text" id="mandats-search" class="asset-search" placeholder="Rechercher nom, bien, n°…" oninput="renderMandatsTable()"/>
+      <button class="asset-refresh" onclick="loadMandats()" title="Actualiser">↻</button>
+    </div>
+  </div>
+  <div class="asset-table-wrap">
+    <table class="asset-table" id="mandats-table">
+      <thead><tr>
+        <th>N°</th><th>Mandant</th><th>Bien</th><th>Prix offre</th><th>Honoraires</th><th>Statut</th><th>Documents</th><th>Créé</th>
+      </tr></thead>
+      <tbody id="mandats-tbody"><tr><td colspan="8" class="asset-msg">Chargement…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ VUE — SUIVI DES ACQUÉREURS ═══════════════════════════════ -->
+<div class="view" id="view-acquereurs">
+  <div class="asset-head">
+    <div>
+      <h2 class="asset-title">Suivi des acquéreurs</h2>
+      <p class="asset-sub" id="acq-sub">—</p>
+    </div>
+    <div class="asset-head-actions">
+      <input type="text" id="acq-search" class="asset-search" placeholder="Rechercher nom, bien…" oninput="renderAcquereursTable()"/>
+      <button class="asset-refresh" onclick="loadAcquereurs()" title="Actualiser">↻</button>
+    </div>
+  </div>
+  <div id="acq-grid" class="acq-grid">
+    <div class="asset-msg" style="grid-column:1/-1">Chargement…</div>
+  </div>
+</div>
+
+<!-- ══ DRAWER DOSSIER ACQUÉREUR ═════════════════════════════════ -->
+<div class="drawer-overlay" id="acq-drawer-overlay" onclick="if(event.target===this)closeAcqDrawer()">
+  <div class="drawer" id="acq-drawer">
+    <button class="drawer-close" onclick="closeAcqDrawer()">✕</button>
+    <div id="acq-drawer-content"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL ENVOI NOTAIRE ══════════════════════════════════════ -->
+<div class="del-proj-overlay" id="notaire-overlay" onclick="if(event.target===this)closeNotaireModal()">
+  <div class="del-proj-modal" style="max-width:440px">
+    <div class="del-proj-icon" style="background:rgba(184,151,90,.15)">📨</div>
+    <div class="del-proj-title">Envoyer le dossier au notaire</div>
+    <div id="notaire-recap" style="text-align:left;font-size:13px;color:var(--dim);margin:14px 0 6px;line-height:1.7"></div>
+    <p class="del-proj-warn" style="background:rgba(184,151,90,.08);border-color:rgba(184,151,90,.25)">Un email avec les pièces jointes sera envoyé à <strong id="notaire-dest">—</strong>, associés Atom en copie. <span id="notaire-id-warn"></span></p>
+    <div class="del-proj-btns">
+      <button class="btn-del-cancel" onclick="closeNotaireModal()">Annuler</button>
+      <button class="btn-del-confirm" id="btn-notaire-send" style="background:var(--gold);border-color:var(--gold);color:#1a1a1a" onclick="sendNotaireRecap()">Envoyer le dossier</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL OFFRE D'ACHAT ══════════════════════════════════════ -->
 <div class="offer-modal-overlay" id="offer-modal-overlay">
   <div class="offer-modal">
@@ -3497,7 +3639,7 @@ function applyLeadFilters() {
 }
 
 /* ── Routeur SPA par hash ───────────────────────────────────── */
-const VALID_VIEWS = ['leads', 'projects', 'new-project', 'showroom', 'showroom-edit', 'interets'];
+const VALID_VIEWS = ['leads', 'projects', 'new-project', 'showroom', 'showroom-edit', 'interets', 'mandats', 'acquereurs'];
 
 function setRoute(view) {
   location.hash = '#' + view;
@@ -3517,10 +3659,15 @@ function showView(view) {
   document.getElementById('view-' + view)?.classList.add('active');
   const navView = view === 'new-project' ? 'projects' : view === 'showroom-edit' ? 'showroom' : view;
   document.querySelector(`.nav-tab[data-view="${navView}"]`)?.classList.add('active');
+  // Onglet Assets (menu déroulant) : actif sur les vues mandats / acquéreurs
+  const assetsBtn = document.getElementById('nav-assets-btn');
+  if (assetsBtn) assetsBtn.classList.toggle('active', view === 'mandats' || view === 'acquereurs');
   if (view === 'projects'     && typeof loadProjects        === 'function') loadProjects();
   if (view === 'new-project'  && typeof resetNewProjectForm === 'function') resetNewProjectForm();
   if (view === 'showroom'     && typeof loadShowroom        === 'function') loadShowroom();
   if (view === 'interets'     && typeof loadInterests       === 'function') loadInterests(true);
+  if (view === 'mandats'      && typeof loadMandats         === 'function') loadMandats();
+  if (view === 'acquereurs'   && typeof loadAcquereurs      === 'function') loadAcquereurs();
 }
 
 window.addEventListener('hashchange', handleRoute);
@@ -5580,6 +5727,202 @@ function fmtDateFull(d) {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══ ONGLET ASSETS — menu déroulant + registres ═══════════════ */
+function toggleAssetsMenu(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('nav-assets');
+  if (dd.classList.toggle('open')) positionAssetsMenu();
+}
+function positionAssetsMenu() {
+  const btn = document.getElementById('nav-assets-btn');
+  const menu = document.getElementById('assets-menu');
+  const r = btn.getBoundingClientRect();
+  menu.style.top = (r.bottom + 2) + 'px';
+  const w = menu.offsetWidth || 230;
+  menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+}
+function closeAssetsMenu()   { document.getElementById('nav-assets')?.classList.remove('open'); }
+function goAssets(view)      { closeAssetsMenu(); setRoute(view); }
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('nav-assets');
+  if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
+
+function fmtDateShort(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—'; }
+function fmtMoney(n)     { return (n != null && n !== '') ? Number(n).toLocaleString('fr-FR') + ' €' : '—'; }
+function mandatStatutBadge(s) {
+  const map = {
+    offre_generee: ['Offre générée','m-stat-offre'], offre_envoyee: ['Offre envoyée','m-stat-offre'],
+    mandat_genere: ['Mandat généré','m-stat-mandat'], mandat_envoye: ['Mandat envoyé','m-stat-mandat'],
+    mandat_signe:  ['Mandat signé ✓','m-stat-signe'], abandonne: ['Abandonné','m-stat-abandon'],
+  };
+  const [lbl, cls] = map[s] || [s || '—', 'm-stat-abandon'];
+  return `<span class="m-stat ${cls}">${esc(lbl)}</span>`;
+}
+
+// ── Registre des mandats ──
+let _mandatsCache = [];
+async function loadMandats() {
+  const tb = document.getElementById('mandats-tbody');
+  tb.innerHTML = '<tr><td colspan="8" class="asset-msg">Chargement…</td></tr>';
+  try {
+    const res = await fetch('/api/offers?registry=mandats', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    _mandatsCache = data.mandats || [];
+    renderMandatsTable();
+  } catch (e) { tb.innerHTML = '<tr><td colspan="8" class="asset-msg">Erreur de chargement.</td></tr>'; }
+}
+function renderMandatsTable() {
+  const tb = document.getElementById('mandats-tbody');
+  const q = (document.getElementById('mandats-search')?.value || '').toLowerCase().trim();
+  let rows = _mandatsCache;
+  if (q) rows = rows.filter(m => [m.numero, m.lead?.prenom, m.lead?.nom, m.project?.address, m.project?.title].join(' ').toLowerCase().includes(q));
+  document.getElementById('mandats-sub').textContent =
+    `${_mandatsCache.length} mandat${_mandatsCache.length>1?'s':''}` + (q ? ` · ${rows.length} affiché${rows.length>1?'s':''}` : '');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="8" class="asset-msg">Aucun mandat.</td></tr>'; return; }
+  tb.innerHTML = rows.map(m => {
+    const mandant = `${esc(m.lead?.prenom||'')} ${esc(m.lead?.nom||'')}`.trim() || '—';
+    const bien = esc(m.project?.address || m.project?.title || '—');
+    const offre  = m.offre_pdf_url  ? `<a class="m-doc-link" href="${esc(m.offre_pdf_url)}" target="_blank" rel="noopener">Offre</a>`  : `<span class="m-doc-link muted">Offre</span>`;
+    const mandat = m.mandat_pdf_url ? `<a class="m-doc-link" href="${esc(m.mandat_pdf_url)}" target="_blank" rel="noopener">Mandat</a>` : `<span class="m-doc-link muted">Mandat</span>`;
+    return `<tr>
+      <td><strong>${esc(String(m.numero||'—'))}</strong></td>
+      <td>${mandant}</td>
+      <td class="muted">${bien}</td>
+      <td>${fmtMoney(m.prix_offre)}</td>
+      <td>${fmtMoney(m.commission)}</td>
+      <td>${mandatStatutBadge(m.statut)}</td>
+      <td style="white-space:nowrap">${offre}${mandat}</td>
+      <td class="muted">${fmtDateShort(m.created_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Suivi des acquéreurs ──
+let _acqCache = [];
+async function loadAcquereurs() {
+  const grid = document.getElementById('acq-grid');
+  grid.innerHTML = '<div class="asset-msg" style="grid-column:1/-1">Chargement…</div>';
+  try {
+    const res = await fetch('/api/offers?registry=acquereurs', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    _acqCache = data.acquereurs || [];
+    renderAcquereursTable();
+  } catch (e) { grid.innerHTML = '<div class="asset-msg" style="grid-column:1/-1">Erreur de chargement.</div>'; }
+}
+function renderAcquereursTable() {
+  const grid = document.getElementById('acq-grid');
+  const q = (document.getElementById('acq-search')?.value || '').toLowerCase().trim();
+  let rows = _acqCache;
+  if (q) rows = rows.filter(m => [m.lead?.prenom, m.lead?.nom, m.project?.address, m.project?.title].join(' ').toLowerCase().includes(q));
+  document.getElementById('acq-sub').textContent =
+    `${_acqCache.length} acquéreur${_acqCache.length>1?'s':''} sous offre/mandat` + (q ? ` · ${rows.length} affiché${rows.length>1?'s':''}` : '');
+  if (!rows.length) { grid.innerHTML = '<div class="asset-msg" style="grid-column:1/-1">Aucun acquéreur sous offre pour l\'instant.</div>'; return; }
+  grid.innerHTML = rows.map((m, i) => {
+    const l = m.lead || {};
+    const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
+    const bien = esc(m.project?.address || m.project?.title || '—');
+    const dot = (ok) => `<span class="acq-doc-dot ${ok?'acq-doc-ok':'acq-doc-no'}"></span>`;
+    return `<div class="acq-card" onclick="openAcqDrawer(${i})">
+      <div class="acq-card-top">
+        <div><p class="acq-card-name">${name}</p><p class="acq-card-bien">${bien}</p></div>
+        ${mandatStatutBadge(m.statut)}
+      </div>
+      <div class="acq-card-row"><span class="acq-card-prix">${fmtMoney(m.prix_offre)}</span>&nbsp;· Mandat n°${esc(String(m.numero||'—'))}</div>
+      <div class="acq-card-row">${dot(!!m.offre_pdf_url)} Offre&nbsp;&nbsp; ${dot(!!m.mandat_pdf_url)} Mandat&nbsp;&nbsp; ${dot(!!l.pj_identite_url)} Pièce ID</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Drawer dossier acquéreur ──
+let _acqCurrent = null;
+function openAcqDrawer(i) {
+  const m = _acqCache[i];
+  if (!m) return;
+  _acqCurrent = m;
+  const l = m.lead || {};
+  const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
+  const bien = esc(m.project?.address || m.project?.title || '—');
+  const situ = { celibataire:'Célibataire', marie:'Marié·e', pacse:'Pacsé·e', divorce:'Divorcé·e' }[l.situation_familiale] || '—';
+  const struct = { personnel:'En nom propre', sci:'SCI'+(l.nom_structure?' '+esc(l.nom_structure):''), sas:'SAS'+(l.nom_structure?' '+esc(l.nom_structure):'') }[l.achat_structure] || '—';
+  const row = (k,v) => `<div class="acq-dr-row"><span>${k}</span><span>${v||'—'}</span></div>`;
+  const docLink = (url, lbl) => url ? `<a class="m-doc-link" href="${esc(url)}" target="_blank" rel="noopener">${lbl} ↗</a>` : `<span class="m-doc-link muted">${lbl} —</span>`;
+  const canSend = !!(m.offre_pdf_url && m.mandat_pdf_url);
+  const conjoint = (l.situation_familiale==='marie'||l.situation_familiale==='pacse')&&l.conjoint_prenom
+    ? row('Co-acquéreur', `${esc(l.conjoint_prenom)} ${esc((l.conjoint_nom||'').toUpperCase())}`) : '';
+  document.getElementById('acq-drawer-content').innerHTML = `
+    <h2 style="font-family:var(--serif);font-size:24px;margin:0 0 2px;color:var(--cream)">${name}</h2>
+    <p style="color:var(--dim);font-size:13px;margin:0 0 20px">${bien} · Mandat n°${esc(String(m.numero||'—'))}</p>
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Acquéreur</p>
+      ${row('Né·e le', fmtDateShort(l.date_naissance))}
+      ${row('Adresse', esc(l.adresse_residence||''))}
+      ${row('Situation', situ)}
+      ${conjoint}
+      ${row('Acquisition', struct)}
+      ${row('Email', l.email?`<a href="mailto:${esc(l.email)}" style="color:var(--gold)">${esc(l.email)}</a>`:'—')}
+      ${row('Téléphone', esc(l.tel||''))}
+    </div>
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Bien & offre</p>
+      ${row('Prix d\'offre', fmtMoney(m.prix_offre))}
+      ${row('Honoraires Atom', fmtMoney(m.commission))}
+      ${row('Statut', mandatStatutBadge(m.statut))}
+    </div>
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Documents</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+        ${docLink(m.offre_pdf_url,'Offre')}${docLink(m.mandat_pdf_url,'Mandat')}${docLink(l.pj_identite_url,'Pièce ID')}
+      </div>
+    </div>
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Notaire confrère (acquéreur)</p>
+      ${row('Étude', esc(m.notaire_nom||''))}
+      ${row('Email', esc(m.notaire_email||''))}
+    </div>
+    <button onclick="openNotaireModal()" ${canSend?'':'disabled'} style="width:100%;padding:13px;border-radius:9px;border:none;background:${canSend?'var(--gold)':'var(--bg3)'};color:${canSend?'#1a1a1a':'var(--dim)'};font-family:var(--sans);font-size:14px;font-weight:600;cursor:${canSend?'pointer':'not-allowed'};margin-top:6px">📨 Envoyer le dossier au notaire</button>
+    ${canSend?'':'<p style="font-size:12px;color:var(--dim);text-align:center;margin:8px 0 0">Offre + mandat requis avant l\'envoi.</p>'}`;
+  document.getElementById('acq-drawer-overlay').classList.add('on');
+}
+function closeAcqDrawer() { document.getElementById('acq-drawer-overlay').classList.remove('on'); }
+
+// ── Modal envoi notaire ──
+function openNotaireModal() {
+  const m = _acqCurrent;
+  if (!m) return;
+  const l = m.lead || {};
+  const hasId = !!l.pj_identite_url;
+  document.getElementById('notaire-recap').innerHTML =
+    `<div>Mandat <strong style="color:var(--cream)">n°${esc(String(m.numero||'—'))}</strong> · ${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}</div>
+     <div>Pièces jointes : Offre, Mandat${hasId?', Pièce ID':''}</div>`;
+  document.getElementById('notaire-dest').textContent = 'linda.rebib.13190@notaires.fr';
+  document.getElementById('notaire-id-warn').innerHTML = hasId ? '' : '<br/>⚠️ Aucune pièce d\'identité au dossier — elle ne sera pas jointe.';
+  const btn = document.getElementById('btn-notaire-send');
+  btn.disabled = false; btn.textContent = 'Envoyer le dossier';
+  document.getElementById('notaire-overlay').classList.add('on');
+}
+function closeNotaireModal() { document.getElementById('notaire-overlay').classList.remove('on'); }
+async function sendNotaireRecap() {
+  const m = _acqCurrent;
+  if (!m) return;
+  const btn = document.getElementById('btn-notaire-send');
+  btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  try {
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'notaire_recap', mandat_id: m.id }),
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    if (!res.ok || !data.ok) { btn.disabled=false; btn.textContent='Réessayer'; showToast(data.detail || data.error || 'Échec de l\'envoi', 'error'); return; }
+    closeNotaireModal();
+    showToast(`Dossier envoyé à ${data.sent_to} · ${data.attachments} PJ · ${data.cc?.length||0} associés en copie`, 'success');
+  } catch (e) { btn.disabled=false; btn.textContent='Réessayer'; showToast('Erreur réseau', 'error'); }
 }
 
 // Cover d'une réalisation : cover explicite, sinon 1ère photo Après, sinon Avant.

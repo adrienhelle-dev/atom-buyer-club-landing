@@ -17,7 +17,7 @@
 
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
-const { getFounder } = require('../lib/founders');
+const { getFounder, allFounderEmails } = require('../lib/founders');
 const { esc } = require('../lib/html');
 const { Resend } = require('resend');
 const crypto = require('crypto');
@@ -384,6 +384,11 @@ module.exports = async function handler(req, res) {
   const payload = verifyToken(tokenFromReq(req));
   if (!payload) return res.status(401).json({ error: 'Non autorisé' });
 
+  // ── GET ?registry=mandats|acquereurs : onglet Assets ─────────────────
+  if (req.method === 'GET' && req.query.registry) {
+    return handleRegistry(req, res);
+  }
+
   // ── GET : statut courant ─────────────────────────────────────────────
   if (req.method === 'GET') {
     const { interest_id } = req.query;
@@ -400,6 +405,13 @@ module.exports = async function handler(req, res) {
 
   const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
   const { action, interest_id } = b;
+
+  // ── action: notaire_recap ── envoi du dossier de vente au clerc de notaire ──
+  // Prend mandat_id (pas interest_id) → traité avant le contrôle ci-dessous.
+  if (action === 'notaire_recap') {
+    return handleNotaireRecap(req, res, b, payload);
+  }
+
   if (!action || !interest_id) return res.status(400).json({ error: 'action et interest_id requis' });
 
   // Charger l'événement
@@ -673,3 +685,152 @@ module.exports = async function handler(req, res) {
 
   return res.status(400).json({ error: 'action inconnue' });
 };
+
+// ── Onglet Assets : registres (mandats / acquéreurs) ────────────────────────
+async function handleRegistry(req, res) {
+  const which = req.query.registry;
+
+  if (which === 'mandats') {
+    // Registre des mandats : tous les mandats, mandant + bien rattachés.
+    const { data, error } = await supabase
+      .from('mandats')
+      .select('id, numero, statut, commission, prix_offre, offre_pdf_url, mandat_pdf_url, docusign_envelope_id, created_by, created_at, notaire_nom, lead:leads(id, prenom, nom, email, tel), project:projects(id, title, address, arrondissement)')
+      .order('numero', { ascending: false })
+      .limit(2000);
+    if (error) { console.error('[registry mandats]', error); return res.status(500).json({ error: 'db_error' }); }
+    return res.status(200).json({ ok: true, mandats: data || [] });
+  }
+
+  if (which === 'acquereurs') {
+    // Acquéreurs = leads avec au moins une offre générée. Un dossier par mandat.
+    const { data, error } = await supabase
+      .from('mandats')
+      .select('id, numero, statut, commission, prix_offre, offre_pdf_url, mandat_pdf_url, docusign_envelope_id, notaire_nom, notaire_email, notaire_adresse, notaire_tel, created_by, created_at, lead:leads(id, prenom, nom, email, tel, date_naissance, adresse_residence, situation_familiale, conjoint_prenom, conjoint_nom, conjoint_dob, achat_structure, nom_structure, pj_identite_url), project:projects(id, title, address, arrondissement, surface_carrez, floor)')
+      .not('offre_pdf_url', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(2000);
+    if (error) { console.error('[registry acquereurs]', error); return res.status(500).json({ error: 'db_error' }); }
+    return res.status(200).json({ ok: true, acquereurs: data || [] });
+  }
+
+  return res.status(400).json({ error: 'registry inconnu' });
+}
+
+// ── Envoi du dossier de vente au clerc de notaire (Linda) ───────────────────
+const NOTAIRE_CLERC_EMAIL = process.env.NOTAIRE_CLERC_EMAIL || 'linda.rebib.13190@notaires.fr';
+
+async function handleNotaireRecap(req, res, b, payload) {
+  if (!b.mandat_id) return res.status(400).json({ error: 'mandat_id requis' });
+  if (!process.env.RESEND_API_KEY) return res.status(503).json({ error: 'email_non_configure' });
+
+  const { data: m, error } = await supabase
+    .from('mandats')
+    .select('*, lead:leads(id, prenom, nom, email, tel, date_naissance, adresse_residence, situation_familiale, conjoint_prenom, conjoint_nom, conjoint_dob, achat_structure, nom_structure, pj_identite_url), project:projects(id, title, address, arrondissement, surface_carrez, floor)')
+    .eq('id', b.mandat_id).maybeSingle();
+  if (error || !m) return res.status(404).json({ error: 'mandat_introuvable' });
+
+  const lead = m.lead || {};
+  const proj = m.project || {};
+
+  if (!m.offre_pdf_url || !m.mandat_pdf_url) {
+    return res.status(422).json({ error: 'documents_manquants', detail: 'offre et mandat requis avant envoi notaire' });
+  }
+
+  // ── Pièces jointes : offre + mandat + copie ID (si dispo) ──
+  const attachments = [];
+  const grab = async (url, filename) => {
+    try {
+      const buf = await fetch(url).then(r => r.arrayBuffer()).then(ab => Buffer.from(ab));
+      attachments.push({ filename, content: buf.toString('base64') });
+      return true;
+    } catch (e) { console.error('[notaire_recap] fetch PJ échec', filename, e?.message || e); return false; }
+  };
+  const safeName = (proj.address || proj.title || `${lead.prenom}-${lead.nom}` || 'dossier').replace(/[^a-z0-9]/gi, '-').slice(0, 40);
+  await grab(m.offre_pdf_url,  `Offre-achat-${safeName}.pdf`);
+  await grab(m.mandat_pdf_url, `Mandat-recherche-${safeName}.pdf`);
+  let idJoined = false;
+  if (lead.pj_identite_url) {
+    const ext = (lead.pj_identite_url.split('?')[0].match(/\.([a-z0-9]{2,5})$/i) || [, 'jpg'])[1].toLowerCase();
+    idJoined = await grab(lead.pj_identite_url, `Piece-identite-${safeName}.${ext}`);
+  }
+
+  const founder = getFounder(payload.email);
+  const ccList  = allFounderEmails().filter(e => e !== NOTAIRE_CLERC_EMAIL);
+  const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+  const subject = `Nouveau dossier de vente — ${esc(lead.prenom || '')} ${esc((lead.nom || '').toUpperCase())} · ${esc(proj.address || proj.title || '')}`;
+
+  const r = (label, val) => val ? `<tr><td style="padding:6px 16px 6px 0;color:#888;font-size:13px;white-space:nowrap;vertical-align:top">${label}</td><td style="padding:6px 0;font-size:14px;color:#111">${val}</td></tr>` : '';
+  const structureLabel = { personnel: 'En nom propre', sci: `SCI${lead.nom_structure ? ' ' + esc(lead.nom_structure) : ''}`, sas: `SAS${lead.nom_structure ? ' ' + esc(lead.nom_structure) : ''}` }[lead.achat_structure] || '—';
+  const conjoint = (lead.situation_familiale === 'marie' || lead.situation_familiale === 'pacse') && lead.conjoint_prenom
+    ? `${esc(lead.conjoint_prenom)} ${esc((lead.conjoint_nom || '').toUpperCase())}${lead.conjoint_dob ? ' (né·e le ' + fmtDate(lead.conjoint_dob) + ')' : ''}` : '';
+
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f4;font-family:system-ui,sans-serif">
+  <div style="max-width:600px;margin:24px auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e5e5e5">
+    <div style="background:#0f0e0c;padding:24px 28px">
+      <p style="margin:0 0 8px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#B8975A">Atom Buyers Club · Dossier de vente</p>
+      <h1 style="margin:0;font-size:20px;font-weight:400;color:#F5F2ED">${esc(lead.prenom || '')} ${esc((lead.nom || '').toUpperCase())}</h1>
+      <p style="margin:6px 0 0;font-size:13px;color:#B8975A">Mandat n° ${esc(String(m.numero || '—'))}</p>
+    </div>
+    <div style="padding:22px 28px">
+      <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6">Bonjour Linda,<br/>Veuillez trouver ci-joint le dossier de vente complet pour l'acquéreur ci-dessous. Les pièces (offre d'achat, mandat de recherche${idJoined ? ', copie pièce d\'identité' : ''}) sont jointes à ce message.</p>
+
+      <p style="margin:18px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#B8975A">Acquéreur</p>
+      <table style="width:100%;border-collapse:collapse">
+        ${r('Nom', `<strong>${esc(lead.prenom || '')} ${esc((lead.nom || '').toUpperCase())}</strong>`)}
+        ${r('Né·e le', lead.date_naissance ? fmtDate(lead.date_naissance) : '')}
+        ${r('Adresse', esc(lead.adresse_residence || ''))}
+        ${r('Email', lead.email ? `<a href="mailto:${esc(lead.email)}" style="color:#B8975A">${esc(lead.email)}</a>` : '')}
+        ${r('Téléphone', esc(lead.tel || ''))}
+        ${r('Acquisition', structureLabel)}
+        ${r('Co-acquéreur', conjoint)}
+      </table>
+
+      <p style="margin:18px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#B8975A">Bien</p>
+      <table style="width:100%;border-collapse:collapse">
+        ${r('Adresse', esc(proj.address || proj.title || ''))}
+        ${r('Surface', proj.surface_carrez ? proj.surface_carrez + ' m² Carrez' : '')}
+        ${r('Étage', proj.floor ? ordinal(proj.floor) + ' étage' : '')}
+        ${r('Prix d\'offre', formatPrix(m.prix_offre))}
+        ${r('Honoraires Atom', formatPrix(m.commission))}
+      </table>
+
+      <p style="margin:18px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#B8975A">Notaire confrère (acquéreur)</p>
+      <table style="width:100%;border-collapse:collapse">
+        ${r('Étude', esc(m.notaire_nom || ''))}
+        ${r('Email', m.notaire_email ? `<a href="mailto:${esc(m.notaire_email)}" style="color:#B8975A">${esc(m.notaire_email)}</a>` : '')}
+        ${r('Adresse', esc(m.notaire_adresse || ''))}
+        ${r('Téléphone', esc(m.notaire_tel || ''))}
+      </table>
+
+      <p style="margin:18px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#B8975A">Agence mandataire</p>
+      <table style="width:100%;border-collapse:collapse">
+        ${r('Raison sociale', 'SAS Microsurfaces (Atom Buyers Club)')}
+        ${r('Siège', '97 rue de Turenne, 75003 Paris')}
+        ${r('RCS', 'Paris 937 663 052')}
+        ${r('Carte pro.', 'CPI 7501 2025 000 000 458 — CCI Paris Île-de-France')}
+        ${r('Contact', `${esc(founder.name || payload.email)}${founder.phone ? ' · ' + esc(founder.phone) : ''}`)}
+      </table>
+
+      <p style="margin:22px 0 0;font-size:13px;color:#555;line-height:1.6">Bien cordialement,<br/><strong style="color:#111">${esc(founder.name || 'Atom Buyers Club')}</strong><br/>Atom Buyers Club</p>
+    </div>
+  </div></body></html>`;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({ from, to: [NOTAIRE_CLERC_EMAIL], cc: ccList, subject, html, attachments });
+  } catch (e) {
+    console.error('[notaire_recap] envoi échec', e?.message || e);
+    return res.status(500).json({ error: 'envoi_echoue', detail: e?.message || String(e) });
+  }
+
+  // Trace dans la timeline du lead
+  if (lead.id) {
+    await supabase.from('lead_events').insert([{
+      lead_id: lead.id, type: 'note',
+      content: `Dossier de vente envoyé au notaire (${NOTAIRE_CLERC_EMAIL}) — mandat n°${m.numero || '—'}, ${attachments.length} PJ`,
+      author: payload.email,
+    }]);
+  }
+
+  return res.status(200).json({ ok: true, sent_to: NOTAIRE_CLERC_EMAIL, cc: ccList, attachments: attachments.length, id_joined: idJoined });
+}
