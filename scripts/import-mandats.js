@@ -18,6 +18,12 @@ const { supabase } = require('../lib/supabase');
 const DRY = process.argv.includes('--dry');
 
 const norm = s => (s || '').toString().trim().toLowerCase();
+const slug = s => norm(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// Email placeholder explicite (tél/mail à compléter plus tard via le drawer)
+const placeholderEmail = m => `${slug(m.prenom) || 'mandant'}.${slug(m.nom) || m.numero}@a-completer.atom`;
+
+// Garde uniquement une vraie date ISO (YYYY-MM-DD), sinon null ("n/a", texte…)
+const cleanDate = v => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) ? v : null;
 
 // État (couleur) → statut du flux offre/mandat
 function statutFromEtat(etat) {
@@ -39,6 +45,8 @@ async function findOrCreateLead(m, cache) {
   const leadData = {
     prenom: m.prenom || null,
     nom: m.nom || null,
+    email: placeholderEmail(m), // tél/mail à compléter plus tard via le drawer
+    tel: '',                    // NOT NULL → placeholder vide, à renseigner ensuite
     is_acquereur: true,
     utm_source: 'mandat_microsurfaces',
     status: 'signe',
@@ -82,8 +90,8 @@ async function main() {
       commission: m.fees_ttc || null,
       prix_offre: m.prix_hai || null,
       prix_hai: m.prix_hai || null,
-      date_mandat: m.date_mandat || null,
-      date_fin_mandat: m.date_fin_mandat || null,
+      date_mandat: cleanDate(m.date_mandat),
+      date_fin_mandat: cleanDate(m.date_fin_mandat),
       type_mandat: m.type_mandat || null,
       commission_partie: m.commission_partie || null,
       nature_bien: m.nature_bien || null,
@@ -93,7 +101,7 @@ async function main() {
       adresse_ville: m.adresse_ville || null,
       mandant_domiciliation: m.mandant_domiciliation || null,
       mandant_sci: m.mandant_sci || null,
-      date_promesse: m.date_promesse || null,
+      date_promesse: cleanDate(m.date_promesse),
       delai_realisation: m.delai_realisation || null,
       dossier_notaire_envoye: !!m.dossier_notaire_envoye,
       fees_paid: !!m.fees_paid,
