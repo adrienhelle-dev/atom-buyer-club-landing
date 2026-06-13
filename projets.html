@@ -591,6 +591,7 @@
 
       const total = p.total_all_in ? fmt(p.total_all_in) + ' €' : '—';
       const rdt   = p.rendement_brut ? p.rendement_brut + ' %' : '—';
+      const loyer = p.loyer_atom ? fmt(p.loyer_atom) + ' €' : null;
 
       return `
         <div class="proj-card" onclick="location.href='/projet/${esc(p.slug || p.id)}'">
@@ -610,6 +611,10 @@
                 <div class="proj-fin-val gold">${rdt}</div>
                 <div class="proj-fin-label">Rendement</div>
               </div>
+              ${loyer ? `<div class="proj-fin-cell">
+                <div class="proj-fin-val">${loyer}</div>
+                <div class="proj-fin-label">Loyer / mois</div>
+              </div>` : ''}
             </div>
             <button class="btn-card-voir">Voir le projet →</button>
           </div>
