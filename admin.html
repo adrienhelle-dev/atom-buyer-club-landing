@@ -1308,8 +1308,12 @@
       .topbar-badge { font-size: 9px; padding: 2px 8px; }
       .btn-logout { font-size: 11px; padding: 5px 10px; }
 
-      .nav-tabs { padding: 0 12px; }
-      .nav-tab { padding: 11px 13px; font-size: 10px; }
+      /* Mobile : la nav passe à la ligne au lieu de scroller horizontalement.
+         Le scroll-x sur iOS avale le tap (interprété comme un pan) → l'onglet
+         Assets ne s'ouvrait pas. En wrap, tous les onglets sont tappables. */
+      .nav-tabs { padding: 0 8px; overflow-x: visible; flex-wrap: wrap; }
+      .nav-tab { padding: 10px 11px; font-size: 10px; }
+      .nav-dd { flex: 0 0 auto; }
 
       /* Stats — 4 en ligne, très compacts */
       .stats { grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--border); }
