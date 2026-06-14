@@ -892,19 +892,34 @@ async function handleDeverserRegistre(req, res, b, payload) {
   return res.status(200).json({ ok: true, registre_numero: next });
 }
 
-// ── action: mandat_doc ── upload PDF promesse / acte ────────────────────────
+// ── action: mandat_doc ── upload de tout document du dossier ─────────────────
+// kinds mandats : offre | mandat | promesse | acte  → bucket offer-docs
+// kind lead     : identite                          → bucket buyer-docs (leads.pj_identite_url)
+const DOC_COL = { offre: 'offre_pdf_url', mandat: 'mandat_pdf_url', promesse: 'promesse_pdf_url', acte: 'acte_pdf_url' };
 async function handleMandatDoc(req, res, b, payload) {
   if (!b.mandat_id || !b.kind || !b.content) return res.status(400).json({ error: 'mandat_id, kind, content requis' });
-  if (!['promesse', 'acte'].includes(b.kind)) return res.status(400).json({ error: 'kind invalide' });
+  if (b.kind !== 'identite' && !DOC_COL[b.kind]) return res.status(400).json({ error: 'kind invalide' });
   const { data: m } = await supabase.from('mandats').select('id, lead_id').eq('id', b.mandat_id).maybeSingle();
   if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
 
   try {
     const buf = Buffer.from(String(b.content).replace(/^data:[^,]+,/, ''), 'base64');
-    const path = `${m.lead_id || m.id}/${b.kind}-${Date.now()}.pdf`;
+    const ext = (String(b.filename || '').match(/\.([a-z0-9]{2,5})$/i) || [, 'pdf'])[1].toLowerCase();
+    const owner = m.lead_id || m.id;
+
+    if (b.kind === 'identite') {
+      if (!m.lead_id) return res.status(400).json({ error: 'lead_absent' });
+      const path = `${owner}/identite-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('buyer-docs').upload(path, buf, { contentType: b.mime || 'application/octet-stream', upsert: true });
+      if (upErr) throw new Error('storage: ' + upErr.message);
+      const { data: { publicUrl } } = supabase.storage.from('buyer-docs').getPublicUrl(path);
+      await supabase.from('leads').update({ pj_identite_url: publicUrl }).eq('id', m.lead_id);
+      return res.status(200).json({ ok: true, url: publicUrl, kind: 'identite' });
+    }
+
+    const path = `${owner}/${b.kind}-${Date.now()}.${ext}`;
     const url = await uploadPdf(buf, path);
-    const col = b.kind === 'promesse' ? 'promesse_pdf_url' : 'acte_pdf_url';
-    await supabase.from('mandats').update({ [col]: url }).eq('id', b.mandat_id);
+    await supabase.from('mandats').update({ [DOC_COL[b.kind]]: url }).eq('id', b.mandat_id);
     return res.status(200).json({ ok: true, url, kind: b.kind });
   } catch (e) {
     console.error('[mandat_doc]', e?.message || e);

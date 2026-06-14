@@ -193,6 +193,12 @@
     .acq-btn-line:hover { border-color: var(--gold); }
     .acq-btn-gold { background: var(--gold); border-color: var(--gold); color: #1a1a1a; font-weight: 600; }
     .acq-btn-gold:disabled { opacity: .4; cursor: not-allowed; }
+    .acq-doc-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .acq-doc-lbl { color: var(--cream); }
+    .acq-doc-actions { display: flex; align-items: center; gap: 10px; }
+    .acq-doc-none { color: var(--dim); font-size: 12px; }
+    .acq-doc-up { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--gold); font-family: var(--sans); font-size: 12px; cursor: pointer; transition: background .12s, border-color .12s; }
+    .acq-doc-up:hover { background: rgba(184,151,90,.12); border-color: var(--gold); }
     .view.active { display: block; }
 
     /* Topbar — gelé avec la nav dans .top-freeze (la liste scrolle dessous) */
@@ -5963,6 +5969,13 @@ function openAcqDrawer(i) {
   const struct = { personnel:'En nom propre', sci:'SCI'+(l.nom_structure?' '+esc(l.nom_structure):''), sas:'SAS'+(l.nom_structure?' '+esc(l.nom_structure):'') }[l.achat_structure] || '—';
   const row = (k,v) => `<div class="acq-dr-row"><span>${k}</span><span>${v||'—'}</span></div>`;
   const docLink = (url, lbl) => url ? `<a class="m-doc-link" href="${esc(url)}" target="_blank" rel="noopener">${lbl} ↗</a>` : `<span class="m-doc-link muted">${lbl} —</span>`;
+  const docRow = (kind, lbl, url, isImage) => `<div class="acq-doc-line">
+    <span class="acq-doc-lbl">${lbl}</span>
+    <span class="acq-doc-actions">
+      ${url ? `<a class="m-doc-link" href="${esc(url)}" target="_blank" rel="noopener">Voir ↗</a>` : '<span class="acq-doc-none">—</span>'}
+      <button class="acq-doc-up" onclick="triggerDocUpload('${kind}', ${isImage?'true':'false'})">${url ? 'Remplacer' : 'Importer'}</button>
+    </span>
+  </div>`;
   const canSend = !!(m.offre_pdf_url && m.mandat_pdf_url);
   const inReg = m.registre_numero != null;
   const conjoint = (l.situation_familiale==='marie'||l.situation_familiale==='pacse')&&l.conjoint_prenom
@@ -6013,15 +6026,12 @@ function openAcqDrawer(i) {
 
     <div class="acq-dr-section">
       <p class="acq-dr-h">Documents</p>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px">
-        ${docLink(m.offre_pdf_url,'Offre')}${docLink(m.mandat_pdf_url,'Mandat')}${docLink(l.pj_identite_url,'Pièce ID')}${docLink(m.promesse_pdf_url,'Promesse')}${docLink(m.acte_pdf_url,'Acte')}
-      </div>
-      <input type="file" id="acq-up-promesse" accept="application/pdf" style="display:none" onchange="uploadMandatDoc('promesse', this)"/>
-      <input type="file" id="acq-up-acte"     accept="application/pdf" style="display:none" onchange="uploadMandatDoc('acte', this)"/>
-      <div style="display:flex;gap:8px">
-        <button class="acq-btn-line" onclick="document.getElementById('acq-up-promesse').click()">Uploader la promesse (PDF)</button>
-        <button class="acq-btn-line" onclick="document.getElementById('acq-up-acte').click()">Uploader l'acte (PDF)</button>
-      </div>
+      ${docRow('offre','Offre', m.offre_pdf_url)}
+      ${docRow('mandat','Mandat', m.mandat_pdf_url)}
+      ${docRow('identite','Pièce d\'identité', l.pj_identite_url, true)}
+      ${docRow('promesse','Promesse de vente', m.promesse_pdf_url)}
+      ${docRow('acte','Acte authentique', m.acte_pdf_url)}
+      <input type="file" id="acq-up-file" style="display:none" onchange="uploadMandatDoc(window._acqUpKind, this)"/>
     </div>
 
     <div class="acq-dr-section">
@@ -6074,14 +6084,27 @@ async function deverserRegistre() {
   const data = await _mandatPost({ action:'deverser_registre', mandat_id:m.id }, null);
   if (data) { m.registre_numero = data.registre_numero; showToast(`Déversé au registre — n°${data.registre_numero}`, 'success'); _acqReopen(); }
 }
+const DOC_LABELS = { offre:'Offre', mandat:'Mandat', identite:"Pièce d'identité", promesse:'Promesse', acte:'Acte' };
+const DOC_FIELD  = { offre:'offre_pdf_url', mandat:'mandat_pdf_url', promesse:'promesse_pdf_url', acte:'acte_pdf_url' };
+function triggerDocUpload(kind, isImage) {
+  window._acqUpKind = kind;
+  const inp = document.getElementById('acq-up-file');
+  inp.accept = isImage ? 'image/*,application/pdf' : 'application/pdf';
+  inp.value = '';
+  inp.click();
+}
 function uploadMandatDoc(kind, input) {
   const file = input.files?.[0]; if (!file) return;
   const m = _acqCurrent; if (!m) return;
   const reader = new FileReader();
   reader.onload = async () => {
     showToast('Envoi du document…', 'info');
-    const data = await _mandatPost({ action:'mandat_doc', mandat_id:m.id, kind, content: reader.result, filename: file.name }, `${kind==='promesse'?'Promesse':'Acte'} uploadé`);
-    if (data) { m[kind==='promesse'?'promesse_pdf_url':'acte_pdf_url'] = data.url; _acqReopen(); }
+    const data = await _mandatPost({ action:'mandat_doc', mandat_id:m.id, kind, content: reader.result, filename: file.name, mime: file.type }, `${DOC_LABELS[kind]||'Document'} enregistré`);
+    if (data) {
+      if (kind === 'identite') { m.lead = { ...(m.lead||{}), pj_identite_url: data.url }; }
+      else if (DOC_FIELD[kind]) { m[DOC_FIELD[kind]] = data.url; }
+      _acqReopen();
+    }
   };
   reader.readAsDataURL(file);
 }
