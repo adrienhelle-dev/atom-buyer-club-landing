@@ -414,6 +414,7 @@ module.exports = async function handler(req, res) {
   if (action === 'mandat_doc')        return handleMandatDoc(req, res, b, payload);
   if (action === 'mandat_doc_url')    return handleMandatDocUrl(req, res, b, payload);
   if (action === 'mandat_doc_set')    return handleMandatDocSet(req, res, b, payload);
+  if (action === 'mandat_doc_delete') return handleMandatDocDelete(req, res, b, payload);
 
   if (!action || !interest_id) return res.status(400).json({ error: 'action et interest_id requis' });
 
@@ -703,6 +704,7 @@ async function handleRegistry(req, res) {
       .order('registre_numero', { ascending: false })
       .limit(3000);
     if (error) { console.error('[registry mandats]', error); return res.status(500).json({ error: 'db_error' }); }
+    await attachDocs(data);
     return res.status(200).json({ ok: true, mandats: data || [] });
   }
 
@@ -715,10 +717,23 @@ async function handleRegistry(req, res) {
       .order('created_at', { ascending: false })
       .limit(3000);
     if (error) { console.error('[registry acquereurs]', error); return res.status(500).json({ error: 'db_error' }); }
+    await attachDocs(data);
     return res.status(200).json({ ok: true, acquereurs: data || [] });
   }
 
   return res.status(400).json({ error: 'registry inconnu' });
+}
+
+// Attache la liste des documents uploadés (table mandat_documents) à chaque mandat.
+async function attachDocs(rows) {
+  if (!rows || !rows.length) return;
+  const ids = rows.map(r => r.id);
+  const { data: docs } = await supabase
+    .from('mandat_documents').select('id, mandat_id, kind, url, filename, size_bytes, created_at')
+    .in('mandat_id', ids).order('created_at', { ascending: true });
+  const byMandat = {};
+  for (const d of (docs || [])) (byMandat[d.mandat_id] = byMandat[d.mandat_id] || []).push(d);
+  for (const r of rows) r.documents = byMandat[r.id] || [];
 }
 
 // ── Envoi du dossier de vente au clerc de notaire (Linda) ───────────────────
@@ -951,18 +966,54 @@ async function handleMandatDocUrl(req, res, b, payload) {
 }
 
 // ── action: mandat_doc_set ── enregistre l'URL après upload direct ──────────
+// Insère une ligne mandat_documents (historique multi-fichiers) + met à jour la
+// colonne "primaire" (dernier fichier) pour la compat (mail notaire, pastilles).
 async function handleMandatDocSet(req, res, b, payload) {
   if (!b.mandat_id || !b.kind || !b.url) return res.status(400).json({ error: 'mandat_id, kind, url requis' });
+  if (b.kind !== 'identite' && !DOC_COL[b.kind]) return res.status(400).json({ error: 'kind invalide' });
   const { data: m } = await supabase.from('mandats').select('id, lead_id').eq('id', b.mandat_id).maybeSingle();
   if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
 
+  const { data: doc, error: insErr } = await supabase.from('mandat_documents').insert([{
+    mandat_id: b.mandat_id, kind: b.kind, url: b.url,
+    filename: b.filename || null, size_bytes: b.size || null, uploaded_by: payload.email,
+  }]).select('id, kind, url, filename, size_bytes, created_at').single();
+  if (insErr) return res.status(500).json({ error: 'db_error', detail: insErr.message });
+
+  // Colonne primaire = dernier fichier (compat email notaire / pastilles)
   if (b.kind === 'identite') {
-    if (!m.lead_id) return res.status(400).json({ error: 'lead_absent' });
-    await supabase.from('leads').update({ pj_identite_url: b.url }).eq('id', m.lead_id);
-  } else if (DOC_COL[b.kind]) {
-    await supabase.from('mandats').update({ [DOC_COL[b.kind]]: b.url }).eq('id', b.mandat_id);
+    if (m.lead_id) await supabase.from('leads').update({ pj_identite_url: b.url }).eq('id', m.lead_id);
   } else {
-    return res.status(400).json({ error: 'kind invalide' });
+    await supabase.from('mandats').update({ [DOC_COL[b.kind]]: b.url }).eq('id', b.mandat_id);
   }
-  return res.status(200).json({ ok: true, url: b.url, kind: b.kind });
+  return res.status(200).json({ ok: true, document: doc });
+}
+
+// ── action: mandat_doc_delete ── supprime un document ───────────────────────
+async function handleMandatDocDelete(req, res, b, payload) {
+  if (!b.mandat_id) return res.status(400).json({ error: 'mandat_id requis' });
+  const { data: m } = await supabase.from('mandats').select('id, lead_id').eq('id', b.mandat_id).maybeSingle();
+  if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
+
+  let url = b.url, kind = b.kind;
+  // Doc en table : on le retrouve, on le supprime
+  if (b.doc_id) {
+    const { data: d } = await supabase.from('mandat_documents').select('url, kind').eq('id', b.doc_id).maybeSingle();
+    if (d) { url = d.url; kind = d.kind; }
+    await supabase.from('mandat_documents').delete().eq('id', b.doc_id);
+  }
+  if (!kind) return res.status(400).json({ error: 'kind requis' });
+
+  // Repointe la colonne primaire si elle pointait sur ce fichier
+  const { data: rest } = await supabase.from('mandat_documents')
+    .select('url').eq('mandat_id', b.mandat_id).eq('kind', kind).order('created_at', { ascending: false }).limit(1);
+  const fallback = rest && rest[0] ? rest[0].url : null;
+  if (kind === 'identite') {
+    if (m.lead_id) { const { data: l } = await supabase.from('leads').select('pj_identite_url').eq('id', m.lead_id).maybeSingle();
+      if (!url || l?.pj_identite_url === url) await supabase.from('leads').update({ pj_identite_url: fallback }).eq('id', m.lead_id); }
+  } else if (DOC_COL[kind]) {
+    const { data: mm } = await supabase.from('mandats').select(DOC_COL[kind]).eq('id', b.mandat_id).maybeSingle();
+    if (!url || (mm && mm[DOC_COL[kind]] === url)) await supabase.from('mandats').update({ [DOC_COL[kind]]: fallback }).eq('id', b.mandat_id);
+  }
+  return res.status(200).json({ ok: true });
 }

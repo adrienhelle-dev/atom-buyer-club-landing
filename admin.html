@@ -193,12 +193,25 @@
     .acq-btn-line:hover { border-color: var(--gold); }
     .acq-btn-gold { background: var(--gold); border-color: var(--gold); color: #1a1a1a; font-weight: 600; }
     .acq-btn-gold:disabled { opacity: .4; cursor: not-allowed; }
-    .acq-doc-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-    .acq-doc-lbl { color: var(--cream); }
-    .acq-doc-actions { display: flex; align-items: center; gap: 10px; }
-    .acq-doc-none { color: var(--dim); font-size: 12px; }
-    .acq-doc-up { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--gold); font-family: var(--sans); font-size: 12px; cursor: pointer; transition: background .12s, border-color .12s; }
-    .acq-doc-up:hover { background: rgba(184,151,90,.12); border-color: var(--gold); }
+    /* Documents — groupes multi-fichiers + drag & drop */
+    .docgrp { margin: 0 0 14px; }
+    .docgrp-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--cream); margin: 0 0 6px; }
+    .docgrp-count { font-size: 10px; font-weight: 600; color: var(--gold); background: rgba(184,151,90,.16); border-radius: 10px; padding: 1px 7px; }
+    .docfile { display: flex; align-items: center; gap: 9px; padding: 7px 9px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 5px; }
+    .docfile-ico { color: var(--gold); flex-shrink: 0; display: flex; }
+    .docfile-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .docfile-name { font-size: 12.5px; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .docfile-meta { font-size: 10.5px; color: var(--dim); }
+    .docfile-view, .docfile-del { flex-shrink: 0; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; text-decoration: none; cursor: pointer; border: 1px solid var(--border); background: none; transition: background .12s, color .12s, border-color .12s; }
+    .docfile-view { color: var(--gold); font-size: 14px; }
+    .docfile-view:hover { background: rgba(184,151,90,.14); border-color: var(--gold); }
+    .docfile-del { color: var(--dim); font-size: 12px; }
+    .docfile-del:hover { color: var(--red); border-color: var(--red); }
+    .docdrop { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border: 1px dashed var(--border); border-radius: 8px; color: var(--dim); font-size: 12px; cursor: pointer; text-align: center; transition: border-color .15s, background .15s, color .15s; }
+    .docdrop:hover { border-color: var(--gold); color: var(--cream); }
+    .docdrop.drag-over { border-color: var(--gold); background: rgba(184,151,90,.1); color: var(--gold); }
+    .docdrop-link { color: var(--gold); text-decoration: underline; }
+    @media (max-width: 640px) { .docdrop { padding: 14px; } .docfile-view, .docfile-del { width: 30px; height: 30px; } }
     .view.active { display: block; }
 
     /* Topbar — gelé avec la nav dans .top-freeze (la liste scrolle dessous) */
@@ -5969,13 +5982,6 @@ function openAcqDrawer(i) {
   const struct = { personnel:'En nom propre', sci:'SCI'+(l.nom_structure?' '+esc(l.nom_structure):''), sas:'SAS'+(l.nom_structure?' '+esc(l.nom_structure):'') }[l.achat_structure] || '—';
   const row = (k,v) => `<div class="acq-dr-row"><span>${k}</span><span>${v||'—'}</span></div>`;
   const docLink = (url, lbl) => url ? `<a class="m-doc-link" href="${esc(url)}" target="_blank" rel="noopener">${lbl} ↗</a>` : `<span class="m-doc-link muted">${lbl} —</span>`;
-  const docRow = (kind, lbl, url, isImage) => `<div class="acq-doc-line">
-    <span class="acq-doc-lbl">${lbl}</span>
-    <span class="acq-doc-actions">
-      ${url ? `<a class="m-doc-link" href="${esc(url)}" target="_blank" rel="noopener">Voir ↗</a>` : '<span class="acq-doc-none">—</span>'}
-      <button class="acq-doc-up" onclick="triggerDocUpload('${kind}', ${isImage?'true':'false'})">${url ? 'Remplacer' : 'Importer'}</button>
-    </span>
-  </div>`;
   const canSend = !!(m.offre_pdf_url && m.mandat_pdf_url);
   const inReg = m.registre_numero != null;
   const conjoint = (l.situation_familiale==='marie'||l.situation_familiale==='pacse')&&l.conjoint_prenom
@@ -6024,16 +6030,7 @@ function openAcqDrawer(i) {
         <input type="text" class="acq-edit-inp acq-sw-input" style="width:140px" value="${esc(m.delai_realisation||'')}" placeholder="ex. 3 mois" onchange="setMandatField('delai_realisation', this.value)"/></div>
     </div>
 
-    <div class="acq-dr-section">
-      <p class="acq-dr-h">Documents</p>
-      ${docRow('offre','Offre', m.offre_pdf_url)}
-      ${docRow('mandat','Mandat', m.mandat_pdf_url)}
-      ${docRow('identite','Pièce d\'identité', l.pj_identite_url, true)}
-      ${docRow('promesse','Promesse de vente', m.promesse_pdf_url)}
-      ${docRow('acte','Acte authentique', m.acte_pdf_url)}
-      ${docRow('facture','Facture de commission', m.facture_pdf_url)}
-      <input type="file" id="acq-up-file" style="display:none" onchange="uploadMandatDoc(window._acqUpKind, this)"/>
-    </div>
+    ${renderDocsSection(m)}
 
     <div class="acq-dr-section">
       <p class="acq-dr-h">Notaire confrère (acquéreur)</p>
@@ -6085,41 +6082,95 @@ async function deverserRegistre() {
   const data = await _mandatPost({ action:'deverser_registre', mandat_id:m.id }, null);
   if (data) { m.registre_numero = data.registre_numero; showToast(`Déversé au registre — n°${data.registre_numero}`, 'success'); _acqReopen(); }
 }
-const MAX_DOC_MB = 10; // limite d'upload par document
-const DOC_LABELS = { offre:'Offre', mandat:'Mandat', identite:"Pièce d'identité", promesse:'Promesse', acte:'Acte', facture:'Facture de commission' };
+const MAX_DOC_MB = 10; // limite d'upload par fichier
 const DOC_FIELD  = { offre:'offre_pdf_url', mandat:'mandat_pdf_url', promesse:'promesse_pdf_url', acte:'acte_pdf_url', facture:'facture_pdf_url' };
-function triggerDocUpload(kind, isImage) {
+const DOC_KINDS  = [
+  ['offre','Offre', false], ['mandat','Mandat', false], ['identite',"Pièce d'identité", true],
+  ['promesse','Promesse de vente', false], ['acte','Acte authentique', false], ['facture','Facture de commission', false],
+];
+function fmtSize(b) { b = Number(b)||0; return b>=1048576 ? (b/1048576).toFixed(1)+' Mo' : Math.max(1, Math.round(b/1024))+' Ko'; }
+function filenameFromUrl(u) { try { return decodeURIComponent((u||'').split('?')[0].split('/').pop()||'') || 'document'; } catch { return 'document'; } }
+// Fusionne le doc "primaire" (colonne) + les fichiers en table, dédup par url
+function docItemsFor(m, kind) {
+  const legacy = kind==='identite' ? m.lead?.pj_identite_url : m[DOC_FIELD[kind]];
+  const rows = (m.documents||[]).filter(d => d.kind===kind)
+    .map(d => ({ id:d.id, url:d.url, filename:d.filename||filenameFromUrl(d.url), size:d.size_bytes, date:d.created_at }));
+  const urls = new Set(rows.map(r => r.url));
+  if (legacy && !urls.has(legacy)) rows.unshift({ url:legacy, filename:filenameFromUrl(legacy), legacy:true });
+  return rows;
+}
+const SVG_DOC = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`;
+function renderDocsSection(m) {
+  return `<div class="acq-dr-section">
+    <p class="acq-dr-h">Documents</p>
+    ${DOC_KINDS.map(([kind, label, img]) => {
+      const items = docItemsFor(m, kind);
+      return `<div class="docgrp">
+        <div class="docgrp-head"><span>${label}</span>${items.length?`<span class="docgrp-count">${items.length}</span>`:''}</div>
+        ${items.map(it => `<div class="docfile">
+          <span class="docfile-ico">${SVG_DOC}</span>
+          <span class="docfile-info"><span class="docfile-name">${esc(it.filename)}</span><span class="docfile-meta">${it.size?fmtSize(it.size)+' · ':''}${it.date?fmtDateShort(it.date):(it.legacy?'document principal':'')}</span></span>
+          <a class="docfile-view" href="${esc(it.url)}" target="_blank" rel="noopener" title="Ouvrir">↗</a>
+          <button class="docfile-del" title="Supprimer" onclick="deleteDoc('${it.id||''}','${kind}','${encodeURIComponent(it.url)}')">✕</button>
+        </div>`).join('')}
+        <div class="docdrop" ondragover="docDragOver(event)" ondragleave="docDragLeave(event)" ondrop="docDrop(event,'${kind}',${img})" onclick="pickDocFiles('${kind}',${img})">
+          <span class="docdrop-txt">Glisser un fichier ou <span class="docdrop-link">importer</span></span>
+        </div>
+      </div>`;
+    }).join('')}
+    <input type="file" id="acq-up-file" multiple style="display:none" onchange="onDocInput(this)"/>
+  </div>`;
+}
+function pickDocFiles(kind, img) {
   window._acqUpKind = kind;
   const inp = document.getElementById('acq-up-file');
-  inp.accept = isImage ? 'image/*,application/pdf' : 'application/pdf';
+  inp.accept = img ? 'image/*,application/pdf' : 'application/pdf';
   inp.value = '';
   inp.click();
 }
+function onDocInput(input) { uploadDocFiles(window._acqUpKind, input.files); }
+function docDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function docDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function docDrop(e, kind) { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); uploadDocFiles(kind, e.dataTransfer?.files); }
 // Upload direct vers Supabase via URL signée (évite la limite de corps Vercel ~4,5 Mo)
-async function uploadMandatDoc(kind, input) {
-  const file = input.files?.[0]; if (!file) return;
-  const m = _acqCurrent; if (!m) return;
-  if (file.size > MAX_DOC_MB * 1024 * 1024) {
-    showToast(`Fichier trop volumineux (${(file.size/1024/1024).toFixed(1)} Mo) — ${MAX_DOC_MB} Mo maximum`, 'error');
-    return;
-  }
-  try {
-    showToast('Envoi du document…', 'info');
+async function uploadDocFiles(kind, files) {
+  const m = _acqCurrent; if (!m || !files || !files.length) return;
+  let ok = 0;
+  for (const file of Array.from(files)) {
+    if (file.size > MAX_DOC_MB * 1024 * 1024) {
+      showToast(`${file.name} : trop volumineux (${(file.size/1048576).toFixed(1)} Mo) — ${MAX_DOC_MB} Mo max`, 'error');
+      continue;
+    }
+    showToast(`Envoi de ${file.name}…`, 'info');
     const ext = (file.name.split('.').pop() || 'pdf').toLowerCase();
-    // 1. URL signée
     const meta = await _mandatPost({ action:'mandat_doc_url', mandat_id:m.id, kind, ext }, null);
-    if (!meta) return;
-    // 2. Upload direct
+    if (!meta) continue;
     const up = await fetch(meta.signedUrl, { method:'PUT', body:file, headers:{ 'Content-Type': file.type || 'application/octet-stream' } });
-    if (!up.ok) { showToast('Upload échoué', 'error'); return; }
-    // 3. Enregistre l'URL
-    const set = await _mandatPost({ action:'mandat_doc_set', mandat_id:m.id, kind, url: meta.publicUrl }, `${DOC_LABELS[kind]||'Document'} enregistré`);
-    if (set) {
+    if (!up.ok) { showToast(`${file.name} : upload échoué`, 'error'); continue; }
+    const set = await _mandatPost({ action:'mandat_doc_set', mandat_id:m.id, kind, url: meta.publicUrl, filename: file.name, size: file.size }, null);
+    if (set?.document) {
+      (m.documents = m.documents || []).push(set.document);
       if (kind === 'identite') m.lead = { ...(m.lead||{}), pj_identite_url: meta.publicUrl };
       else if (DOC_FIELD[kind]) m[DOC_FIELD[kind]] = meta.publicUrl;
-      _acqReopen();
+      ok++;
     }
-  } catch (e) { showToast('Erreur réseau pendant l\'upload', 'error'); }
+  }
+  if (ok) { showToast(`${ok} document${ok>1?'s':''} ajouté${ok>1?'s':''}`, 'success'); _acqReopen(); }
+}
+async function deleteDoc(docId, kind, encUrl) {
+  const m = _acqCurrent; if (!m) return;
+  if (!confirm('Supprimer ce document ?')) return;
+  const url = encUrl ? decodeURIComponent(encUrl) : null;
+  const body = docId ? { action:'mandat_doc_delete', mandat_id:m.id, doc_id:docId }
+                     : { action:'mandat_doc_delete', mandat_id:m.id, kind, url };
+  const r = await _mandatPost(body, 'Document supprimé');
+  if (!r) return;
+  if (docId) m.documents = (m.documents||[]).filter(d => d.id !== docId);
+  const remaining = (m.documents||[]).filter(d => d.kind === kind);
+  const fb = remaining.length ? remaining[remaining.length-1].url : null;
+  if (kind === 'identite') { if (!url || m.lead?.pj_identite_url === url) m.lead = { ...(m.lead||{}), pj_identite_url: fb }; }
+  else if (DOC_FIELD[kind]) { if (!url || m[DOC_FIELD[kind]] === url) m[DOC_FIELD[kind]] = fb; }
+  _acqReopen();
 }
 
 // ── Modal envoi notaire ──
