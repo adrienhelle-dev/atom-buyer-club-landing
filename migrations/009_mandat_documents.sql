@@ -21,5 +21,7 @@ create table if not exists mandat_documents (
 );
 create index if not exists mandat_documents_mandat_idx on mandat_documents (mandat_id);
 
+-- Postgres ne supporte pas CREATE POLICY IF NOT EXISTS → drop puis create (idempotent)
 alter table mandat_documents enable row level security;
-create policy if not exists "service_full_access" on mandat_documents using (true) with check (true);
+drop policy if exists "service_full_access" on mandat_documents;
+create policy "service_full_access" on mandat_documents using (true) with check (true);
