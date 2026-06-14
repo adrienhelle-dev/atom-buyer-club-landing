@@ -6031,6 +6031,7 @@ function openAcqDrawer(i) {
       ${docRow('identite','Pièce d\'identité', l.pj_identite_url, true)}
       ${docRow('promesse','Promesse de vente', m.promesse_pdf_url)}
       ${docRow('acte','Acte authentique', m.acte_pdf_url)}
+      ${docRow('facture','Facture de commission', m.facture_pdf_url)}
       <input type="file" id="acq-up-file" style="display:none" onchange="uploadMandatDoc(window._acqUpKind, this)"/>
     </div>
 
@@ -6084,8 +6085,9 @@ async function deverserRegistre() {
   const data = await _mandatPost({ action:'deverser_registre', mandat_id:m.id }, null);
   if (data) { m.registre_numero = data.registre_numero; showToast(`Déversé au registre — n°${data.registre_numero}`, 'success'); _acqReopen(); }
 }
-const DOC_LABELS = { offre:'Offre', mandat:'Mandat', identite:"Pièce d'identité", promesse:'Promesse', acte:'Acte' };
-const DOC_FIELD  = { offre:'offre_pdf_url', mandat:'mandat_pdf_url', promesse:'promesse_pdf_url', acte:'acte_pdf_url' };
+const MAX_DOC_MB = 10; // limite d'upload par document
+const DOC_LABELS = { offre:'Offre', mandat:'Mandat', identite:"Pièce d'identité", promesse:'Promesse', acte:'Acte', facture:'Facture de commission' };
+const DOC_FIELD  = { offre:'offre_pdf_url', mandat:'mandat_pdf_url', promesse:'promesse_pdf_url', acte:'acte_pdf_url', facture:'facture_pdf_url' };
 function triggerDocUpload(kind, isImage) {
   window._acqUpKind = kind;
   const inp = document.getElementById('acq-up-file');
@@ -6093,20 +6095,31 @@ function triggerDocUpload(kind, isImage) {
   inp.value = '';
   inp.click();
 }
-function uploadMandatDoc(kind, input) {
+// Upload direct vers Supabase via URL signée (évite la limite de corps Vercel ~4,5 Mo)
+async function uploadMandatDoc(kind, input) {
   const file = input.files?.[0]; if (!file) return;
   const m = _acqCurrent; if (!m) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
+  if (file.size > MAX_DOC_MB * 1024 * 1024) {
+    showToast(`Fichier trop volumineux (${(file.size/1024/1024).toFixed(1)} Mo) — ${MAX_DOC_MB} Mo maximum`, 'error');
+    return;
+  }
+  try {
     showToast('Envoi du document…', 'info');
-    const data = await _mandatPost({ action:'mandat_doc', mandat_id:m.id, kind, content: reader.result, filename: file.name, mime: file.type }, `${DOC_LABELS[kind]||'Document'} enregistré`);
-    if (data) {
-      if (kind === 'identite') { m.lead = { ...(m.lead||{}), pj_identite_url: data.url }; }
-      else if (DOC_FIELD[kind]) { m[DOC_FIELD[kind]] = data.url; }
+    const ext = (file.name.split('.').pop() || 'pdf').toLowerCase();
+    // 1. URL signée
+    const meta = await _mandatPost({ action:'mandat_doc_url', mandat_id:m.id, kind, ext }, null);
+    if (!meta) return;
+    // 2. Upload direct
+    const up = await fetch(meta.signedUrl, { method:'PUT', body:file, headers:{ 'Content-Type': file.type || 'application/octet-stream' } });
+    if (!up.ok) { showToast('Upload échoué', 'error'); return; }
+    // 3. Enregistre l'URL
+    const set = await _mandatPost({ action:'mandat_doc_set', mandat_id:m.id, kind, url: meta.publicUrl }, `${DOC_LABELS[kind]||'Document'} enregistré`);
+    if (set) {
+      if (kind === 'identite') m.lead = { ...(m.lead||{}), pj_identite_url: meta.publicUrl };
+      else if (DOC_FIELD[kind]) m[DOC_FIELD[kind]] = meta.publicUrl;
       _acqReopen();
     }
-  };
-  reader.readAsDataURL(file);
+  } catch (e) { showToast('Erreur réseau pendant l\'upload', 'error'); }
 }
 
 // ── Modal envoi notaire ──

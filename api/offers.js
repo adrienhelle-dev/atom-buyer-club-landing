@@ -412,6 +412,8 @@ module.exports = async function handler(req, res) {
   if (action === 'mandat_update')     return handleMandatUpdate(req, res, b, payload);
   if (action === 'deverser_registre') return handleDeverserRegistre(req, res, b, payload);
   if (action === 'mandat_doc')        return handleMandatDoc(req, res, b, payload);
+  if (action === 'mandat_doc_url')    return handleMandatDocUrl(req, res, b, payload);
+  if (action === 'mandat_doc_set')    return handleMandatDocSet(req, res, b, payload);
 
   if (!action || !interest_id) return res.status(400).json({ error: 'action et interest_id requis' });
 
@@ -691,7 +693,7 @@ module.exports = async function handler(req, res) {
 async function handleRegistry(req, res) {
   const which = req.query.registry;
 
-  const FULL = 'id, numero, registre_numero, registre_at, statut, etat, source, commission, prix_offre, prix_hai, offre_pdf_url, mandat_pdf_url, promesse_pdf_url, acte_pdf_url, docusign_envelope_id, date_mandat, date_fin_mandat, type_mandat, commission_partie, nature_bien, adresse_num, adresse_rue, adresse_cp, adresse_ville, mandant_domiciliation, mandant_sci, date_promesse, delai_realisation, fees_paid, dossier_notaire_envoye, notaire_nom, notaire_email, notaire_adresse, notaire_tel, created_by, created_at, lead:leads(id, prenom, nom, email, tel, date_naissance, adresse_residence, situation_familiale, conjoint_prenom, conjoint_nom, conjoint_dob, achat_structure, nom_structure, pj_identite_url), project:projects(id, title, address, arrondissement, surface_carrez, floor)';
+  const FULL = 'id, numero, registre_numero, registre_at, statut, etat, source, commission, prix_offre, prix_hai, offre_pdf_url, mandat_pdf_url, promesse_pdf_url, acte_pdf_url, facture_pdf_url, docusign_envelope_id, date_mandat, date_fin_mandat, type_mandat, commission_partie, nature_bien, adresse_num, adresse_rue, adresse_cp, adresse_ville, mandant_domiciliation, mandant_sci, date_promesse, delai_realisation, fees_paid, dossier_notaire_envoye, notaire_nom, notaire_email, notaire_adresse, notaire_tel, created_by, created_at, lead:leads(id, prenom, nom, email, tel, date_naissance, adresse_residence, situation_familiale, conjoint_prenom, conjoint_nom, conjoint_dob, achat_structure, nom_structure, pj_identite_url), project:projects(id, title, address, arrondissement, surface_carrez, floor)';
 
   if (which === 'mandats') {
     // Registre = mandats déversés (registre_numero NOT NULL), triés par n° décroissant.
@@ -895,7 +897,7 @@ async function handleDeverserRegistre(req, res, b, payload) {
 // ── action: mandat_doc ── upload de tout document du dossier ─────────────────
 // kinds mandats : offre | mandat | promesse | acte  → bucket offer-docs
 // kind lead     : identite                          → bucket buyer-docs (leads.pj_identite_url)
-const DOC_COL = { offre: 'offre_pdf_url', mandat: 'mandat_pdf_url', promesse: 'promesse_pdf_url', acte: 'acte_pdf_url' };
+const DOC_COL = { offre: 'offre_pdf_url', mandat: 'mandat_pdf_url', promesse: 'promesse_pdf_url', acte: 'acte_pdf_url', facture: 'facture_pdf_url' };
 async function handleMandatDoc(req, res, b, payload) {
   if (!b.mandat_id || !b.kind || !b.content) return res.status(400).json({ error: 'mandat_id, kind, content requis' });
   if (b.kind !== 'identite' && !DOC_COL[b.kind]) return res.status(400).json({ error: 'kind invalide' });
@@ -925,4 +927,42 @@ async function handleMandatDoc(req, res, b, payload) {
     console.error('[mandat_doc]', e?.message || e);
     return res.status(500).json({ error: 'upload_echoue', detail: e?.message || String(e) });
   }
+}
+
+// ── action: mandat_doc_url ── URL signée pour upload direct (gros fichiers) ──
+// Évite la limite de corps de requête Vercel (~4,5 Mo) : le navigateur uploade
+// directement vers Supabase Storage. kinds : offre|mandat|promesse|acte|facture|identite.
+async function handleMandatDocUrl(req, res, b, payload) {
+  if (!b.mandat_id || !b.kind) return res.status(400).json({ error: 'mandat_id, kind requis' });
+  if (b.kind !== 'identite' && !DOC_COL[b.kind]) return res.status(400).json({ error: 'kind invalide' });
+  const { data: m } = await supabase.from('mandats').select('id, lead_id').eq('id', b.mandat_id).maybeSingle();
+  if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
+
+  const bucket = b.kind === 'identite' ? 'buyer-docs' : 'offer-docs';
+  if (b.kind === 'identite' && !m.lead_id) return res.status(400).json({ error: 'lead_absent' });
+  const owner = m.lead_id || m.id;
+  const ext = (String(b.ext || 'pdf').match(/[a-z0-9]{2,5}/i) || ['pdf'])[0].toLowerCase();
+  const path = `${owner}/${b.kind}-${Date.now()}.${ext}`;
+
+  const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
+  if (error) return res.status(500).json({ error: 'signed_url_error', detail: error.message });
+  const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
+  return res.status(200).json({ ok: true, signedUrl: data.signedUrl, publicUrl, kind: b.kind });
+}
+
+// ── action: mandat_doc_set ── enregistre l'URL après upload direct ──────────
+async function handleMandatDocSet(req, res, b, payload) {
+  if (!b.mandat_id || !b.kind || !b.url) return res.status(400).json({ error: 'mandat_id, kind, url requis' });
+  const { data: m } = await supabase.from('mandats').select('id, lead_id').eq('id', b.mandat_id).maybeSingle();
+  if (!m) return res.status(404).json({ error: 'mandat_introuvable' });
+
+  if (b.kind === 'identite') {
+    if (!m.lead_id) return res.status(400).json({ error: 'lead_absent' });
+    await supabase.from('leads').update({ pj_identite_url: b.url }).eq('id', m.lead_id);
+  } else if (DOC_COL[b.kind]) {
+    await supabase.from('mandats').update({ [DOC_COL[b.kind]]: b.url }).eq('id', b.mandat_id);
+  } else {
+    return res.status(400).json({ error: 'kind invalide' });
+  }
+  return res.status(200).json({ ok: true, url: b.url, kind: b.kind });
 }
