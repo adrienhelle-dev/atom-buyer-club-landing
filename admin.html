@@ -187,6 +187,11 @@
     .acq-tg { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: all .12s; }
     .acq-tg.on-actif   { background: rgba(76,175,125,.16); border-color: var(--green); color: var(--green); }
     .acq-tg.on-tombe   { background: rgba(217,150,80,.16); border-color: #d99650; color: #d99650; }
+    .acq-edit-pencil { flex-shrink: 0; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid var(--border); background: var(--bg3); color: var(--dim); cursor: pointer; transition: color .12s, border-color .12s, background .12s; }
+    .acq-edit-pencil:hover, .acq-edit-pencil.on { color: var(--gold); border-color: var(--gold); background: rgba(184,151,90,.12); }
+    .acq-form { display: grid; gap: 10px; margin-top: 4px; }
+    .acq-form-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .acq-form label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--dim); }
     .acq-edit-inp { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; color: var(--cream); font-family: var(--sans); font-size: 13px; }
     .acq-edit-inp:focus { outline: none; border-color: var(--gold); }
     .acq-btn-line { width: 100%; padding: 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg3); color: var(--cream); font-family: var(--sans); font-size: 13.5px; font-weight: 500; cursor: pointer; margin-top: 8px; transition: border-color .12s, background .12s; }
@@ -5972,9 +5977,11 @@ function renderAcquereursTable() {
 
 // ── Drawer dossier acquéreur ──
 let _acqCurrent = null;
+let _acqEdit = false;
 function openAcqDrawer(i) {
   const m = _acqCache[i];
   if (!m) return;
+  if (_acqCurrent?.id !== m.id) _acqEdit = false; // reset l'édition au changement de dossier
   _acqCurrent = m;
   const l = m.lead || {};
   const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
@@ -5987,8 +5994,54 @@ function openAcqDrawer(i) {
   const conjoint = (l.situation_familiale==='marie'||l.situation_familiale==='pacse')&&l.conjoint_prenom
     ? row('Co-acquéreur', `${esc(l.conjoint_prenom)} ${esc((l.conjoint_nom||'').toUpperCase())}`) : '';
   const headNum = inReg ? `Mandat n°${m.registre_numero}` : 'Non déversé au registre';
+  const PENCIL = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+  const selOpt = (cur, opts) => opts.map(([v,t]) => `<option value="${v}" ${cur===v?'selected':''}>${t}</option>`).join('');
+  const acqSection = _acqEdit ? `
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Acquéreur — édition</p>
+      <div class="acq-form">
+        <div class="acq-form-2">
+          <label>Prénom<input class="acq-edit-inp" id="acq-f-prenom" value="${esc(l.prenom||'')}"/></label>
+          <label>Nom<input class="acq-edit-inp" id="acq-f-nom" value="${esc(l.nom||'')}"/></label>
+        </div>
+        <label>Né·e le<input type="date" class="acq-edit-inp" id="acq-f-dob" value="${l.date_naissance||''}"/></label>
+        <label>Adresse de résidence<input class="acq-edit-inp" id="acq-f-adresse" value="${esc(l.adresse_residence||'')}"/></label>
+        <label>Situation familiale<select class="acq-edit-inp" id="acq-f-situ">${selOpt(l.situation_familiale,[['','—'],['celibataire','Célibataire'],['marie','Marié·e'],['pacse','Pacsé·e'],['divorce','Divorcé·e']])}</select></label>
+        <div class="acq-form-2">
+          <label>Conjoint prénom<input class="acq-edit-inp" id="acq-f-cprenom" value="${esc(l.conjoint_prenom||'')}"/></label>
+          <label>Conjoint nom<input class="acq-edit-inp" id="acq-f-cnom" value="${esc(l.conjoint_nom||'')}"/></label>
+        </div>
+        <label>Conjoint né·e le<input type="date" class="acq-edit-inp" id="acq-f-cdob" value="${l.conjoint_dob||''}"/></label>
+        <div class="acq-form-2">
+          <label>Structure d'achat<select class="acq-edit-inp" id="acq-f-struct">${selOpt(l.achat_structure,[['','—'],['personnel','En nom propre'],['sci','SCI'],['sas','SAS']])}</select></label>
+          <label>Nom structure<input class="acq-edit-inp" id="acq-f-nomstruct" value="${esc(l.nom_structure||'')}"/></label>
+        </div>
+        <div class="acq-form-2">
+          <label>Email<input class="acq-edit-inp" id="acq-f-email" value="${esc(l.email||'')}"/></label>
+          <label>Téléphone<input class="acq-edit-inp" id="acq-f-tel" value="${esc(l.tel||'')}"/></label>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="acq-btn-line" onclick="toggleAcqEdit()">Annuler</button>
+          <button class="acq-btn-line acq-btn-gold" onclick="saveAcquereur()">Enregistrer</button>
+        </div>
+      </div>
+    </div>`
+  : `
+    <div class="acq-dr-section">
+      <p class="acq-dr-h">Acquéreur</p>
+      ${row('Né·e le', fmtDateShort(l.date_naissance))}
+      ${row('Adresse', esc(l.adresse_residence||''))}
+      ${row('Situation', situ)}
+      ${conjoint}
+      ${row('Acquisition', struct)}
+      ${row('Email', esc(l.email||''))}
+      ${row('Téléphone', esc(l.tel||''))}
+    </div>`;
   document.getElementById('acq-drawer-content').innerHTML = `
-    <h2 style="font-family:var(--serif);font-size:24px;margin:0 0 2px;color:var(--cream)">${name}</h2>
+    <h2 style="font-family:var(--serif);font-size:24px;margin:0 0 2px;color:var(--cream);display:flex;align-items:center;gap:10px">
+      <span>${name}</span>
+      <button class="acq-edit-pencil ${_acqEdit?'on':''}" onclick="toggleAcqEdit()" title="Modifier les informations">${PENCIL}</button>
+    </h2>
     <p style="color:var(--dim);font-size:13px;margin:0 0 16px">${esc(bienLabel(m))} · ${headNum}</p>
 
     <p class="acq-dr-h">État du mandat</p>
@@ -5997,19 +6050,7 @@ function openAcqDrawer(i) {
       <button class="acq-tg ${m.etat==='tombe'?'on-tombe':''}"  onclick="setMandatEtat('tombe')">Annulé</button>
     </div>
 
-    <div class="acq-dr-section">
-      <p class="acq-dr-h">Acquéreur</p>
-      ${row('Né·e le', fmtDateShort(l.date_naissance))}
-      ${row('Adresse', esc(l.adresse_residence||''))}
-      ${row('Situation', situ)}
-      ${conjoint}
-      ${row('Acquisition', struct)}
-      <div style="margin-top:8px;display:grid;gap:6px">
-        <input class="acq-edit-inp" id="acq-edit-email" value="${esc(l.email||'')}" placeholder="Email à compléter"/>
-        <input class="acq-edit-inp" id="acq-edit-tel" value="${esc(l.tel||'')}" placeholder="Téléphone à compléter"/>
-        <button class="acq-btn-line" onclick="saveMandantContact()">Enregistrer email / téléphone</button>
-      </div>
-    </div>
+    ${acqSection}
 
     <div class="acq-dr-section">
       <p class="acq-dr-h">Bien & honoraires</p>
@@ -6056,6 +6097,21 @@ async function _mandatPost(body, okMsg) {
     if (okMsg) showToast(okMsg, 'success');
     return data;
   } catch (e) { showToast('Erreur réseau', 'error'); return null; }
+}
+function toggleAcqEdit() { _acqEdit = !_acqEdit; _acqReopen(); }
+async function saveAcquereur() {
+  const m = _acqCurrent; if (!m) return;
+  const g = id => (document.getElementById(id)?.value ?? '').trim();
+  const lead = {
+    prenom: g('acq-f-prenom'), nom: g('acq-f-nom'),
+    date_naissance: g('acq-f-dob'), adresse_residence: g('acq-f-adresse'),
+    situation_familiale: g('acq-f-situ'),
+    conjoint_prenom: g('acq-f-cprenom'), conjoint_nom: g('acq-f-cnom'), conjoint_dob: g('acq-f-cdob'),
+    achat_structure: g('acq-f-struct'), nom_structure: g('acq-f-nomstruct'),
+    email: g('acq-f-email'), tel: g('acq-f-tel'),
+  };
+  const r = await _mandatPost({ action:'mandat_update', mandat_id:m.id, lead }, 'Informations enregistrées');
+  if (r) { m.lead = { ...(m.lead||{}), ...lead }; _acqEdit = false; _acqReopen(); }
 }
 async function setMandatEtat(etat) {
   const m = _acqCurrent; if (!m) return;

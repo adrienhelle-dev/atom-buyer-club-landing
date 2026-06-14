@@ -858,7 +858,7 @@ async function handleNotaireRecap(req, res, b, payload) {
 // ── action: mandat_update ── édition d'un mandat + infos mandant ────────────
 const MANDAT_FIELDS = ['etat','statut','fees_paid','dossier_notaire_envoye','prix_hai','prix_offre','commission','nature_bien','adresse_num','adresse_rue','adresse_cp','adresse_ville','type_mandat','commission_partie','delai_realisation','mandant_domiciliation','mandant_sci','notaire_nom','notaire_email','notaire_adresse','notaire_tel'];
 const MANDAT_DATE_FIELDS = ['date_mandat','date_fin_mandat','date_promesse'];
-const LEAD_FIELDS = ['prenom','nom','email','tel','adresse_residence'];
+const LEAD_FIELDS = ['prenom','nom','email','tel','adresse_residence','date_naissance','situation_familiale','conjoint_prenom','conjoint_nom','conjoint_dob','achat_structure','nom_structure'];
 
 async function handleMandatUpdate(req, res, b, payload) {
   if (!b.mandat_id) return res.status(400).json({ error: 'mandat_id requis' });
@@ -876,7 +876,7 @@ async function handleMandatUpdate(req, res, b, payload) {
   // Édition des coordonnées du mandant (lead lié)
   if (b.lead && m.lead_id) {
     const lp = {};
-    for (const k of LEAD_FIELDS) if (k in b.lead) lp[k] = b.lead[k];
+    for (const k of LEAD_FIELDS) if (k in b.lead) lp[k] = b.lead[k] === '' ? null : b.lead[k];
     if (Object.keys(lp).length) await supabase.from('leads').update(lp).eq('id', m.lead_id);
   }
   return res.status(200).json({ ok: true });
