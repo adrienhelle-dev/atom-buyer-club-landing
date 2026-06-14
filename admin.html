@@ -6138,7 +6138,7 @@ async function deverserRegistre() {
   const data = await _mandatPost({ action:'deverser_registre', mandat_id:m.id }, null);
   if (data) { m.registre_numero = data.registre_numero; showToast(`Déversé au registre — n°${data.registre_numero}`, 'success'); _acqReopen(); }
 }
-const MAX_DOC_MB = 10; // limite d'upload par fichier
+const MAX_DOC_MB = 20; // limite d'upload par fichier
 const DOC_FIELD  = { offre:'offre_pdf_url', mandat:'mandat_pdf_url', promesse:'promesse_pdf_url', acte:'acte_pdf_url', facture:'facture_pdf_url' };
 const DOC_KINDS  = [
   ['offre','Offre', false], ['mandat','Mandat', false], ['identite',"Pièce d'identité", true],
