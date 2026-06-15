@@ -9,13 +9,15 @@
   "functions": {
     "api/generate-pdf.js": { "maxDuration": 60 },
     "api/offers.js":       { "maxDuration": 60 },
-    "api/send-fiche.js":   { "maxDuration": 30 },
+    "api/send-fiche.js":   { "maxDuration": 60 },
     "api/submit.js":       { "maxDuration": 30 },
     "api/buyer-info.js":   { "maxDuration": 15 },
-    "api/docusign-webhook.js": { "maxDuration": 15 }
+    "api/docusign-webhook.js": { "maxDuration": 15 },
+    "api/cron/fiche-queue.js": { "maxDuration": 60 }
   },
   "crons": [
-    { "path": "/api/cron/stale-hot-leads", "schedule": "0 7 * * *" }
+    { "path": "/api/cron/stale-hot-leads", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/fiche-queue", "schedule": "0 * * * *" }
   ],
   "headers": [
     {

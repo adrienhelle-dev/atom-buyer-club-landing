@@ -4,7 +4,10 @@ const { getFounder, associateEmails } = require('../lib/founders');
 const { esc } = require('../lib/html');
 const { Resend } = require('resend');
 
-module.exports = async function handler(req, res) {
+module.exports = handler;
+module.exports.processFicheQueue = processFicheQueue;
+
+async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -152,57 +155,103 @@ module.exports = async function handler(req, res) {
   });
 };
 
-// ─── Envoi en masse de la fiche projet aux leads compatibles ──────────────
-// Envoi groupé via Resend batch (≤100/appel), reply-to = 3 associés, SANS cc
-// (évite 177 copies à l'expéditeur). Anti-doublon : ignore les leads ayant déjà
-// reçu la fiche de CE projet (sauf force=true).
+const FICHE_BATCH_SIZE = 50; // envois par passage (immédiat + chaque heure via cron)
+
+// ─── Envoi en masse : mise en file + envoi des 50 premiers tout de suite ──────
+// Le reste part automatiquement par paquets de 50/heure (cron api/cron/fiche-queue).
+// Anti-doublon : ignore les leads déjà destinataires (fiche reçue OU déjà en file),
+// sauf force=true.
 async function handleBulkFiche(req, res, b, payload) {
   const { project_id, lead_ids, message, force } = b;
   if (!project_id) return res.status(400).json({ error: 'project_id requis' });
-  if (!process.env.RESEND_API_KEY) return res.status(500).json({ error: 'email_config_missing' });
 
-  const { data: project } = await supabase.from('projects').select('*').eq('id', project_id).single();
+  const { data: project } = await supabase.from('projects').select('id').eq('id', project_id).single();
   if (!project) return res.status(404).json({ error: 'Projet non trouvé' });
 
-  const { data: leads } = await supabase.from('leads').select('id, prenom, nom, email, status').in('id', lead_ids);
+  const { data: leads } = await supabase.from('leads').select('id, email').in('id', lead_ids);
   let targets = (leads || []).filter(l => l.email);
 
-  // Anti-doublon : leads ayant déjà reçu la fiche de ce projet
-  const { data: prior } = await supabase.from('lead_events').select('lead_id, content').eq('type', 'fiche_envoyee').limit(10000);
-  const doneSet = new Set();
-  for (const e of (prior || [])) { try { if (JSON.parse(e.content).project_id === project_id) doneSet.add(e.lead_id); } catch {} }
-  const skipped = force ? 0 : targets.filter(l => doneSet.has(l.id)).length;
-  if (!force) targets = targets.filter(l => !doneSet.has(l.id));
+  // Déjà destinataires : fiche déjà reçue, ou déjà en file (pending) pour ce projet
+  const exclude = new Set();
+  if (!force) {
+    const { data: prior } = await supabase.from('lead_events').select('lead_id, content').eq('type', 'fiche_envoyee').limit(10000);
+    for (const e of (prior || [])) { try { if (JSON.parse(e.content).project_id === project_id) exclude.add(e.lead_id); } catch {} }
+  }
+  const { data: queued } = await supabase.from('fiche_queue').select('lead_id').eq('project_id', project_id).eq('status', 'pending');
+  for (const q of (queued || [])) exclude.add(q.lead_id); // jamais de double-file
+  const skipped = targets.filter(l => exclude.has(l.id)).length;
+  targets = targets.filter(l => !exclude.has(l.id));
 
-  if (!targets.length) return res.status(200).json({ ok: true, sent: 0, skipped, total: (leads || []).length, all_done: skipped > 0 });
+  if (!targets.length) return res.status(200).json({ ok: true, queued: 0, sent: 0, skipped, total: (leads || []).length, all_done: skipped > 0 });
+
+  // Mise en file
+  const rows = targets.map(l => ({ project_id, lead_id: l.id, message: message || null, requested_by: payload.email, status: 'pending' }));
+  const { error: qErr } = await supabase.from('fiche_queue').insert(rows);
+  if (qErr) return res.status(500).json({ error: 'db_error', detail: qErr.message });
+
+  // Traite tout de suite le premier paquet de 50
+  const first = await processFicheQueue(FICHE_BATCH_SIZE);
+  const remaining = Math.max(0, targets.length - (first.sent || 0));
+  return res.status(200).json({ ok: true, queued: targets.length, sent: first.sent || 0, skipped, remaining, total: (leads || []).length });
+}
+
+// Traite jusqu'à `limit` éléments en attente de la file (utilisé par l'envoi initial
+// ET par le cron horaire). Envoi groupé Resend, reply-to = 3 associés, sans cc.
+async function processFicheQueue(limit = FICHE_BATCH_SIZE) {
+  if (!process.env.RESEND_API_KEY) return { sent: 0, failed: 0, remaining: 0, skipped: 'no_key' };
+
+  const { data: items } = await supabase.from('fiche_queue')
+    .select('id, project_id, lead_id, message, requested_by')
+    .eq('status', 'pending').order('created_at', { ascending: true }).limit(limit);
+  if (!items || !items.length) return { sent: 0, failed: 0, remaining: 0 };
+
+  const projIds = [...new Set(items.map(i => i.project_id))];
+  const leadIds = [...new Set(items.map(i => i.lead_id))];
+  const [{ data: projects }, { data: leads }] = await Promise.all([
+    supabase.from('projects').select('*').in('id', projIds),
+    supabase.from('leads').select('id, prenom, nom, email, status').in('id', leadIds),
+  ]);
+  const pMap = Object.fromEntries((projects || []).map(p => [p.id, p]));
+  const lMap = Object.fromEntries((leads || []).map(l => [l.id, l]));
 
   const resend  = new Resend(process.env.RESEND_API_KEY);
   const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
   const replyTo = associateEmails();
-  const title   = project.title || project.titre || 'Nouvelle opportunité';
-  const founder = getFounder(payload.email);
-  const subject = `Atom Buyers Club — ${title}`;
+
+  const emails = [], valid = [];
+  for (const it of items) {
+    const p = pMap[it.project_id], l = lMap[it.lead_id];
+    if (!p || !l || !l.email) continue;
+    const title = p.title || p.titre || 'Nouvelle opportunité';
+    emails.push({ from, replyTo, to: [l.email], subject: `Atom Buyers Club — ${title}`, html: buildFicheEmail(l, p, it.message, getFounder(it.requested_by), it.requested_by) });
+    valid.push({ ...it, _lead: l, _title: title });
+  }
 
   let sent = 0, failed = 0;
-  const sentLeads = [];
-  for (let i = 0; i < targets.length; i += 100) {
-    const chunkLeads = targets.slice(i, i + 100);
-    const chunk = chunkLeads.map(l => ({ from, replyTo, to: [l.email], subject, html: buildFicheEmail(l, project, message, founder, payload.email) }));
+  if (emails.length) {
     try {
-      const r = await resend.batch.send(chunk);
-      if (r?.error) { failed += chunkLeads.length; console.error('[bulk fiche] batch error', JSON.stringify(r.error)); }
-      else { sent += chunkLeads.length; sentLeads.push(...chunkLeads); }
-    } catch (e) { failed += chunkLeads.length; console.error('[bulk fiche] throw', e?.message || e); }
+      const r = await resend.batch.send(emails);
+      if (r?.error) { failed = emails.length; console.error('[fiche-queue] batch error', JSON.stringify(r.error)); }
+      else sent = emails.length;
+    } catch (e) { failed = emails.length; console.error('[fiche-queue] throw', e?.message || e); }
   }
 
-  if (sentLeads.length) {
-    const events = sentLeads.map(l => ({ lead_id: l.id, type: 'fiche_envoyee', content: JSON.stringify({ title, project_id, bulk: true }), author: payload.email }));
-    const toContacte = sentLeads.filter(l => !l.status || l.status === 'nouveau').map(l => l.id);
-    await supabase.from('lead_events').insert(events);
+  const now = new Date().toISOString();
+  if (sent) {
+    const okIds = valid.map(v => v.id);
+    await supabase.from('fiche_queue').update({ status: 'sent', sent_at: now }).in('id', okIds);
+    await supabase.from('lead_events').insert(valid.map(v => ({
+      lead_id: v.lead_id, type: 'fiche_envoyee',
+      content: JSON.stringify({ title: v._title, project_id: v.project_id, bulk: true }), author: v.requested_by,
+    })));
+    const toContacte = valid.filter(v => !v._lead.status || v._lead.status === 'nouveau').map(v => v.lead_id);
     if (toContacte.length) await supabase.from('leads').update({ status: 'contacte' }).in('id', toContacte);
+  } else if (failed) {
+    await supabase.from('fiche_queue').update({ status: 'failed', error: 'batch_failed' }).in('id', valid.map(v => v.id));
   }
 
-  return res.status(200).json({ ok: true, sent, skipped, failed, total: (leads || []).length });
+  const { count } = await supabase.from('fiche_queue').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+  return { sent, failed, remaining: count || 0 };
 }
 
 // ─── Helpers ────────────────────────────────────────────────────

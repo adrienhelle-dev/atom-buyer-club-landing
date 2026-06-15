@@ -6719,16 +6719,16 @@ async function sendFicheToAllLeads() {
       if (confirm(`⚠️ Ces ${d.skipped} leads ont déjà reçu cette fiche. Tout leur renvoyer quand même ?`)) {
         btn.disabled = true; btn.textContent = 'Renvoi en cours…';
         const d2 = await post(true);
-        if (d2) { showToast(`Fiche renvoyée à ${d2.sent} lead${d2.sent>1?'s':''}`, 'success'); closeSendLeadsModal(); }
+        if (d2) { showToast(`${d2.sent} renvoyé${d2.sent>1?'s':''} maintenant${d2.remaining?` · ${d2.remaining} en file (50/h)`:''}`, 'success'); closeSendLeadsModal(); }
         else { btn.disabled = false; btn.textContent = orig; }
       }
       return;
     }
 
-    const parts = [`Fiche envoyée à ${d.sent} lead${d.sent>1?'s':''}`];
-    if (d.skipped) parts.push(`${d.skipped} déjà contactés ignorés`);
-    if (d.failed)  parts.push(`${d.failed} échec${d.failed>1?'s':''}`);
-    showToast(parts.join(' · '), d.failed ? 'info' : 'success');
+    const parts = [`${d.sent} envoyé${d.sent>1?'s':''} maintenant`];
+    if (d.remaining) parts.push(`${d.remaining} en file (50/h, auto)`);
+    if (d.skipped)   parts.push(`${d.skipped} déjà contactés ignorés`);
+    showToast(parts.join(' · '), 'success');
     closeSendLeadsModal();
   } catch (e) {
     btn.disabled = false; btn.textContent = orig;
