@@ -804,7 +804,7 @@ async function handleNotaireRecap(req, res, b, payload) {
     <div style="background:#0f0e0c;padding:24px 28px">
       <p style="margin:0 0 8px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#B8975A">Atom Buyers Club · Dossier de vente</p>
       <h1 style="margin:0;font-size:20px;font-weight:400;color:#F5F2ED">${esc(lead.prenom || '')} ${esc((lead.nom || '').toUpperCase())}</h1>
-      <p style="margin:6px 0 0;font-size:13px;color:#B8975A">Mandat n° ${esc(String(m.numero || '—'))}</p>
+      <p style="margin:6px 0 0;font-size:13px;color:#B8975A">Mandat n° ${esc(String(m.registre_numero ?? m.numero ?? '—'))}</p>
     </div>
     <div style="padding:22px 28px">
       <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6">Bonjour Linda,<br/>Veuillez trouver ci-joint le dossier de vente complet pour l'acquéreur ci-dessous. Les pièces (offre d'achat, mandat de recherche${idJoined ? ', copie pièce d\'identité' : ''}) sont jointes à ce message.</p>
@@ -862,7 +862,7 @@ async function handleNotaireRecap(req, res, b, payload) {
   if (lead.id) {
     await supabase.from('lead_events').insert([{
       lead_id: lead.id, type: 'note',
-      content: `Dossier de vente envoyé au notaire (${NOTAIRE_CLERC_EMAIL}) — mandat n°${m.numero || '—'}, ${attachments.length} PJ`,
+      content: `Dossier de vente envoyé au notaire (${NOTAIRE_CLERC_EMAIL}) — mandat n°${m.registre_numero ?? m.numero ?? '—'}, ${attachments.length} PJ`,
       author: payload.email,
     }]);
   }
