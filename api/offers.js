@@ -639,15 +639,27 @@ module.exports = async function handler(req, res) {
 
       const commission = b.commission || mandatRow?.commission || 8900;
       const dateToday  = todayFr();
-      const numero = mandatRow?.numero || '—';
 
-      const html = buildMandatHtml({ lead, project: proj, commission, numero, dateToday });
+      // Génération du mandat = entrée au registre : on attribue le n° de registre
+      // (suite de la numérotation, plancher 160) s'il n'en a pas déjà un. Ce numéro
+      // est celui imprimé sur le PDF — pas l'id série interne.
+      let registreNumero = mandatRow?.registre_numero;
+      if (!registreNumero) {
+        const { data: top } = await supabase.from('mandats').select('registre_numero')
+          .not('registre_numero', 'is', null).order('registre_numero', { ascending: false }).limit(1).maybeSingle();
+        registreNumero = Math.max(160, (top?.registre_numero || 159) + 1);
+      }
+
+      const html = buildMandatHtml({ lead, project: proj, commission, numero: registreNumero, dateToday });
       const pdf  = await renderPdf(html);
 
       const pdfPath = `${lead.id}/mandat-${Date.now()}.pdf`;
       const pdfUrl  = await uploadPdf(pdf, pdfPath);
 
-      await supabase.from('mandats').update({ mandat_pdf_url: pdfUrl, commission, statut: 'mandat_envoye' }).eq('id', mandatRow.id);
+      await supabase.from('mandats').update({
+        mandat_pdf_url: pdfUrl, commission, statut: 'mandat_envoye',
+        registre_numero: registreNumero, registre_at: mandatRow?.registre_at || new Date().toISOString(),
+      }).eq('id', mandatRow.id);
 
       const mandatDelivery = b.delivery || 'email';
       const fileName = `Mandat-${(proj.address || proj.title || '').replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.pdf`;
@@ -676,11 +688,12 @@ module.exports = async function handler(req, res) {
         ...content,
         mandat_sent_at: new Date().toISOString(),
         mandat_sent_by: payload.email,
+        registre_numero: registreNumero,
         ...(mandatDelivery !== 'download' ? { mandat_emailed_at: new Date().toISOString() } : {}),
       };
       await supabase.from('lead_events').update({ content: newContent }).eq('id', interest_id);
 
-      return res.status(200).json({ ok: true, mandat_id: mandatRow.id, pdf_url: pdfUrl, docusign: !!envelopeId, emailed: mandatDelivery !== 'download' });
+      return res.status(200).json({ ok: true, mandat_id: mandatRow.id, pdf_url: pdfUrl, registre_numero: registreNumero, docusign: !!envelopeId, emailed: mandatDelivery !== 'download' });
     } catch (err) {
       console.error('mandat action error:', err);
       return res.status(500).json({ ok: false, error: err.message || 'Erreur serveur mandat' });
