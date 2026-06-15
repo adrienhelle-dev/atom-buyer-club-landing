@@ -1,6 +1,6 @@
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
-const { getFounder } = require('../lib/founders');
+const { getFounder, associateEmails } = require('../lib/founders');
 const { esc } = require('../lib/html');
 const { Resend } = require('resend');
 
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
     let emailResult;
     try {
       emailResult = await resend.emails.send({
-        from, replyTo: payload.email, to: [lead.email], subject,
+        from, replyTo: associateEmails(), to: [lead.email], subject,
         cc: [payload.email], // responsable du lead (= l'expéditeur) en copie
         html: buildSimpleEmail(lead, subject, emailBody, founder, payload.email),
       });
@@ -103,7 +103,7 @@ module.exports = async function handler(req, res) {
   try {
     emailResult = await resend.emails.send({
       from,
-      replyTo: payload.email,
+      replyTo: associateEmails(),
       to: [lead.email],
       cc: [payload.email], // responsable du lead (= l'expéditeur) en copie
       subject: `Atom Buyers Club — ${title}`,

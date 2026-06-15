@@ -17,7 +17,7 @@
 
 const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
-const { getFounder, allFounderEmails } = require('../lib/founders');
+const { getFounder, allFounderEmails, associateEmails } = require('../lib/founders');
 const { esc } = require('../lib/html');
 const { Resend } = require('resend');
 const crypto = require('crypto');
@@ -531,7 +531,7 @@ module.exports = async function handler(req, res) {
       const subject = `Offre d'achat — ${project.address || project.title}`;
       await resend.emails.send({
         from,
-        replyTo: payload.email,
+        replyTo: associateEmails(),
         to: [lead.email],
         cc: [payload.email],
         subject,
@@ -567,7 +567,7 @@ module.exports = async function handler(req, res) {
       const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
       const founder = getFounder(payload.email);
       await resend.emails.send({
-        from, replyTo: payload.email, to: [lead.email], cc: [payload.email],
+        from, replyTo: associateEmails(), to: [lead.email], cc: [payload.email],
         subject: `Offre d'achat — ${project?.address || project?.title || ''}`,
         html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre offre d'achat.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
         attachments: [{ filename: 'Offre-achat.pdf', content: pdfBuf.toString('base64') }],
@@ -589,7 +589,7 @@ module.exports = async function handler(req, res) {
       const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
       const founder = getFounder(payload.email);
       await resend.emails.send({
-        from, replyTo: payload.email, to: [lead.email], cc: [payload.email],
+        from, replyTo: associateEmails(), to: [lead.email], cc: [payload.email],
         subject: 'Mandat de recherche — Atom Buyers Club',
         html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre mandat de recherche à signer.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
         attachments: [{ filename: 'Mandat-recherche.pdf', content: pdfBuf.toString('base64') }],
@@ -677,7 +677,7 @@ module.exports = async function handler(req, res) {
           const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
           const founder = getFounder(payload.email);
           await resend.emails.send({
-            from, replyTo: payload.email, to: [lead.email], cc: [payload.email],
+            from, replyTo: associateEmails(), to: [lead.email], cc: [payload.email],
             subject: `Mandat de recherche — Atom Buyers Club`,
             html: `<p>Bonjour ${esc(lead.prenom)},</p>
 <p>Veuillez trouver ci-joint votre mandat de recherche à signer et nous retourner.</p>
