@@ -3163,6 +3163,7 @@
       <div style="margin:0 0 12px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.5;background:var(--bg3);border:1px solid var(--border);color:var(--dim)">
         Ces leads n'ont pas renseigné leur <strong style="color:var(--cream)">financement</strong> (score souvent à 0). On leur envoie un email pour compléter le formulaire de la landing.
       </div>
+      <div id="relance-status-banner" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.5"></div>
       <button id="btn-relance-all" class="btn-send-fiche" style="width:100%;margin:0 0 14px;display:none" onclick="sendRelanceProfil()">Envoyer la demande</button>
       <p class="send-modal-label">Leads au profil incomplet</p>
       <div class="project-list" id="relance-list"><div class="project-empty">Chargement…</div></div>
@@ -5843,6 +5844,30 @@ function openRelanceModal() {
   }).join('') : '<div class="project-empty">Aucun lead à compléter — tous ont renseigné leur financement 🎉</div>';
   updateRelanceBtn();
   document.getElementById('relance-overlay').classList.add('on');
+  loadRelanceStatus();
+}
+async function loadRelanceStatus() {
+  const banner = document.getElementById('relance-status-banner');
+  if (!banner) return;
+  banner.style.display = 'none';
+  try {
+    const res = await fetch('/api/send-fiche?relance_status=1', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const d = await res.json();
+    if (!d.ever) return;
+    const by = d.last_by ? founderNameFromEmail(d.last_by) : 'un admin';
+    const date = d.last_at ? fmtDateShort(d.last_at) : '';
+    banner.style.cssText += ';display:block;background:rgba(76,175,125,.1);border:1px solid rgba(76,175,125,.3);color:var(--green)';
+    banner.innerHTML = `✓ <strong>Dernière relance</strong> le ${date} par ${esc(by)}${d.recent_count ? ` · ${d.recent_count} lead${d.recent_count>1?'s':''} relancé${d.recent_count>1?'s':''} ces 7 derniers jours (ignorés au prochain envoi)` : ''}.`;
+    const recent = new Set(d.recent_ids || []);
+    document.querySelectorAll('#relance-list .project-item').forEach(row => {
+      if (recent.has(row.dataset.leadId)) {
+        row.style.opacity = '.55';
+        const addr = row.querySelector('.project-addr');
+        if (addr && !addr.dataset.relMarked) { addr.dataset.relMarked = '1'; addr.innerHTML += ' · <span style="color:var(--green)">déjà relancé</span>'; }
+      }
+    });
+  } catch {}
 }
 function toggleRelanceSelect(id) {
   if (_relanceSelected.has(id)) _relanceSelected.delete(id); else _relanceSelected.add(id);

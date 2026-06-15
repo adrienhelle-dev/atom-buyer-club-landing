@@ -16,6 +16,7 @@ async function handler(req, res) {
   if (!payload) return res.status(401).json({ error: 'Non autorisé' });
 
   // ─── GET : statut du mailing groupé d'un projet (bandeau anti-doublon) ──
+  if (req.method === 'GET' && req.query.relance_status) return handleRelanceStatus(req, res);
   if (req.method === 'GET') return handleBlastStatus(req, res);
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -183,6 +184,22 @@ async function handleBlastStatus(req, res) {
     last_by: latest?.requested_by || null,
     last_at: latest?.created_at || null,
     last_sent_at: lastSentAt,
+  });
+}
+
+// ─── Statut des relances "compléter le profil" (bandeau anti-doublon) ─────────
+async function handleRelanceStatus(req, res) {
+  const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+  const { data: ev } = await supabase.from('lead_events')
+    .select('lead_id, author, created_at').eq('type', 'relance_profil')
+    .order('created_at', { ascending: false }).limit(5000);
+  if (!ev || !ev.length) return res.status(200).json({ ok: true, ever: false });
+  const recentIds = [...new Set(ev.filter(e => e.created_at >= since).map(e => e.lead_id))];
+  return res.status(200).json({
+    ok: true, ever: true,
+    last_at: ev[0].created_at, last_by: ev[0].author,
+    recent_ids: recentIds, recent_count: recentIds.length,
+    total: new Set(ev.map(e => e.lead_id)).size,
   });
 }
 
