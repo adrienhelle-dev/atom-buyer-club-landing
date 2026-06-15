@@ -520,6 +520,7 @@ module.exports = async function handler(req, res) {
       const { data: m } = await supabase.from('mandats').insert([{ lead_id: lead.id, project_id: projectId, interest_event_id: interest_id, commission: 8900, prix_offre: prix, notaire_nom: notaire.nom, notaire_email: notaire.email, notaire_adresse: notaire.adresse, notaire_tel: notaire.tel, offre_pdf_url: pdfUrl, statut: 'offre_envoyee', created_by: payload.email }]).select('id').single();
       mandatId = m?.id;
     }
+    await upsertGeneratedDoc(mandatId, 'offre', pdfUrl, "Offre d'achat (générée).pdf");
 
     const delivery = b.delivery || 'email';
     let offerEmailed = false;
@@ -660,6 +661,7 @@ module.exports = async function handler(req, res) {
         mandat_pdf_url: pdfUrl, commission, statut: 'mandat_envoye',
         registre_numero: registreNumero, registre_at: mandatRow?.registre_at || new Date().toISOString(),
       }).eq('id', mandatRow.id);
+      await upsertGeneratedDoc(mandatRow.id, 'mandat', pdfUrl, `Mandat n°${registreNumero} (généré).pdf`);
 
       const mandatDelivery = b.delivery || 'email';
       const fileName = `Mandat-${(proj.address || proj.title || '').replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.pdf`;
@@ -735,6 +737,14 @@ async function handleRegistry(req, res) {
   }
 
   return res.status(400).json({ error: 'registry inconnu' });
+}
+
+// Enregistre le document généré (offre/mandat) comme fichier listé, remplaçable
+// à chaque régénération (pas de doublon). uploaded_by='system:generated' = marqueur.
+async function upsertGeneratedDoc(mandatId, kind, url, filename) {
+  if (!mandatId || !url) return;
+  await supabase.from('mandat_documents').delete().eq('mandat_id', mandatId).eq('kind', kind).eq('uploaded_by', 'system:generated');
+  await supabase.from('mandat_documents').insert([{ mandat_id: mandatId, kind, url, filename, uploaded_by: 'system:generated' }]);
 }
 
 // Attache la liste des documents uploadés (table mandat_documents) à chaque mandat.
