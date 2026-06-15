@@ -788,7 +788,9 @@ async function handleNotaireRecap(req, res, b, payload) {
   }
 
   const founder = getFounder(payload.email);
-  const ccList  = allFounderEmails().filter(e => e !== NOTAIRE_CLERC_EMAIL);
+  // CC = associés fondateurs, hors Melina (staff) et hors le destinataire
+  const NOTAIRE_CC_EXCLUDE = ['melina.cabral@atom-capital.fr'];
+  const ccList  = allFounderEmails().filter(e => e !== NOTAIRE_CLERC_EMAIL && !NOTAIRE_CC_EXCLUDE.includes(e.toLowerCase()));
   const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
   const subject = `Nouveau dossier de vente — ${esc(lead.prenom || '')} ${esc((lead.nom || '').toUpperCase())} · ${esc(proj.address || proj.title || '')}`;
 
