@@ -858,6 +858,9 @@ async function handleNotaireRecap(req, res, b, payload) {
     return res.status(500).json({ error: 'envoi_echoue', detail: e?.message || String(e) });
   }
 
+  // Envoi réussi → coche automatiquement "Dossier envoyé au notaire"
+  await supabase.from('mandats').update({ dossier_notaire_envoye: true }).eq('id', b.mandat_id);
+
   // Trace dans la timeline du lead
   if (lead.id) {
     await supabase.from('lead_events').insert([{
@@ -867,7 +870,7 @@ async function handleNotaireRecap(req, res, b, payload) {
     }]);
   }
 
-  return res.status(200).json({ ok: true, sent_to: NOTAIRE_CLERC_EMAIL, cc: ccList, attachments: attachments.length, id_joined: idJoined });
+  return res.status(200).json({ ok: true, sent_to: NOTAIRE_CLERC_EMAIL, cc: ccList, attachments: attachments.length, id_joined: idJoined, dossier_notaire_envoye: true });
 }
 
 // ── action: mandat_update ── édition d'un mandat + infos mandant ────────────

@@ -6259,7 +6259,9 @@ async function sendNotaireRecap() {
     if (res.status === 401) { logout(); return; }
     const data = await res.json();
     if (!res.ok || !data.ok) { btn.disabled=false; btn.textContent='Réessayer'; showToast(data.detail || data.error || 'Échec de l\'envoi', 'error'); return; }
+    m.dossier_notaire_envoye = true; // coché auto après envoi
     closeNotaireModal();
+    _acqReopen();
     showToast(`Dossier envoyé à ${data.sent_to} · ${data.attachments} PJ · ${data.cc?.length||0} associés en copie`, 'success');
   } catch (e) { btn.disabled=false; btn.textContent='Réessayer'; showToast('Erreur réseau', 'error'); }
 }
