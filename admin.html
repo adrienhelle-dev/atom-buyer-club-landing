@@ -1355,6 +1355,7 @@
       .filter-select { font-size: 11px; padding: 6px 20px 6px 9px; border-radius: 8px; flex-shrink: 0; }
       .btn-export { font-size: 12px; padding: 8px 12px; }
       .btn-refresh { padding: 8px 10px; }
+      .desktop-only { display: none !important; }
       .btn-new-project { font-size: 12px; padding: 8px 12px; border-radius: 8px; }
 
       /* Score → col 1 */
@@ -2087,7 +2088,7 @@
       </div>
       <div class="toolbar-right">
         <button class="btn-refresh" onclick="loadLeads()" title="Actualiser">↻</button>
-        <button class="btn-export" onclick="exportCSV()">↓ CSV</button>
+        <button class="btn-export desktop-only" id="btn-relance-profil" onclick="openRelanceModal()" title="Relancer les leads au profil incomplet">Profils à compléter</button>
       </div>
     </div>
     <div class="toolbar-filters">
@@ -3120,6 +3121,31 @@
       <p class="fiche-status" id="send-leads-status"></p>
       <button class="send-modal-cancel" onclick="closeSendLeadsModal()">Annuler</button>
       <button class="btn-send-fiche" id="btn-send-leads" disabled>Envoyer par email</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PROFILS À COMPLÉTER (relance financement) ════════ -->
+<div class="fiche-overlay" id="relance-overlay" onclick="if(event.target===this)closeRelanceModal()">
+  <div class="fiche-modal send-modal">
+    <div class="send-modal-header">
+      <div>
+        <p class="send-modal-tag">Profils à compléter</p>
+        <p class="send-modal-sub" id="relance-sub">—</p>
+      </div>
+      <button class="send-modal-close" onclick="closeRelanceModal()">✕</button>
+    </div>
+    <div class="send-modal-scroll">
+      <div style="margin:0 0 12px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.5;background:var(--bg3);border:1px solid var(--border);color:var(--dim)">
+        Ces leads n'ont pas renseigné leur <strong style="color:var(--cream)">financement</strong> (score souvent à 0). On leur envoie un email pour compléter le formulaire de la landing.
+      </div>
+      <button id="btn-relance-all" class="btn-send-fiche" style="width:100%;margin:0 0 14px;display:none" onclick="sendRelanceProfil()">Envoyer la demande</button>
+      <p class="send-modal-label">Leads au profil incomplet</p>
+      <div class="project-list" id="relance-list"><div class="project-empty">Chargement…</div></div>
+    </div>
+    <div class="send-modal-footer">
+      <p class="fiche-status" id="relance-status"></p>
+      <button class="send-modal-cancel" onclick="closeRelanceModal()">Fermer</button>
     </div>
   </div>
 </div>
@@ -5771,6 +5797,53 @@ async function saveNotes(id) {
 
 
 /* ── Export ─────────────────────────────────────────────────── */
+/* ── Profils à compléter : relance financement ───────────────── */
+function _incompleteLeads() { return leadsCache.filter(l => !l.financement && l.email); }
+function openRelanceModal() {
+  const inc = _incompleteLeads();
+  document.getElementById('relance-sub').textContent = `${inc.length} lead${inc.length>1?'s':''} sans information de financement`;
+  document.getElementById('relance-status').textContent = '';
+  const allBtn = document.getElementById('btn-relance-all');
+  if (inc.length) { allBtn.style.display=''; allBtn.disabled=false; allBtn.textContent=`Envoyer la demande à ${inc.length} lead${inc.length>1?'s':''}`; }
+  else allBtn.style.display='none';
+  const list = document.getElementById('relance-list');
+  list.innerHTML = inc.length ? inc.map(l => {
+    const name = (`${l.prenom||''} ${l.nom||''}`).trim() || l.email;
+    const init = (((l.prenom||'')[0]||'') + ((l.nom||'')[0]||'')).toUpperCase();
+    const manque = [!l.financement?'financement':null, !l.timing?'horizon':null].filter(Boolean).join(', ') || '—';
+    return `<div class="project-item">
+      <span class="lead-avatar">${esc(init)}</span>
+      <div class="project-info">
+        <div class="project-title">${esc(name)}</div>
+        <div class="project-addr">${esc(l.email)} · manque : ${esc(manque)}</div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="project-empty">Aucun lead à compléter — tous ont renseigné leur financement 🎉</div>';
+  document.getElementById('relance-overlay').classList.add('on');
+}
+function closeRelanceModal() { document.getElementById('relance-overlay').classList.remove('on'); }
+async function sendRelanceProfil() {
+  const inc = _incompleteLeads();
+  if (!inc.length) return;
+  if (!confirm(`Envoyer un email « compléter votre profil » à ${inc.length} lead${inc.length>1?'s':''} ?`)) return;
+  const btn = document.getElementById('btn-relance-all');
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  try {
+    const res = await fetch('/api/send-fiche', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ relance_profil: true, lead_ids: inc.map(l => l.id) }),
+    });
+    if (res.status === 401) { logout(); return; }
+    const d = await res.json();
+    if (!res.ok) { btn.disabled=false; btn.textContent=orig; showToast(d.detail||d.error||'Échec de l\'envoi', 'error'); return; }
+    const parts = [`${d.sent} relance${d.sent>1?'s':''} envoyée${d.sent>1?'s':''}`];
+    if (d.skipped) parts.push(`${d.skipped} déjà relancés (<7j) ignorés`);
+    if (d.failed)  parts.push(`${d.failed} échec(s)`);
+    showToast(parts.join(' · '), 'success');
+    closeRelanceModal();
+  } catch (e) { btn.disabled=false; btn.textContent=orig; showToast('Erreur réseau', 'error'); }
+}
+
 async function exportCSV() {
   const res = await fetch('/api/leads?export=csv', { headers: { Authorization: `Bearer ${token}` } });
   if (res.status === 401) { logout(); return; }

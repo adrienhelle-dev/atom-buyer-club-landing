@@ -20,6 +20,9 @@ async function handler(req, res) {
 
   const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
 
+  // ─── Relance "compléter le profil" (leads sans info de financement) ──
+  if (b.relance_profil && Array.isArray(b.lead_ids) && b.lead_ids.length) return handleRelanceProfil(req, res, b, payload);
+
   // ─── Envoi en masse : fiche à tous les leads compatibles d'un projet ──
   if (Array.isArray(b.lead_ids) && b.lead_ids.length) return handleBulkFiche(req, res, b, payload);
 
@@ -298,6 +301,80 @@ async function processFicheQueue(limit = FICHE_BATCH_SIZE) {
 
   const { count } = await supabase.from('fiche_queue').select('id', { count: 'exact', head: true }).eq('status', 'pending');
   return { sent, failed, remaining: count || 0 };
+}
+
+// ─── Relance "compléter le profil" ───────────────────────────────────────────
+// Envoie aux leads sans info de financement un email invitant à compléter le
+// formulaire de la landing. Batch Resend, reply-to = 3 associés, anti-doublon 7j.
+async function handleRelanceProfil(req, res, b, payload) {
+  if (!process.env.RESEND_API_KEY) return res.status(500).json({ error: 'email_config_missing' });
+  const { lead_ids, force } = b;
+
+  const { data: leads } = await supabase.from('leads')
+    .select('id, prenom, nom, email, status, arrondissements, timing').in('id', lead_ids);
+  let targets = (leads || []).filter(l => l.email);
+
+  // Anti-doublon : relancé il y a moins de 7 jours
+  if (!force) {
+    const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+    const { data: recent } = await supabase.from('lead_events')
+      .select('lead_id').eq('type', 'relance_profil').gte('created_at', since).in('lead_id', targets.map(l => l.id));
+    const done = new Set((recent || []).map(e => e.lead_id));
+    targets = targets.filter(l => !done.has(l.id));
+  }
+  if (!targets.length) return res.status(200).json({ ok: true, sent: 0, skipped: (leads || []).length });
+
+  const resend  = new Resend(process.env.RESEND_API_KEY);
+  const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+  const replyTo = associateEmails();
+  const founder = getFounder(payload.email);
+
+  let sent = 0, failed = 0;
+  const sentLeads = [];
+  for (let i = 0; i < targets.length; i += 100) {
+    const chunk = targets.slice(i, i + 100);
+    const emails = chunk.map(l => ({ from, replyTo, to: [l.email], subject: 'Complétez votre profil — Atom Buyers Club', html: buildRelanceEmail(l, founder, payload.email) }));
+    try {
+      const r = await resend.batch.send(emails);
+      if (r?.error) { failed += chunk.length; console.error('[relance] batch error', JSON.stringify(r.error)); }
+      else { sent += chunk.length; sentLeads.push(...chunk); }
+    } catch (e) { failed += chunk.length; console.error('[relance] throw', e?.message || e); }
+  }
+
+  if (sentLeads.length) {
+    await supabase.from('lead_events').insert(sentLeads.map(l => ({
+      lead_id: l.id, type: 'relance_profil', content: JSON.stringify({ bulk: true }), author: payload.email,
+    })));
+  }
+  return res.status(200).json({ ok: true, sent, failed, skipped: (leads || []).length - targets.length });
+}
+
+function buildRelanceEmail(lead, founder = {}, senderEmail = '') {
+  const url = 'https://join.atombuyerclub.fr/?complete=1';
+  const known = [];
+  if (lead.arrondissements) known.push(`Secteurs visés : <strong>${esc(lead.arrondissements)}</strong>`);
+  const TIMING = { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' };
+  if (lead.timing) known.push(`Horizon : <strong>${esc(TIMING[lead.timing] || lead.timing)}</strong>`);
+  const knownHtml = known.length
+    ? `<p style="margin:0 0 6px;font-size:13px;color:#888">Ce que nous avons déjà :</p><ul style="margin:0 0 18px;padding-left:18px;font-size:14px;color:#444;line-height:1.7">${known.map(k => `<li>${k}</li>`).join('')}</ul>`
+    : '';
+  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f4;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e5e5e5">
+    <div style="background:#0f0e0c;padding:26px 28px">
+      <p style="margin:0 0 8px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#B8975A">Atom Buyers Club</p>
+      <h1 style="margin:0;font-size:21px;font-weight:300;color:#F5F2ED">Complétez votre profil investisseur</h1>
+    </div>
+    <div style="padding:28px">
+      <p style="margin:0 0 16px;font-size:16px;color:#111">Bonjour ${esc(lead.prenom || '')},</p>
+      <p style="margin:0 0 18px;font-size:14px;color:#444;line-height:1.7">Pour vous proposer les opportunités les plus adaptées (et vous les envoyer en priorité), il nous manque quelques informations sur votre <strong>capacité de financement</strong> et votre projet.</p>
+      ${knownHtml}
+      <p style="margin:0 0 4px;font-size:14px;color:#444;line-height:1.7">Cela prend moins d'une minute :</p>
+      <div style="margin-top:20px"><a href="${url}" style="display:inline-block;padding:13px 26px;background:#B8975A;color:#0f0e0c;text-decoration:none;border-radius:7px;font-size:14px;font-weight:600">Compléter mon profil →</a></div>
+    </div>
+    <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0;font-size:12px;color:#888;line-height:1.7">
+      ${founder.name ? `<strong style="color:#555">${esc(founder.name)}</strong><br>` : ''}${senderEmail ? `<a href="mailto:${esc(senderEmail)}" style="color:#B8975A;text-decoration:none">${esc(senderEmail)}</a><br>` : ''}Atom Buyers Club · Paris · <a href="https://join.atombuyerclub.fr" style="color:#B8975A;text-decoration:none">join.atombuyerclub.fr</a>
+    </div>
+  </div></body></html>`;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────
