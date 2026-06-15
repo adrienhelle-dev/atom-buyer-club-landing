@@ -3103,6 +3103,7 @@
       <button class="send-modal-close" onclick="closeSendLeadsModal()">✕</button>
     </div>
     <div class="send-modal-scroll">
+      <div id="blast-banner" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.5"></div>
       <button id="btn-send-all-leads" class="btn-send-fiche" style="width:100%;margin:0 0 14px;display:none" onclick="sendFicheToAllLeads()">Envoyer la fiche à tous</button>
       <p class="send-modal-label">Leads compatibles <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">— ou en sélectionner un seul ci-dessous</span></p>
       <div class="project-list" id="send-leads-list"><div class="project-empty">Chargement…</div></div>
@@ -6602,6 +6603,9 @@ function openSendToLeadsModal(projectId, mode = 'email') {
       allBtn.style.display = 'none';
     }
   }
+  // Bandeau anti-doublon : statut du dernier mailing groupé (email only)
+  const banner = document.getElementById('blast-banner');
+  if (banner) { banner.style.display = 'none'; if (!isWa) loadBlastStatus(projectId); }
 
   if (!matching.length) {
     listEl.innerHTML = '<div class="project-empty">Aucun lead compatible pour ce projet.<br><span style="font-size:11px;margin-top:6px;display:block">Vérifiez l\'arrondissement et les critères budget.</span></div>';
@@ -6679,6 +6683,27 @@ function closeSendLeadsModal() {
   sendLeadsSelectedLead = null;
   sendLeadsForce        = false;
   sendLeadsMode         = 'email';
+}
+
+// Bandeau « dernier mailing groupé » (anti-doublon)
+async function loadBlastStatus(projectId) {
+  const banner = document.getElementById('blast-banner');
+  if (!banner) return;
+  try {
+    const res = await fetch(`/api/send-fiche?project_id=${encodeURIComponent(projectId)}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const d = await res.json();
+    if (!d.ever) { banner.style.display = 'none'; return; }
+    const by = d.last_by ? founderNameFromEmail(d.last_by) : 'un admin';
+    const date = d.last_at ? fmtDateShort(d.last_at) : '';
+    if (d.pending > 0) {
+      banner.style.cssText += ';display:block;background:rgba(184,151,90,.12);border:1px solid rgba(184,151,90,.35);color:var(--gold)';
+      banner.innerHTML = `⏳ <strong>Mailing en cours</strong> — initié le ${date} par ${esc(by)} · ${d.sent} envoyés, ${d.pending} en file (50/h).`;
+    } else {
+      banner.style.cssText += ';display:block;background:rgba(76,175,125,.12);border:1px solid rgba(76,175,125,.35);color:var(--green)';
+      banner.innerHTML = `✓ <strong>Fiche déjà envoyée</strong> le ${date} par ${esc(by)} · ${d.sent} lead${d.sent>1?'s':''}${d.failed?` (${d.failed} échec(s))`:''}. Ne renvoyez qu'en cas de baisse de prix ou de modification.`;
+    }
+  } catch {}
 }
 
 // Envoi groupé de la fiche à tous les leads compatibles (avec garde-fou anti-doublon)

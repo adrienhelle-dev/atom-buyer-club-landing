@@ -2,6 +2,7 @@ const { supabase } = require('../lib/supabase');
 const { verifyToken, tokenFromReq } = require('../lib/auth');
 const { getFounder, associateEmails } = require('../lib/founders');
 const { esc } = require('../lib/html');
+const { sendTelegram } = require('../lib/notify');
 const { Resend } = require('resend');
 
 module.exports = handler;
@@ -9,10 +10,13 @@ module.exports.processFicheQueue = processFicheQueue;
 
 async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).end();
 
   const payload = verifyToken(tokenFromReq(req));
   if (!payload) return res.status(401).json({ error: 'Non autorisé' });
+
+  // ─── GET : statut du mailing groupé d'un projet (bandeau anti-doublon) ──
+  if (req.method === 'GET') return handleBlastStatus(req, res);
+  if (req.method !== 'POST') return res.status(405).end();
 
   const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
 
@@ -155,6 +159,29 @@ async function handler(req, res) {
   });
 };
 
+// ─── Statut du mailing groupé d'un projet (pour le bandeau anti-doublon) ──────
+async function handleBlastStatus(req, res) {
+  const project_id = req.query.project_id;
+  if (!project_id) return res.status(400).json({ error: 'project_id requis' });
+  const { data: rows } = await supabase.from('fiche_queue')
+    .select('status, requested_by, created_at, sent_at').eq('project_id', project_id);
+  const q = rows || [];
+  if (!q.length) return res.status(200).json({ ok: true, ever: false });
+
+  const sent = q.filter(r => r.status === 'sent').length;
+  const pending = q.filter(r => r.status === 'pending').length;
+  const failed = q.filter(r => r.status === 'failed').length;
+  // Dernier blast = requested_by du plus récent created_at
+  const latest = q.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+  const lastSentAt = q.filter(r => r.sent_at).map(r => r.sent_at).sort().pop() || null;
+  return res.status(200).json({
+    ok: true, ever: true, sent, pending, failed, total: q.length,
+    last_by: latest?.requested_by || null,
+    last_at: latest?.created_at || null,
+    last_sent_at: lastSentAt,
+  });
+}
+
 const FICHE_BATCH_SIZE = 50; // envois par passage (immédiat + chaque heure via cron)
 
 // ─── Envoi en masse : mise en file + envoi des 50 premiers tout de suite ──────
@@ -248,6 +275,25 @@ async function processFicheQueue(limit = FICHE_BATCH_SIZE) {
     if (toContacte.length) await supabase.from('leads').update({ status: 'contacte' }).in('id', toContacte);
   } else if (failed) {
     await supabase.from('fiche_queue').update({ status: 'failed', error: 'batch_failed' }).in('id', valid.map(v => v.id));
+  }
+
+  // ── Notif TG de fin de mailing : pour chaque projet de ce lot dont la file
+  //    de pending vient de tomber à 0, on prévient les founders ──
+  if (sent) {
+    const projectsInBatch = [...new Set(valid.map(v => v.project_id))];
+    for (const pid of projectsInBatch) {
+      const { count: stillPending } = await supabase.from('fiche_queue')
+        .select('id', { count: 'exact', head: true }).eq('project_id', pid).eq('status', 'pending');
+      if (stillPending) continue; // pas encore fini pour ce projet
+      const [{ count: totalSent }, { count: totalFailed }] = await Promise.all([
+        supabase.from('fiche_queue').select('id', { count: 'exact', head: true }).eq('project_id', pid).eq('status', 'sent'),
+        supabase.from('fiche_queue').select('id', { count: 'exact', head: true }).eq('project_id', pid).eq('status', 'failed'),
+      ]);
+      const title = pMap[pid]?.title || pMap[pid]?.titre || 'Projet';
+      try {
+        await sendTelegram(`✅ <b>Mailing terminé</b> — ${title}\n${totalSent || 0} fiche${(totalSent||0)>1?'s':''} envoyée${(totalSent||0)>1?'s':''}${totalFailed ? ` · ⚠️ ${totalFailed} échec(s)` : ''}.`);
+      } catch (e) { console.error('[fiche-queue] TG fin échec', e?.message || e); }
+    }
   }
 
   const { count } = await supabase.from('fiche_queue').select('id', { count: 'exact', head: true }).eq('status', 'pending');
