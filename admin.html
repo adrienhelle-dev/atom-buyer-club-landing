@@ -6698,12 +6698,14 @@ let sendLeadsProjectId    = null;
 let sendLeadsSelectedLead = null;
 let sendLeadsForce        = false; // bypass anti-spam si confirmation
 let sendLeadsMode         = 'email'; // 'email' | 'whatsapp'
+let _sendSelected         = new Set(); // leads cochés pour l'envoi groupé ciblé
 
 function openSendToLeadsModal(projectId, mode = 'email') {
   sendLeadsProjectId    = projectId;
   sendLeadsSelectedLead = null;
   sendLeadsForce        = false;
   sendLeadsMode         = mode;
+  _sendSelected = new Set();
 
   const project = projectsCache.find(p => p.id === projectId);
   const title   = project?.title || 'ce projet';
@@ -6722,7 +6724,7 @@ function openSendToLeadsModal(projectId, mode = 'email') {
   btn.textContent = isWa ? 'Ouvrir sur WhatsApp' : 'Envoyer par email';
   btn.style.background = isWa ? 'rgba(37,211,102,.15)' : '';
   btn.style.color      = isWa ? '#25d366' : '';
-  btn.onclick = isWa ? () => openWaForSelectedLead() : () => sendFicheToLead();
+  btn.onclick = isWa ? () => openWaForSelectedLead() : () => sendFicheToSelectedLeads();
   document.getElementById('send-leads-overlay').classList.add('on');
 
   const matching = project ? leadsCache.filter(l => leadMatchesProject(l, project)) : [];
@@ -6750,16 +6752,62 @@ function openSendToLeadsModal(projectId, mode = 'email') {
     return;
   }
 
-  listEl.innerHTML = matching.map(l => `
-    <div class="project-item" data-lead-id="${esc(l.id)}" onclick="selectLeadForFiche('${esc(l.id)}')">
-      <span class="lead-avatar">${esc(((l.prenom || '')[0] || '') + ((l.nom || '')[0] || '')).toUpperCase()}</span>
+  listEl.innerHTML = matching.map(l => {
+    const init = esc((((l.prenom || '')[0] || '') + ((l.nom || '')[0] || '')).toUpperCase());
+    const meta = `${esc(l.email) || '<span style="color:var(--red)">sans email</span>'} · ${TIMING[l.timing] || l.timing || '—'} · ${FIN[l.financement] || l.financement || '—'}`;
+    const body = `<span class="lead-avatar">${init}</span>
       <div class="project-info">
         <div class="project-title">${esc(l.prenom)} ${esc(l.nom)}</div>
-        <div class="project-addr">${esc(l.email)} · ${TIMING[l.timing] || l.timing || '—'} · ${FIN[l.financement] || l.financement || '—'}</div>
+        <div class="project-addr">${meta}</div>
       </div>
-      ${founderBadge(l.assigned_to)}
-    </div>
-  `).join('');
+      ${founderBadge(l.assigned_to)}`;
+    if (isWa) {
+      return `<div class="project-item" data-lead-id="${esc(l.id)}" onclick="selectLeadForFiche('${esc(l.id)}')">${body}</div>`;
+    }
+    // Email : multi-sélection (case à cocher)
+    return `<div class="project-item" data-lead-id="${esc(l.id)}" onclick="toggleSendSelect('${esc(l.id)}')">
+      <input type="checkbox" class="lead-select send-select" style="pointer-events:none" ${l.email ? '' : 'disabled'}/>
+      ${body}
+    </div>`;
+  }).join('');
+}
+
+// Multi-sélection (mode email) : coche/décoche un lead pour l'envoi groupé ciblé
+function toggleSendSelect(id) {
+  const lead = leadsCache.find(l => l.id === id);
+  if (!lead || !lead.email) { showToast('Ce lead n\'a pas d\'adresse email', 'info'); return; }
+  if (_sendSelected.has(id)) _sendSelected.delete(id); else _sendSelected.add(id);
+  const row = document.querySelector(`#send-leads-list .project-item[data-lead-id="${CSS.escape(id)}"]`);
+  if (row) { row.classList.toggle('selected', _sendSelected.has(id)); const cb = row.querySelector('.send-select'); if (cb) cb.checked = _sendSelected.has(id); }
+  const btn = document.getElementById('btn-send-leads');
+  btn.disabled = _sendSelected.size === 0;
+  btn.textContent = _sendSelected.size ? `Envoyer par email (${_sendSelected.size})` : 'Envoyer par email';
+}
+
+// Envoi de la fiche aux leads cochés (sous-ensemble) via la file groupée
+async function sendFicheToSelectedLeads() {
+  const ids = [..._sendSelected];
+  if (!ids.length) return;
+  const project = projectsCache.find(p => p.id === sendLeadsProjectId);
+  const title = project?.title || 'ce projet';
+  if (!confirm(`Envoyer la fiche « ${title} » à ${ids.length} lead${ids.length>1?'s':''} sélectionné${ids.length>1?'s':''} ?`)) return;
+  const btn = document.getElementById('btn-send-leads');
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  const msg = document.getElementById('send-leads-message').value.trim();
+  try {
+    const res = await fetch('/api/send-fiche', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ project_id: sendLeadsProjectId, lead_ids: ids, message: msg }),
+    });
+    if (res.status === 401) { logout(); return; }
+    const d = await res.json();
+    if (!res.ok) { btn.disabled = false; btn.textContent = orig; showToast(d.detail || d.error || 'Échec de l\'envoi', 'error'); return; }
+    const parts = [`${d.sent} envoyé${d.sent>1?'s':''}`];
+    if (d.remaining) parts.push(`${d.remaining} en file (50/h)`);
+    if (d.skipped)   parts.push(`${d.skipped} déjà contactés ignorés`);
+    showToast(parts.join(' · '), 'success');
+    closeSendLeadsModal();
+  } catch (e) { btn.disabled = false; btn.textContent = orig; showToast('Erreur réseau', 'error'); }
 }
 
 function selectLeadForFiche(leadId) {
@@ -6821,6 +6869,7 @@ function closeSendLeadsModal() {
   sendLeadsSelectedLead = null;
   sendLeadsForce        = false;
   sendLeadsMode         = 'email';
+  _sendSelected         = new Set();
 }
 
 // Statut du dernier mailing groupé (rempli par loadBlastStatus, lu par sendFicheToAllLeads)
