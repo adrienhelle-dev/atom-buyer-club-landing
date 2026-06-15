@@ -1200,6 +1200,23 @@
       .np-eq-items { grid-template-columns: 1fr; }
     }
 
+    /* ── Sélection multiple de leads + barre sticky d'envoi ──── */
+    .lead-select { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; margin-right: 2px; }
+    .lead-selbar {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+      z-index: 120; display: none; align-items: center; gap: 16px;
+      background: var(--bg2); border: 1px solid var(--gold); border-radius: 12px;
+      padding: 12px 16px; box-shadow: 0 12px 40px rgba(0,0,0,.55);
+    }
+    .lead-selbar.on { display: flex; }
+    .lead-selbar-count { font-size: 13px; color: var(--cream); white-space: nowrap; }
+    .lead-selbar-count strong { color: var(--gold); }
+    .lead-selbar-send { background: var(--gold); border: none; border-radius: 8px; padding: 10px 18px; color: #1a1a1a; font-family: var(--sans); font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity .12s; }
+    .lead-selbar-send:hover { opacity: .88; }
+    .lead-selbar-send:disabled { opacity: .5; cursor: not-allowed; }
+    .lead-selbar-clear { background: none; border: none; color: var(--dim); font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .lead-selbar-clear:hover { color: var(--cream); }
+
     /* ── Projets compatibles (dans drawer lead) ──────────────── */
     .compat-list { display: flex; flex-direction: column; gap: 8px; }
     .compat-item {
@@ -2161,6 +2178,13 @@
     <div class="page-btns" id="page-btns" style="display:none"></div>
   </div>
   </div><!-- /view-leads -->
+
+  <!-- Barre sticky : envoi ciblé aux leads sélectionnés -->
+  <div class="lead-selbar" id="lead-selbar">
+    <span class="lead-selbar-count"><strong id="lead-selbar-n">0</strong> lead(s) sélectionné(s)</span>
+    <button class="lead-selbar-send" id="lead-selbar-send" onclick="sendRelanceToSelected()">Demander de compléter le profil</button>
+    <button class="lead-selbar-clear" onclick="clearLeadSelection()">Tout désélectionner</button>
+  </div>
 
   <!-- ══ VUE PROJETS ═══════════════════════════════════════════ -->
   <div class="view" id="view-projects">
@@ -3759,6 +3783,8 @@ function showView(view) {
   // Onglet Assets (menu déroulant) : actif sur les vues mandats / acquéreurs
   const assetsBtn = document.getElementById('nav-assets-btn');
   if (assetsBtn) assetsBtn.classList.toggle('active', view === 'mandats' || view === 'acquereurs');
+  // Quitter la vue Leads → on vide la sélection multiple
+  if (view !== 'leads' && typeof clearLeadSelection === 'function') clearLeadSelection();
   if (view === 'projects'     && typeof loadProjects        === 'function') loadProjects();
   if (view === 'new-project'  && typeof resetNewProjectForm === 'function') resetNewProjectForm();
   if (view === 'showroom'     && typeof loadShowroom        === 'function') loadShowroom();
@@ -5306,7 +5332,7 @@ function renderTable(leads) {
   tbody.innerHTML = sorted.map((l, i) => `
     <tr style="cursor:pointer" data-idx="${i}">
       <td style="text-align:center">${scoreBadge(l)}</td>
-      <td><div class="lead-cell-wrap">${statusBadge(l.status)}<div class="lead-name-row"><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</div></div></td>
+      <td><div class="lead-cell-wrap" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="lead-select" data-id="${esc(l.id)}" ${_selectedLeads.has(l.id)?'checked':''} onclick="event.stopPropagation()" onchange="toggleLeadSelect('${esc(l.id)}',this.checked)"/>${statusBadge(l.status)}<div class="lead-name-row"><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</div></div></td>
       <td>${l.timing ? `<span class="timing-badge ${l.timing === 'asap' ? 'timing-asap' : ''}">${TIMING[l.timing] || l.timing}</span>` : '<span class="muted">—</span>'}</td>
       <td>${srcBadge(l.utm_source)}</td>
       <td style="white-space:nowrap;text-align:right">
@@ -5842,6 +5868,44 @@ async function sendRelanceProfil() {
     showToast(parts.join(' · '), 'success');
     closeRelanceModal();
   } catch (e) { btn.disabled=false; btn.textContent=orig; showToast('Erreur réseau', 'error'); }
+}
+
+/* ── Sélection multiple de leads + envoi ciblé ───────────────── */
+let _selectedLeads = new Set();
+function toggleLeadSelect(id, checked) {
+  if (checked) _selectedLeads.add(id); else _selectedLeads.delete(id);
+  updateLeadSelBar();
+}
+function updateLeadSelBar() {
+  const bar = document.getElementById('lead-selbar');
+  const n = _selectedLeads.size;
+  document.getElementById('lead-selbar-n').textContent = n;
+  document.getElementById('lead-selbar-send').textContent = `Demander de compléter le profil${n ? ` (${n})` : ''}`;
+  bar.classList.toggle('on', n > 0);
+}
+function clearLeadSelection() {
+  _selectedLeads.clear();
+  document.querySelectorAll('.lead-select:checked').forEach(c => { c.checked = false; });
+  updateLeadSelBar();
+}
+async function sendRelanceToSelected() {
+  if (!_selectedLeads.size) return;
+  const targets = leadsCache.filter(l => _selectedLeads.has(l.id) && l.email);
+  if (!targets.length) { showToast('Aucun lead sélectionné avec une adresse email', 'error'); return; }
+  if (!confirm(`Envoyer l'email « compléter votre profil » à ${targets.length} lead${targets.length>1?'s':''} sélectionné${targets.length>1?'s':''} ?`)) return;
+  const btn = document.getElementById('lead-selbar-send');
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  try {
+    const res = await fetch('/api/send-fiche', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ relance_profil: true, force: true, lead_ids: targets.map(l => l.id) }),
+    });
+    if (res.status === 401) { logout(); return; }
+    const d = await res.json();
+    if (!res.ok) { btn.disabled = false; btn.textContent = orig; showToast(d.detail || d.error || 'Échec de l\'envoi', 'error'); return; }
+    showToast(`${d.sent} email${d.sent>1?'s':''} envoyé${d.sent>1?'s':''}${d.failed?` · ${d.failed} échec(s)`:''}`, 'success');
+    clearLeadSelection();
+  } catch (e) { btn.disabled = false; btn.textContent = orig; showToast('Erreur réseau', 'error'); }
 }
 
 async function exportCSV() {
