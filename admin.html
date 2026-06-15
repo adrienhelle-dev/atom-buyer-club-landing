@@ -6604,6 +6604,7 @@ function openSendToLeadsModal(projectId, mode = 'email') {
     }
   }
   // Bandeau anti-doublon : statut du dernier mailing groupé (email only)
+  _blastStatus = null;
   const banner = document.getElementById('blast-banner');
   if (banner) { banner.style.display = 'none'; if (!isWa) loadBlastStatus(projectId); }
 
@@ -6685,23 +6686,32 @@ function closeSendLeadsModal() {
   sendLeadsMode         = 'email';
 }
 
-// Bandeau « dernier mailing groupé » (anti-doublon)
+// Statut du dernier mailing groupé (rempli par loadBlastStatus, lu par sendFicheToAllLeads)
+let _blastStatus = null;
+
+// Bandeau « dernier mailing groupé » + état du bouton (anti-doublon)
 async function loadBlastStatus(projectId) {
   const banner = document.getElementById('blast-banner');
+  const btn    = document.getElementById('btn-send-all-leads');
   if (!banner) return;
   try {
     const res = await fetch(`/api/send-fiche?project_id=${encodeURIComponent(projectId)}`, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) return;
     const d = await res.json();
+    _blastStatus = d;
     if (!d.ever) { banner.style.display = 'none'; return; }
     const by = d.last_by ? founderNameFromEmail(d.last_by) : 'un admin';
     const date = d.last_at ? fmtDateShort(d.last_at) : '';
     if (d.pending > 0) {
+      // Envoi en cours → bouton grisé, clic impossible
       banner.style.cssText += ';display:block;background:rgba(184,151,90,.12);border:1px solid rgba(184,151,90,.35);color:var(--gold)';
       banner.innerHTML = `⏳ <strong>Mailing en cours</strong> — initié le ${date} par ${esc(by)} · ${d.sent} envoyés, ${d.pending} en file (50/h).`;
+      if (btn) { btn.disabled = true; btn.textContent = `Envoi en cours… ${d.pending} en file`; }
     } else {
+      // Déjà envoyé → bouton actif mais clic = double-confirmation forte
       banner.style.cssText += ';display:block;background:rgba(76,175,125,.12);border:1px solid rgba(76,175,125,.35);color:var(--green)';
       banner.innerHTML = `✓ <strong>Fiche déjà envoyée</strong> le ${date} par ${esc(by)} · ${d.sent} lead${d.sent>1?'s':''}${d.failed?` (${d.failed} échec(s))`:''}. Ne renvoyez qu'en cas de baisse de prix ou de modification.`;
+      if (btn) { btn.disabled = false; btn.textContent = 'Renvoyer la fiche à tous'; }
     }
   } catch {}
 }
@@ -6714,43 +6724,49 @@ async function sendFicheToAllLeads() {
   if (!matching.length) { showToast('Aucun lead compatible avec une adresse email', 'error'); return; }
 
   const title = project.title || 'ce projet';
-  if (!confirm(`Envoyer la fiche « ${title} » par email à ${matching.length} lead${matching.length>1?'s':''} compatible${matching.length>1?'s':''} ?`)) return;
+
+  // Envoi déjà en cours → on bloque (le bouton est déjà grisé, double sécurité)
+  if (_blastStatus && _blastStatus.pending > 0) {
+    showToast('Un envoi est déjà en cours pour ce projet', 'info');
+    return;
+  }
+
+  // Déjà envoyé (file vide, des leads déjà servis) → confirmation FORTE + renvoi forcé
+  const alreadySent = _blastStatus && _blastStatus.ever && _blastStatus.pending === 0 && _blastStatus.sent > 0;
+  let force = false;
+  if (alreadySent) {
+    const by   = _blastStatus.last_by ? founderNameFromEmail(_blastStatus.last_by) : 'un admin';
+    const date = _blastStatus.last_at ? fmtDateShort(_blastStatus.last_at) : '';
+    if (!confirm(`⚠️ ATTENTION : la fiche a déjà été envoyée à ${_blastStatus.sent} lead(s) le ${date} par ${by}.\n\nÊtes-vous sûr de vouloir la RENVOYER aux ${matching.length} leads compatibles ?\n(À faire uniquement en cas de baisse de prix ou de modification d'un paramètre de vente.)`)) return;
+    force = true;
+  } else {
+    if (!confirm(`Envoyer la fiche « ${title} » par email à ${matching.length} lead${matching.length>1?'s':''} compatible${matching.length>1?'s':''} ?`)) return;
+  }
 
   const btn = document.getElementById('btn-send-all-leads');
   const orig = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  btn.disabled = true; btn.textContent = force ? 'Renvoi en cours…' : 'Envoi en cours…';
   const msg = document.getElementById('send-leads-message').value.trim();
   const ids = matching.map(l => l.id);
 
-  async function post(force) {
+  try {
     const res = await fetch('/api/send-fiche', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ project_id: sendLeadsProjectId, lead_ids: ids, message: msg, force }),
     });
-    if (res.status === 401) { logout(); return null; }
+    if (res.status === 401) { logout(); return; }
     const d = await res.json();
-    if (!res.ok) { showToast(d.detail || d.error || 'Échec de l\'envoi', 'error'); return null; }
-    return d;
-  }
+    if (!res.ok) { btn.disabled = false; btn.textContent = orig; showToast(d.detail || d.error || 'Échec de l\'envoi', 'error'); return; }
 
-  try {
-    const d = await post(false);
-    if (!d) { btn.disabled = false; btn.textContent = orig; return; }
-
-    // Tous déjà contactés → proposer le renvoi forcé
-    if (d.sent === 0 && d.skipped > 0) {
+    if (d.sent === 0 && d.skipped > 0 && !force) {
+      // Cas limite : tout déjà servi mais statut pas encore chargé → on redemande
       btn.disabled = false; btn.textContent = orig;
-      if (confirm(`⚠️ Ces ${d.skipped} leads ont déjà reçu cette fiche. Tout leur renvoyer quand même ?`)) {
-        btn.disabled = true; btn.textContent = 'Renvoi en cours…';
-        const d2 = await post(true);
-        if (d2) { showToast(`${d2.sent} renvoyé${d2.sent>1?'s':''} maintenant${d2.remaining?` · ${d2.remaining} en file (50/h)`:''}`, 'success'); closeSendLeadsModal(); }
-        else { btn.disabled = false; btn.textContent = orig; }
-      }
+      showToast('Tous les leads compatibles ont déjà reçu cette fiche.', 'info');
       return;
     }
 
-    const parts = [`${d.sent} envoyé${d.sent>1?'s':''} maintenant`];
+    const parts = [`${d.sent} ${force?'renvoyé':'envoyé'}${d.sent>1?'s':''} maintenant`];
     if (d.remaining) parts.push(`${d.remaining} en file (50/h, auto)`);
     if (d.skipped)   parts.push(`${d.skipped} déjà contactés ignorés`);
     showToast(parts.join(' · '), 'success');
