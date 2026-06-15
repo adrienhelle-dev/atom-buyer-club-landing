@@ -563,6 +563,10 @@
           <span class="sep-label">Vos coordonnées</span>
         </div>
 
+        <div id="prefill-note" style="display:none;margin:0 0 16px;padding:11px 14px;border:1px solid rgba(184,151,90,.35);border-radius:8px;background:rgba(184,151,90,.08);font-size:13px;color:#B8975A;line-height:1.5">
+          Vos coordonnées sont déjà pré-remplies. <a href="#" id="prefill-edit" style="color:#B8975A;text-decoration:underline">Modifier</a>
+        </div>
+
         <div class="fields">
           <div class="field-row">
             <div class="field">
@@ -998,6 +1002,37 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   document.getElementById('success').classList.add('on');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
+</script>
+
+<script>
+// Pré-remplissage depuis un lien de relance "compléter le profil" (?complete=token)
+(function () {
+  var token = new URLSearchParams(location.search).get('complete');
+  if (!token || token === '1') return;
+  fetch('/api/submit?prefill=' + encodeURIComponent(token))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || !d.ok) return;
+      var lock = function (id, v) {
+        var el = document.getElementById(id);
+        if (el && v) { el.value = v; el.setAttribute('readonly', 'readonly'); el.style.opacity = '.7'; el.style.cursor = 'not-allowed'; }
+      };
+      lock('prenom', d.prenom); lock('nom', d.nom); lock('email', d.email); lock('tel', d.tel);
+      var note = document.getElementById('prefill-note');
+      if (note) note.style.display = 'block';
+      var edit = document.getElementById('prefill-edit');
+      if (edit) edit.addEventListener('click', function (e) {
+        e.preventDefault();
+        ['prenom', 'nom', 'email', 'tel'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) { el.removeAttribute('readonly'); el.style.opacity = ''; el.style.cursor = ''; }
+        });
+        if (note) note.style.display = 'none';
+        var p = document.getElementById('prenom'); if (p) p.focus();
+      });
+    })
+    .catch(function () {});
+})();
 </script>
 
 </body>

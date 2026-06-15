@@ -16,6 +16,16 @@ module.exports = async function handler(req, res) {
   // Webhook Telegram (ingestion de leads manuels via screenshot) — pas de
   // nouvelle fonction serverless : greffé ici via ?tg=1 (cf. lib/telegram-ingest).
   if (req.query.tg) return handleTelegramUpdate(req, res);
+
+  // Pré-remplissage du formulaire landing depuis un lien de relance (?prefill=token)
+  if (req.method === 'GET' && req.query.prefill) {
+    const token = String(req.query.prefill);
+    if (!token || token.length < 8) return res.status(400).json({ error: 'token_invalide' });
+    const { data: lead } = await supabase
+      .from('leads').select('prenom, nom, email, tel').eq('infos_token', token).maybeSingle();
+    if (!lead) return res.status(404).json({ error: 'not_found' });
+    return res.status(200).json({ ok: true, prenom: lead.prenom || '', nom: lead.nom || '', email: lead.email || '', tel: lead.tel || '' });
+  }
   if (req.method !== 'POST') return res.status(405).end();
 
   const b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});

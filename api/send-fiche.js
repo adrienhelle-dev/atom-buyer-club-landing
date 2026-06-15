@@ -4,6 +4,7 @@ const { getFounder, associateEmails } = require('../lib/founders');
 const { esc } = require('../lib/html');
 const { sendTelegram } = require('../lib/notify');
 const { Resend } = require('resend');
+const crypto = require('crypto');
 
 module.exports = handler;
 module.exports.processFicheQueue = processFicheQueue;
@@ -311,7 +312,7 @@ async function handleRelanceProfil(req, res, b, payload) {
   const { lead_ids, force } = b;
 
   const { data: leads } = await supabase.from('leads')
-    .select('id, prenom, nom, email, status, arrondissements, timing').in('id', lead_ids);
+    .select('id, prenom, nom, email, tel, status, arrondissements, timing, infos_token').in('id', lead_ids);
   let targets = (leads || []).filter(l => l.email);
 
   // Anti-doublon : relancé il y a moins de 7 jours
@@ -323,6 +324,12 @@ async function handleRelanceProfil(req, res, b, payload) {
     targets = targets.filter(l => !done.has(l.id));
   }
   if (!targets.length) return res.status(200).json({ ok: true, sent: 0, skipped: (leads || []).length });
+
+  // Token de pré-remplissage (réutilise infos_token) : généré si absent
+  await Promise.all(targets.filter(l => !l.infos_token).map(async l => {
+    l.infos_token = crypto.randomBytes(16).toString('hex');
+    await supabase.from('leads').update({ infos_token: l.infos_token }).eq('id', l.id);
+  }));
 
   const resend  = new Resend(process.env.RESEND_API_KEY);
   const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
@@ -350,7 +357,7 @@ async function handleRelanceProfil(req, res, b, payload) {
 }
 
 function buildRelanceEmail(lead, founder = {}, senderEmail = '') {
-  const url = 'https://join.atombuyerclub.fr/?complete=1';
+  const url = `https://join.atombuyerclub.fr/?complete=${encodeURIComponent(lead.infos_token || '1')}`;
   const known = [];
   if (lead.arrondissements) known.push(`Secteurs visés : <strong>${esc(lead.arrondissements)}</strong>`);
   const TIMING = { asap: 'Dès que possible', '3mois': 'Dans 3 mois', '6mois': 'Dans 6 mois', reflexion: 'En réflexion' };
