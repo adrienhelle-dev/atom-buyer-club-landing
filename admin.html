@@ -3103,7 +3103,8 @@
       <button class="send-modal-close" onclick="closeSendLeadsModal()">✕</button>
     </div>
     <div class="send-modal-scroll">
-      <p class="send-modal-label">Leads compatibles</p>
+      <button id="btn-send-all-leads" class="btn-send-fiche" style="width:100%;margin:0 0 14px;display:none" onclick="sendFicheToAllLeads()">Envoyer la fiche à tous</button>
+      <p class="send-modal-label">Leads compatibles <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">— ou en sélectionner un seul ci-dessous</span></p>
       <div class="project-list" id="send-leads-list"><div class="project-empty">Chargement…</div></div>
       <div class="send-modal-msg" id="send-leads-msg-wrap">
         <p class="send-modal-label">Note personnalisée <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></p>
@@ -6589,6 +6590,19 @@ function openSendToLeadsModal(projectId, mode = 'email') {
   const matching = project ? leadsCache.filter(l => leadMatchesProject(l, project)) : [];
   const listEl   = document.getElementById('send-leads-list');
 
+  // Bouton d'envoi groupé (email uniquement) — avec compteur de leads avec email
+  const allBtn = document.getElementById('btn-send-all-leads');
+  const withEmail = matching.filter(l => l.email);
+  if (allBtn) {
+    if (!isWa && withEmail.length) {
+      allBtn.style.display = '';
+      allBtn.disabled = false;
+      allBtn.textContent = `Envoyer la fiche aux ${withEmail.length} leads compatibles`;
+    } else {
+      allBtn.style.display = 'none';
+    }
+  }
+
   if (!matching.length) {
     listEl.innerHTML = '<div class="project-empty">Aucun lead compatible pour ce projet.<br><span style="font-size:11px;margin-top:6px;display:block">Vérifiez l\'arrondissement et les critères budget.</span></div>';
     return;
@@ -6665,6 +6679,61 @@ function closeSendLeadsModal() {
   sendLeadsSelectedLead = null;
   sendLeadsForce        = false;
   sendLeadsMode         = 'email';
+}
+
+// Envoi groupé de la fiche à tous les leads compatibles (avec garde-fou anti-doublon)
+async function sendFicheToAllLeads() {
+  const project = projectsCache.find(p => p.id === sendLeadsProjectId);
+  if (!project) return;
+  const matching = leadsCache.filter(l => leadMatchesProject(l, project) && l.email);
+  if (!matching.length) { showToast('Aucun lead compatible avec une adresse email', 'error'); return; }
+
+  const title = project.title || 'ce projet';
+  if (!confirm(`Envoyer la fiche « ${title} » par email à ${matching.length} lead${matching.length>1?'s':''} compatible${matching.length>1?'s':''} ?`)) return;
+
+  const btn = document.getElementById('btn-send-all-leads');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  const msg = document.getElementById('send-leads-message').value.trim();
+  const ids = matching.map(l => l.id);
+
+  async function post(force) {
+    const res = await fetch('/api/send-fiche', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ project_id: sendLeadsProjectId, lead_ids: ids, message: msg, force }),
+    });
+    if (res.status === 401) { logout(); return null; }
+    const d = await res.json();
+    if (!res.ok) { showToast(d.detail || d.error || 'Échec de l\'envoi', 'error'); return null; }
+    return d;
+  }
+
+  try {
+    const d = await post(false);
+    if (!d) { btn.disabled = false; btn.textContent = orig; return; }
+
+    // Tous déjà contactés → proposer le renvoi forcé
+    if (d.sent === 0 && d.skipped > 0) {
+      btn.disabled = false; btn.textContent = orig;
+      if (confirm(`⚠️ Ces ${d.skipped} leads ont déjà reçu cette fiche. Tout leur renvoyer quand même ?`)) {
+        btn.disabled = true; btn.textContent = 'Renvoi en cours…';
+        const d2 = await post(true);
+        if (d2) { showToast(`Fiche renvoyée à ${d2.sent} lead${d2.sent>1?'s':''}`, 'success'); closeSendLeadsModal(); }
+        else { btn.disabled = false; btn.textContent = orig; }
+      }
+      return;
+    }
+
+    const parts = [`Fiche envoyée à ${d.sent} lead${d.sent>1?'s':''}`];
+    if (d.skipped) parts.push(`${d.skipped} déjà contactés ignorés`);
+    if (d.failed)  parts.push(`${d.failed} échec${d.failed>1?'s':''}`);
+    showToast(parts.join(' · '), d.failed ? 'info' : 'success');
+    closeSendLeadsModal();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = orig;
+    showToast('Erreur réseau', 'error');
+  }
 }
 
 function openWaForSelectedLead() {
