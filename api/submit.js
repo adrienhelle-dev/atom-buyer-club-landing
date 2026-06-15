@@ -161,6 +161,7 @@ module.exports = async function handler(req, res) {
         try {
           await resend.emails.send({
             from: fromAddr,
+            replyTo: emailNorm, // répondre = écrire au lead
             to:   notifyList,
             subject: `Intérêt projet — ${leadData.prenom} ${leadData.nom} · ${projTitle}`,
             html: buildInterestEmail(leadData, projTitle, responsible),
@@ -198,6 +199,7 @@ module.exports = async function handler(req, res) {
       try {
         await resend.emails.send({
           from: fromAddr,
+          replyTo: emailNorm, // répondre = écrire au lead
           to:   notifyEmails,
           subject: `🔥 Lead chaud — ${leadData.prenom} ${leadData.nom} · Comptant · Dès que possible`,
           html: buildHotLeadEmail(leadData),

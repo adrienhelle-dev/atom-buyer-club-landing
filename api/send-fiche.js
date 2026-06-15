@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
     let emailResult;
     try {
       emailResult = await resend.emails.send({
-        from, to: [lead.email], subject,
+        from, replyTo: payload.email, to: [lead.email], subject,
         cc: [payload.email], // responsable du lead (= l'expéditeur) en copie
         html: buildSimpleEmail(lead, subject, emailBody, founder, payload.email),
       });
@@ -103,6 +103,7 @@ module.exports = async function handler(req, res) {
   try {
     emailResult = await resend.emails.send({
       from,
+      replyTo: payload.email,
       to: [lead.email],
       cc: [payload.email], // responsable du lead (= l'expéditeur) en copie
       subject: `Atom Buyers Club — ${title}`,

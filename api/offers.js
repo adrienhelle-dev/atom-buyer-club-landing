@@ -531,6 +531,7 @@ module.exports = async function handler(req, res) {
       const subject = `Offre d'achat — ${project.address || project.title}`;
       await resend.emails.send({
         from,
+        replyTo: payload.email,
         to: [lead.email],
         cc: [payload.email],
         subject,
@@ -566,7 +567,7 @@ module.exports = async function handler(req, res) {
       const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
       const founder = getFounder(payload.email);
       await resend.emails.send({
-        from, to: [lead.email], cc: [payload.email],
+        from, replyTo: payload.email, to: [lead.email], cc: [payload.email],
         subject: `Offre d'achat — ${project?.address || project?.title || ''}`,
         html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre offre d'achat.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
         attachments: [{ filename: 'Offre-achat.pdf', content: pdfBuf.toString('base64') }],
@@ -588,7 +589,7 @@ module.exports = async function handler(req, res) {
       const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
       const founder = getFounder(payload.email);
       await resend.emails.send({
-        from, to: [lead.email], cc: [payload.email],
+        from, replyTo: payload.email, to: [lead.email], cc: [payload.email],
         subject: 'Mandat de recherche — Atom Buyers Club',
         html: `<p>Bonjour ${esc(lead.prenom)},</p><p>Veuillez trouver ci-joint votre mandat de recherche à signer.</p><p>Bien à vous,<br/><strong>${esc(founder.name)}</strong><br/>Atom Buyers Club</p>`,
         attachments: [{ filename: 'Mandat-recherche.pdf', content: pdfBuf.toString('base64') }],
@@ -676,7 +677,7 @@ module.exports = async function handler(req, res) {
           const from    = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
           const founder = getFounder(payload.email);
           await resend.emails.send({
-            from, to: [lead.email], cc: [payload.email],
+            from, replyTo: payload.email, to: [lead.email], cc: [payload.email],
             subject: `Mandat de recherche — Atom Buyers Club`,
             html: `<p>Bonjour ${esc(lead.prenom)},</p>
 <p>Veuillez trouver ci-joint votre mandat de recherche à signer et nous retourner.</p>
@@ -862,7 +863,7 @@ async function handleNotaireRecap(req, res, b, payload) {
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({ from, to: [NOTAIRE_CLERC_EMAIL], cc: ccList, subject, html, attachments });
+    await resend.emails.send({ from, replyTo: payload.email, to: [NOTAIRE_CLERC_EMAIL], cc: ccList, subject, html, attachments });
   } catch (e) {
     console.error('[notaire_recap] envoi échec', e?.message || e);
     return res.status(500).json({ error: 'envoi_echoue', detail: e?.message || String(e) });

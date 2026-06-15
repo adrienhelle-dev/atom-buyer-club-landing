@@ -206,6 +206,7 @@ module.exports = async function handler(req, res) {
             try {
               await resend.emails.send({
                 from: fromAddr,
+                ...(lead.email ? { replyTo: lead.email } : {}), // répondre = écrire au lead
                 to:   notifyList,
                 subject: `Intérêt showroom — ${lead.prenom || ''} ${lead.nom || ''} · ${item_name || slug || 'Réalisation'}`,
                 html: buildShowroomInterestEmail(lead, item_name || slug || 'Réalisation', respName),
