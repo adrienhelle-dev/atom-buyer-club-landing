@@ -1201,7 +1201,13 @@
     }
 
     /* ── Sélection multiple de leads + barre sticky d'envoi ──── */
-    .lead-select { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; margin-right: 2px; }
+    /* Pastille de sélection (remplace la case à cocher) */
+    .sel-dot { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background .12s, border-color .12s; }
+    .sel-dot:hover { border-color: var(--green); }
+    .sel-dot.on { background: var(--green); border-color: var(--green); }
+    .sel-dot.on::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; line-height: 1; }
+    tr.sel-row { background: rgba(76,175,125,.08); }
+    tr.sel-row td:first-child { box-shadow: inset 3px 0 0 var(--green); }
     .lead-selbar {
       position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
       z-index: 120; display: none; align-items: center; gap: 16px;
@@ -1256,9 +1262,10 @@
     .fiche-modal-sub   { font-size:13px; color:var(--dim); margin-bottom:20px; }
     .fiche-modal-label { font-size:10px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin-bottom:8px; display:block; }
     .project-list  { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
-    .project-item  { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color .15s, background .15s; }
+    .project-item  { position:relative; display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color .15s, background .15s; }
     .project-item:hover   { border-color: rgba(184,151,90,.4); }
-    .project-item.selected { border-color:var(--gold); background:rgba(184,151,90,.07); }
+    .project-item.selected { border-color:var(--green); background:rgba(76,175,125,.08); }
+    .project-item.selected::after { content:'✓'; position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:var(--green); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
     .project-info  { flex:1; }
     .project-title { font-size:13px; font-weight:500; color:var(--cream); }
     .project-addr  { font-size:11px; color:var(--dim); margin-top:2px; }
@@ -5330,9 +5337,9 @@ function renderTable(leads) {
     return;
   }
   tbody.innerHTML = sorted.map((l, i) => `
-    <tr style="cursor:pointer" data-idx="${i}">
+    <tr class="${_selectedLeads.has(l.id)?'sel-row':''}" style="cursor:pointer" data-idx="${i}" data-lead-id="${esc(l.id)}">
       <td style="text-align:center">${scoreBadge(l)}</td>
-      <td><div class="lead-cell-wrap" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="lead-select" data-id="${esc(l.id)}" ${_selectedLeads.has(l.id)?'checked':''} onclick="event.stopPropagation()" onchange="toggleLeadSelect('${esc(l.id)}',this.checked)"/>${statusBadge(l.status)}<div class="lead-name-row"><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</div></div></td>
+      <td><div class="lead-cell-wrap" style="display:flex;align-items:center;gap:8px"><span class="sel-dot ${_selectedLeads.has(l.id)?'on':''}" onclick="event.stopPropagation();toggleLeadSelect('${esc(l.id)}')" title="Sélectionner ce lead"></span>${statusBadge(l.status)}<div class="lead-name-row"><strong>${esc(l.prenom)} ${esc(l.nom)}</strong>${founderBadge(l.assigned_to)}</div></div></td>
       <td>${l.timing ? `<span class="timing-badge ${l.timing === 'asap' ? 'timing-asap' : ''}">${TIMING[l.timing] || l.timing}</span>` : '<span class="muted">—</span>'}</td>
       <td>${srcBadge(l.utm_source)}</td>
       <td style="white-space:nowrap;text-align:right">
@@ -5872,8 +5879,11 @@ async function sendRelanceProfil() {
 
 /* ── Sélection multiple de leads + envoi ciblé ───────────────── */
 let _selectedLeads = new Set();
-function toggleLeadSelect(id, checked) {
-  if (checked) _selectedLeads.add(id); else _selectedLeads.delete(id);
+function toggleLeadSelect(id) {
+  if (_selectedLeads.has(id)) _selectedLeads.delete(id); else _selectedLeads.add(id);
+  const on = _selectedLeads.has(id);
+  const tr = document.querySelector(`#leads-body tr[data-lead-id="${CSS.escape(id)}"]`);
+  if (tr) { tr.classList.toggle('sel-row', on); const dot = tr.querySelector('.sel-dot'); if (dot) dot.classList.toggle('on', on); }
   updateLeadSelBar();
 }
 function updateLeadSelBar() {
@@ -5885,7 +5895,8 @@ function updateLeadSelBar() {
 }
 function clearLeadSelection() {
   _selectedLeads.clear();
-  document.querySelectorAll('.lead-select:checked').forEach(c => { c.checked = false; });
+  document.querySelectorAll('#leads-body .sel-dot.on').forEach(d => d.classList.remove('on'));
+  document.querySelectorAll('#leads-body tr.sel-row').forEach(r => r.classList.remove('sel-row'));
   updateLeadSelBar();
 }
 async function sendRelanceToSelected() {
@@ -6764,9 +6775,8 @@ function openSendToLeadsModal(projectId, mode = 'email') {
     if (isWa) {
       return `<div class="project-item" data-lead-id="${esc(l.id)}" onclick="selectLeadForFiche('${esc(l.id)}')">${body}</div>`;
     }
-    // Email : multi-sélection (case à cocher)
-    return `<div class="project-item" data-lead-id="${esc(l.id)}" onclick="toggleSendSelect('${esc(l.id)}')">
-      <input type="checkbox" class="lead-select send-select" style="pointer-events:none" ${l.email ? '' : 'disabled'}/>
+    // Email : multi-sélection au clic (carte → contour vert + pastille)
+    return `<div class="project-item${l.email ? '' : ' no-email'}" data-lead-id="${esc(l.id)}" onclick="toggleSendSelect('${esc(l.id)}')">
       ${body}
     </div>`;
   }).join('');
@@ -6778,7 +6788,7 @@ function toggleSendSelect(id) {
   if (!lead || !lead.email) { showToast('Ce lead n\'a pas d\'adresse email', 'info'); return; }
   if (_sendSelected.has(id)) _sendSelected.delete(id); else _sendSelected.add(id);
   const row = document.querySelector(`#send-leads-list .project-item[data-lead-id="${CSS.escape(id)}"]`);
-  if (row) { row.classList.toggle('selected', _sendSelected.has(id)); const cb = row.querySelector('.send-select'); if (cb) cb.checked = _sendSelected.has(id); }
+  if (row) row.classList.toggle('selected', _sendSelected.has(id));
   const btn = document.getElementById('btn-send-leads');
   btn.disabled = _sendSelected.size === 0;
   btn.textContent = _sendSelected.size ? `Envoyer par email (${_sendSelected.size})` : 'Envoyer par email';
