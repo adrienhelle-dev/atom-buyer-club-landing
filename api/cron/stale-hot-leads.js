@@ -1,6 +1,7 @@
 const { supabase } = require('../../lib/supabase');
 const { isHot } = require('../../lib/scoring');
 const { notifyStaleDigest, sendTelegram } = require('../../lib/notify');
+const { associateEmails } = require('../../lib/founders');
 
 // ── Cron quotidien : leads chauds (score ≥ 8) sans interaction depuis +N jours ──
 // Déclenché par Vercel Cron (voir vercel.json). Protégé par CRON_SECRET :
@@ -55,6 +56,11 @@ module.exports = async function handler(req, res) {
     const waExpiry = await expireWaInterests();
     console.log(`[cron] wa-expiry : ${waExpiry.expired} intérêt(s) passé(s) en sans suite`);
 
+    // ── Rappels d'échéance de baux (J-30 / J-15) → Telegram + email associés ──
+    // (greffé ici pour ne pas créer de fonction serverless — limite 12)
+    const leaseRem = await remindLeaseExpiries();
+    console.log(`[cron] baux : ${leaseRem.reminded} rappel(s), ${leaseRem.expired} expiré(s)`);
+
     // ── Health-check quotidien : alerte Telegram UNIQUEMENT si panne ──
     // (greffé ici pour ne pas créer de fonction serverless — limite 12)
     const health = await runHealthCheck();
@@ -64,7 +70,7 @@ module.exports = async function handler(req, res) {
     }
     console.log(`[cron] health-check : ${health.checked} testés, ${health.failures.length} en panne`);
 
-    return res.status(200).json({ ok: true, days, stale: stale.length, sent: !!result.ok && !result.skipped, wa_expired: waExpiry.expired, health });
+    return res.status(200).json({ ok: true, days, stale: stale.length, sent: !!result.ok && !result.skipped, wa_expired: waExpiry.expired, lease_reminders: leaseRem, health });
   } catch (e) {
     console.error('[cron] crash:', e?.message || e);
     return res.status(500).json({ error: 'handler_crash', detail: e?.message || String(e) });
@@ -132,6 +138,74 @@ async function expireWaInterests() {
     );
   }
   return { expired: lines.length };
+}
+
+// ── Rappels d'échéance de baux ────────────────────────────────────────────────
+// Pour chaque bail actif/signé dont la date de fin approche, on prévient une
+// seule fois à J-30 puis à J-15 (flags reminder_j30 / reminder_j15). Telegram
+// (groupe founders) + email aux 3 associés. Les baux échus passent en "expire".
+async function remindLeaseExpiries() {
+  const { data: leases, error } = await supabase
+    .from('leases')
+    .select('id, numero, type, statut, date_fin, bien, locataire, reminder_j30, reminder_j15')
+    .in('statut', ['genere', 'envoye', 'signe_locataire', 'contresigne', 'actif'])
+    .not('date_fin', 'is', null)
+    .limit(2000);
+  if (error) { console.error('[cron] lease-reminders error:', error.message); return { reminded: 0, expired: 0 }; }
+
+  const DAY = 24 * 60 * 60 * 1000;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const reminders = []; // {lease, kind, daysLeft}
+  let expired = 0;
+
+  for (const l of leases || []) {
+    const end = new Date(l.date_fin); end.setHours(0, 0, 0, 0);
+    const daysLeft = Math.round((end.getTime() - today.getTime()) / DAY);
+
+    if (daysLeft < 0) {
+      if (l.statut === 'actif') { await supabase.from('leases').update({ statut: 'expire', updated_at: new Date().toISOString() }).eq('id', l.id); expired++; }
+      continue;
+    }
+    if (daysLeft <= 15 && !l.reminder_j15) {
+      await supabase.from('leases').update({ reminder_j15: true, reminder_j30: true, updated_at: new Date().toISOString() }).eq('id', l.id);
+      reminders.push({ lease: l, kind: 'J-15', daysLeft });
+    } else if (daysLeft <= 30 && !l.reminder_j30) {
+      await supabase.from('leases').update({ reminder_j30: true, updated_at: new Date().toISOString() }).eq('id', l.id);
+      reminders.push({ lease: l, kind: 'J-30', daysLeft });
+    }
+  }
+
+  if (!reminders.length) return { reminded: 0, expired };
+
+  const nom = l => { const lo = l.locataire || {}; return lo.kind === 'societe' ? (lo.name || 'Société') : `${lo.prenom || ''} ${lo.nom || ''}`.trim() || 'Locataire'; };
+  const fmtFr = d => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  // Telegram
+  const lines = reminders.map(r => {
+    const bien = r.lease.bien?.adresse || r.lease.bien?.designation || 'Bien';
+    return `• <b>${r.kind}</b> — Bail n°${r.lease.numero} (${r.lease.type === 'mobilite' ? 'mobilité' : 'code civil'})\n   ${nom(r.lease)} · ${bien}\n   Échéance le ${fmtFr(r.lease.date_fin)} (dans ${r.daysLeft} j)`;
+  });
+  await sendTelegram(`📅 <b>Échéances de baux à venir</b>\n\n${lines.join('\n\n')}\n\nPensez au renouvellement / restitution / état des lieux de sortie.`);
+
+  // Email aux associés
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = require('resend');
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const from = process.env.RESEND_FROM || 'Atom Buyers Club <onboarding@resend.dev>';
+      const rows = reminders.map(r => {
+        const bien = r.lease.bien?.adresse || r.lease.bien?.designation || 'Bien';
+        return `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee"><strong>${r.kind}</strong></td><td style="padding:6px 10px;border-bottom:1px solid #eee">Bail n°${r.lease.numero}</td><td style="padding:6px 10px;border-bottom:1px solid #eee">${nom(r.lease)}</td><td style="padding:6px 10px;border-bottom:1px solid #eee">${bien}</td><td style="padding:6px 10px;border-bottom:1px solid #eee">${fmtFr(r.lease.date_fin)} (${r.daysLeft} j)</td></tr>`;
+      }).join('');
+      await resend.emails.send({
+        from, to: associateEmails(),
+        subject: `Échéances de baux — ${reminders.length} à anticiper`,
+        html: `<p>Bonjour,</p><p>Baux dont l'échéance approche :</p><table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px"><thead><tr><th align="left" style="padding:6px 10px">Rappel</th><th align="left" style="padding:6px 10px">Bail</th><th align="left" style="padding:6px 10px">Locataire</th><th align="left" style="padding:6px 10px">Bien</th><th align="left" style="padding:6px 10px">Échéance</th></tr></thead><tbody>${rows}</tbody></table><p>Pensez au renouvellement, à la restitution ou à l'état des lieux de sortie.</p>`,
+      });
+    } catch (e) { console.error('[cron] lease-reminder email error:', e?.message || e); }
+  }
+
+  return { reminded: reminders.length, expired };
 }
 
 // ── Health-check : mêmes règles que scripts/smoke.sh ──────────────────────────
