@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
     }
     const sid = req.query.showroom_item_id;
     if (!sid) return res.status(400).json({ error: 'showroom_item_id requis' });
-    const { data } = await supabase.from('leases').select('*').eq('showroom_item_id', sid).order('created_at', { ascending: false });
+    const { data } = await supabase.from('leases').select('*').eq('showroom_item_id', sid).order('date_debut', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true });
     return res.status(200).json({ ok: true, leases: data || [] });
   }
 

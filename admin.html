@@ -189,6 +189,7 @@
     .lease-act { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:7px; border:1px solid var(--border); background:var(--bg3); color:var(--dim); font-family:var(--sans); font-size:12px; cursor:pointer; transition:all .12s; white-space:nowrap; }
     .lease-act:hover { border-color:var(--gold); color:var(--gold); }
     .lease-act.is-edit { border-color:rgba(184,151,90,.5); color:var(--gold); }
+    .lease-act-del:hover { border-color:#d96666; color:#d96666; }
     .acq-tg.on-tombe   { background: rgba(217,150,80,.16); border-color: #d99650; color: #d99650; }
     .acq-edit-pencil { flex-shrink: 0; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid var(--border); background: var(--bg3); color: var(--dim); cursor: pointer; transition: color .12s, border-color .12s, background .12s; }
     .acq-edit-pencil:hover, .acq-edit-pencil.on { color: var(--gold); border-color: var(--gold); background: rgba(184,151,90,.12); }
@@ -2931,7 +2932,7 @@
             </div>
             <div class="asset-table-wrap" style="padding:0;margin-bottom:18px">
               <table class="asset-table" id="lease-table" style="min-width:640px">
-                <thead><tr><th>N°</th><th>Type</th><th>Locataire</th><th>Période</th><th>Loyer</th><th>Statut</th><th>Docs</th><th></th></tr></thead>
+                <thead><tr><th>Type</th><th>Locataire</th><th>Période</th><th>Loyer</th><th>Statut</th><th>Docs</th><th></th></tr></thead>
                 <tbody id="lease-tbody"><tr><td colspan="8" class="asset-msg">Chargement…</td></tr></tbody>
               </table>
             </div>
@@ -2950,9 +2951,9 @@
 
                 <div class="np-field span-2"><label>Bailleur</label>
                   <div class="acq-toggle-row" style="margin:0">
-                    <button type="button" class="acq-tg" id="lease-bail-societe" onclick="setBailKind('societe')">Société</button>
                     <button type="button" class="acq-tg" id="lease-bail-physique" onclick="setBailKind('physique')">Personne physique</button>
                     <button type="button" class="acq-tg" id="lease-bail-lead" onclick="setBailKind('lead')">Lead existant</button>
+                    <button type="button" class="acq-tg" id="lease-bail-societe" onclick="setBailKind('societe')">Société</button>
                   </div>
                 </div>
                 <div id="lease-bail-lead-pick" class="np-field span-2" style="display:none"><label>Choisir le lead (bailleur)</label><input id="lease-bail-lead-search" placeholder="Rechercher un lead par nom/email…" oninput="searchBailLead()" autocomplete="off"/><div id="lease-bail-lead-results" style="margin-top:4px"></div></div>
@@ -6541,7 +6542,7 @@ async function uploadDocFiles(kind, files) {
 }
 async function deleteDoc(docId, kind, encUrl) {
   const m = _acqCurrent; if (!m) return;
-  if (!confirm('Supprimer ce document ?')) return;
+  if (!confirmTwice('Supprimer ce document ? Cette action est définitive.', 'Confirmer une seconde fois la suppression définitive de ce document ?')) return;
   const url = encUrl ? decodeURIComponent(encUrl) : null;
   const body = docId ? { action:'mandat_doc_delete', mandat_id:m.id, doc_id:docId }
                      : { action:'mandat_doc_delete', mandat_id:m.id, kind, url };
@@ -8917,7 +8918,7 @@ async function loadLeaseList() {
     _leaseList = (await res.json()).leases || [];
   } catch { _leaseList = []; }
   document.getElementById('lease-count').textContent = `${_leaseList.length} bail${_leaseList.length>1?'/baux':''}`;
-  if (!_leaseList.length) { tb.innerHTML = '<tr><td colspan="8" class="asset-msg">Aucun bail. Clique « + Nouveau bail ».</td></tr>'; return; }
+  if (!_leaseList.length) { tb.innerHTML = '<tr><td colspan="7" class="asset-msg">Aucun bail. Clique « + Nouveau bail ».</td></tr>'; return; }
   tb.innerHTML = _leaseList.map(l => {
     const lo = l.locataire || {}; const loc = lo.kind === 'societe' ? (lo.name||'—') : `${lo.prenom||''} ${lo.nom||''}`.trim() || '—';
     const total = ['loyer_base','complement_loyer','charges','services'].reduce((s,k)=>s+(Number(l[k])||0),0);
@@ -8925,9 +8926,9 @@ async function loadLeaseList() {
     // On ne montre que le dernier document disponible (signé en priorité).
     const last = l.pdf_contresigne_url ? { url:l.pdf_contresigne_url, label:'Bail signé' } : (l.pdf_url ? { url:l.pdf_url, label:'Bail' } : null);
     const docs = last ? `<a class="m-doc-link" href="${esc(last.url)}" target="_blank">${last.label} ↓</a>` : '—';
-    const act = `<button class="lease-act${signed?'':' is-edit'}" onclick="openLeaseForm('${esc(l.id)}')" title="${signed?'Voir et envoyer les documents':'Modifier le bail'}">${signed?'Documents':'Modifier'}</button>`;
+    const act = `<button class="lease-act${signed?'':' is-edit'}" onclick="openLeaseForm('${esc(l.id)}')" title="${signed?'Voir et envoyer les documents':'Modifier le bail'}">${signed?'Documents':'Modifier'}</button>`
+      + `<button class="lease-act lease-act-del" onclick="deleteLease('${esc(l.id)}')" title="Supprimer le bail" style="margin-left:6px;padding:5px 9px">✕</button>`;
     return `<tr>
-      <td><strong>${esc(String(l.numero))}</strong></td>
       <td>${l.type==='mobilite'?'Mobilité':'Code civil'}</td>
       <td>${esc(loc)}</td>
       <td class="muted">${l.date_debut?fmtDateShort(l.date_debut):'—'} → ${l.date_fin?fmtDateShort(l.date_fin):'—'}</td>
@@ -8973,7 +8974,7 @@ let _leaseLeadId = null;
 function openLeaseForm(id) {
   const l = _leaseList.find(x => x.id === id); if (!l) return;
   _editingLease = l;
-  document.getElementById('lease-form-title').textContent = `Bail n°${l.numero}`;
+  document.getElementById('lease-form-title').textContent = `Bail ${l.type==='mobilite'?'mobilité':'société'}${l.date_debut?' · début '+fmtDateShort(l.date_debut):''}`;
   setLeaseType(l.type);
   const ba = l.bailleur || {};
   if (ba.kind === 'physique') {
@@ -9037,6 +9038,19 @@ function updateLeaseActions(l) {
   document.getElementById('lease-btn-partage').style.display = signed ? '' : 'none';
 }
 function closeLeaseForm() { document.getElementById('lease-form').style.display = 'none'; _editingLease = null; }
+// Double confirmation (utilisé pour les suppressions définitives).
+function confirmTwice(m1, m2) { return confirm(m1) && confirm(m2); }
+async function deleteLease(id) {
+  const l = _leaseList.find(x => x.id === id);
+  const lbl = l ? (l.type === 'mobilite' ? 'ce bail mobilité' : 'ce bail société') : 'ce bail';
+  if (!confirmTwice(`Supprimer ${lbl} ? Cette action est définitive.`, 'Confirmer une seconde fois la suppression définitive de ce bail ?')) return;
+  const res = await fetch(`/api/leases?id=${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${token}` } });
+  if (res.status === 401) { logout(); return; }
+  if (!res.ok) { showToast('Échec de la suppression', 'error'); return; }
+  showToast('Bail supprimé', 'success');
+  if (_editingLease?.id === id) closeLeaseForm();
+  await loadLeaseList();
+}
 function setBailKind(k) {
   _bailKind = k;
   document.getElementById('lease-bail-societe').classList.toggle('on-actif', k==='societe');
@@ -9125,7 +9139,7 @@ async function saveLease(silent) {
   if (!res.ok) { showToast(d.error||'Échec enregistrement','error'); return null; }
   if (!_editingLease) _editingLease = { id: d.lease.id, numero: d.lease.numero, statut: d.lease.statut };
   else _editingLease.id = d.lease.id;
-  document.getElementById('lease-form-title').textContent = `Bail n°${d.lease.numero}`;
+  document.getElementById('lease-form-title').textContent = `Bail ${_leaseType==='mobilite'?'mobilité':'société'}`;
   document.getElementById('lease-form-actions').style.display = 'flex';
   if (!silent) showToast('Bail enregistré', 'success');
   await loadLeaseList();
