@@ -239,8 +239,8 @@ function partiesRows(lease) {
   let baFr, baEn;
   if (ba.kind === 'physique') {
     const baName = ba.name || `${ba.prenom || ''} ${ba.nom || ''}`.trim();
-    const idFr = [ba.nationalite ? `de nationalité ${esc(ba.nationalite)}` : '', ba.dob ? `né(e) le ${fmtDateFr(ba.dob)}` : '', ba.adresse ? `demeurant ${esc(ba.adresse)}` : '', ba.piece ? esc(ba.piece) : ''].filter(Boolean).join(', ');
-    const idEn = [ba.nationalite ? `of ${esc(ba.nationalite)} nationality` : '', ba.dob ? `born on ${fmtDateFr(ba.dob)}` : '', ba.adresse ? `residing at ${esc(ba.adresse)}` : '', ba.piece ? esc(ba.piece) : ''].filter(Boolean).join(', ');
+    const idFr = [ba.nationalite ? `de nationalité ${esc(ba.nationalite)}` : '', ba.dob ? `né(e) le ${fmtDateFr(ba.dob)}` : '', ba.adresse ? `demeurant ${esc(ba.adresse)}` : '', ba.piece ? esc(ba.piece) : '', ba.siret ? `immatriculé(e) sous le SIRET ${esc(ba.siret)} (loueur en meublé)` : ''].filter(Boolean).join(', ');
+    const idEn = [ba.nationalite ? `of ${esc(ba.nationalite)} nationality` : '', ba.dob ? `born on ${fmtDateFr(ba.dob)}` : '', ba.adresse ? `residing at ${esc(ba.adresse)}` : '', ba.piece ? esc(ba.piece) : '', ba.siret ? `registered under SIRET ${esc(ba.siret)} (furnished-rental operator)` : ''].filter(Boolean).join(', ');
     baFr = `<strong>${esc(baName)}</strong>${idFr ? ', ' + idFr : ''}.`;
     baEn = `<strong>${esc(baName)}</strong>${idEn ? ', ' + idEn : ''}.`;
   } else {
@@ -252,9 +252,10 @@ function partiesRows(lease) {
     locFr = `<strong>${esc(lo.name || '')}</strong>, ${esc(lo.forme || 'société')}, RCS ${esc(lo.rcs_ville || '')} n° ${esc(lo.rcs_numero || '')}, siège ${esc(lo.siege || '')}${lo.representant_nom ? `, représentée par ${esc(lo.representant_nom)}` : ''}.`;
     locEn = `<strong>${esc(lo.name || '')}</strong>, ${esc(lo.forme || 'company')}, registered ${esc(lo.rcs_ville || '')} n° ${esc(lo.rcs_numero || '')}, registered office ${esc(lo.siege || '')}${lo.representant_nom ? `, represented by ${esc(lo.representant_nom)}` : ''}.`;
   } else {
-    const id = [lo.nationalite ? `de nationalité ${esc(lo.nationalite)}` : '', lo.dob ? `né(e) le ${fmtDateFr(lo.dob)}` : '', lo.adresse ? `demeurant ${esc(lo.adresse)}` : '', lo.piece ? esc(lo.piece) : ''].filter(Boolean).join(', ');
+    const id = [lo.nationalite ? `de nationalité ${esc(lo.nationalite)}` : '', lo.dob ? `né(e) le ${fmtDateFr(lo.dob)}` : '', lo.adresse ? `demeurant ${esc(lo.adresse)}` : '', lo.piece ? esc(lo.piece) : '', lo.siret ? `SIRET ${esc(lo.siret)} (loueur en meublé)` : ''].filter(Boolean).join(', ');
+    const idEnLo = [lo.nationalite ? `of ${esc(lo.nationalite)} nationality` : '', lo.dob ? `born on ${fmtDateFr(lo.dob)}` : '', lo.adresse ? `residing at ${esc(lo.adresse)}` : '', lo.piece ? esc(lo.piece) : '', lo.siret ? `SIRET ${esc(lo.siret)} (furnished-rental operator)` : ''].filter(Boolean).join(', ');
     locFr = `<strong>${esc((lo.prenom || '') + ' ' + (lo.nom || ''))}</strong>${id ? ', ' + id : ''}.`;
-    locEn = `<strong>${esc((lo.prenom || '') + ' ' + (lo.nom || ''))}</strong>${id ? ', ' + id : ''}.`;
+    locEn = `<strong>${esc((lo.prenom || '') + ' ' + (lo.nom || ''))}</strong>${idEnLo ? ', ' + idEnLo : ''}.`;
   }
   return head('Désignation des parties', 'Parties')
     + clause(`<u>Le Bailleur</u> : ${baFr}`, `<u>The Landlord</u>: ${baEn}`)
