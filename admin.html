@@ -3028,6 +3028,13 @@
                 <div class="np-field"><label>Date de début</label><input type="date" id="lease-debut" onchange="onLeaseDates()"/></div>
                 <div class="np-field"><label>Date de fin</label><input type="date" id="lease-fin"/></div>
 
+                <div class="np-field span-2"><label>Clause de sous-location</label>
+                  <div class="acq-toggle-row" style="margin:0">
+                    <button type="button" class="acq-tg" id="lease-sl-on" onclick="setSousLoc(true)">Interdire la sous-location (défaut)</button>
+                    <button type="button" class="acq-tg" id="lease-sl-off" onclick="setSousLoc(false)">Exclure la clause</button>
+                  </div>
+                </div>
+
                 <div id="lease-motif-wrap" class="np-grid-2 span-2" style="display:contents">
                   <div class="np-field"><label>Motif (bail mobilité)</label>
                     <select id="lease-motif">
@@ -8863,7 +8870,12 @@ function showSrSection(n) {
 }
 
 /* ══ ONGLET 5 — BAUX ═══════════════════════════════════════════ */
-let _leaseCompanies = [], _leaseList = [], _editingLease = null, _leaseType = 'mobilite', _locKind = 'physique', _bailKind = 'societe', _leaseAsset = null, _companyPickContext = null, _bailLeadId = null;
+let _leaseCompanies = [], _leaseList = [], _editingLease = null, _leaseType = 'mobilite', _locKind = 'physique', _bailKind = 'societe', _leaseAsset = null, _companyPickContext = null, _bailLeadId = null, _sousLoc = true;
+function setSousLoc(v) {
+  _sousLoc = v;
+  document.getElementById('lease-sl-on').classList.toggle('on-actif', v === true);
+  document.getElementById('lease-sl-off').classList.toggle('on-actif', v === false);
+}
 
 // Un bail est "signé" dès qu'on a uploadé la version contresignée.
 function isLeaseSigned(l) { return ['contresigne', 'actif', 'expire'].includes(l.statut) || !!l.pdf_contresigne_url; }
@@ -8963,7 +8975,7 @@ function newLease() {
   document.getElementById('lease-bien-equip').value = (g('sr-equipements') || '').split('\n').map(s => s.trim()).filter(Boolean).join(', ');
   _leaseLeadId = null; _bailLeadId = null;
   document.getElementById('lease-bail-lead-results').innerHTML = ''; document.getElementById('lease-loc-lead-results').innerHTML = '';
-  setLeaseType('mobilite'); setBailKind('societe'); setLocKind('physique');
+  setLeaseType('mobilite'); setBailKind('societe'); setLocKind('physique'); setSousLoc(true);
   setLeaseFormReadOnly(false);
   document.getElementById('lease-form-statut').textContent = 'Brouillon';
   document.getElementById('lease-form-actions').style.display = 'none';
@@ -9009,6 +9021,7 @@ function openLeaseForm(id) {
   sv('lease-loyer-base',l.loyer_base); sv('lease-complement',l.complement_loyer); sv('lease-charges',l.charges); sv('lease-services',l.services); sv('lease-menage',l.frais_menage); sv('lease-depot',l.depot_garantie); sv('lease-encadrement',l.loyer_ref_majore); sv('lease-preavis',l.preavis); sv('lease-duree',l.duree); sv('lease-debut',l.date_debut); sv('lease-fin',l.date_fin); document.getElementById('lease-motif').value=l.motif||''; sv('lease-motif-detail',l.motif_justificatif);
   const st = effLeaseStatus(l);
   const pillEl = document.getElementById('lease-form-statut'); pillEl.textContent = st.label; pillEl.className = st.cls.startsWith('m-stat') ? 'm-stat ' + st.cls : 'sr-statut-pill ' + st.cls;
+  setSousLoc(l.clause_sous_location !== false);
   // Bail signé → lecture seule (plus de modification possible, uniquement envoi de docs)
   setLeaseFormReadOnly(isLeaseSigned(l));
   updateLeaseActions(l);
@@ -9130,6 +9143,7 @@ function collectLease() {
     loyer_base:g('lease-loyer-base'), complement_loyer:g('lease-complement'), charges:g('lease-charges'), services:g('lease-services'), frais_menage:g('lease-menage'), depot_garantie:g('lease-depot'), loyer_ref_majore:g('lease-encadrement'),
     preavis:g('lease-preavis'), date_debut:g('lease-debut'), date_fin:g('lease-fin'), duree:g('lease-duree'),
     motif: _leaseType==='mobilite'?g('lease-motif'):'', motif_justificatif: _leaseType==='mobilite'?g('lease-motif-detail'):'',
+    clause_sous_location: _sousLoc,
   };
 }
 async function saveLease(silent) {

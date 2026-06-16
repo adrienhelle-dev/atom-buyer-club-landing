@@ -86,9 +86,16 @@ module.exports = async function handler(req, res) {
       motif: L.motif || null, motif_justificatif: L.motif_justificatif || null,
       updated_at: new Date().toISOString(),
     };
-    let saved;
-    if (L.id) { const { data, error } = await supabase.from('leases').update(row).eq('id', L.id).select('id, numero, statut').single(); if (error) return res.status(500).json({ error: error.message }); saved = data; }
-    else { row.statut = 'brouillon'; row.created_by = payload.email; const { data, error } = await supabase.from('leases').insert([row]).select('id, numero, statut').single(); if (error) return res.status(500).json({ error: error.message }); saved = data; }
+    if (L.clause_sous_location != null) row.clause_sous_location = !!L.clause_sous_location;
+    // Sauvegarde tolérante : si la colonne clause_sous_location n'existe pas encore
+    // (migration 012 non exécutée), on réessaie sans ce champ.
+    const persist = async (r) => {
+      if (L.id) return supabase.from('leases').update(r).eq('id', L.id).select('id, numero, statut').single();
+      return supabase.from('leases').insert([{ ...r, statut: 'brouillon', created_by: payload.email }]).select('id, numero, statut').single();
+    };
+    let { data: saved, error } = await persist(row);
+    if (error && /clause_sous_location/.test(error.message || '')) { const { clause_sous_location, ...rest } = row; ({ data: saved, error } = await persist(rest)); }
+    if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ ok: true, lease: saved });
   }
 
@@ -292,11 +299,11 @@ function loyerRows(lease) {
   const encadrEn = lease.loyer_ref_majore ? `<br/>Applicable reference rent (cap): ${fmtEur(lease.loyer_ref_majore)} (rent control complied with).` : '';
   const menageFr = lease.frais_menage ? `<br/>Forfait ménage (prélevé en fin de bail) : ${fmtEur(lease.frais_menage)}.` : '';
   const menageEn = lease.frais_menage ? `<br/>Cleaning fee (deducted at end of lease): ${fmtEur(lease.frais_menage)}.` : '';
-  const depotFr = lease.type === 'mobilite' ? `Dépôt de garantie : Aucun (art. 25-14 de la loi du 6 juillet 1989).` : `Dépôt de garantie : ${fmtEur(lease.depot_garantie)}.`;
-  const depotEn = lease.type === 'mobilite' ? `Security deposit: None (article 25-14 of the Law of 6 July 1989).` : `Security deposit: ${fmtEur(lease.depot_garantie)}.`;
+  // Dépôt de garantie : ligne affichée uniquement s'il y a un montant > 0.
+  const hasDepot = Number(lease.depot_garantie) > 0;
   return head('Loyer et charges', 'Rent and Charges')
     + clause(`Loyer mensuel toutes charges comprises : <strong>${fmtEur(total)}</strong>.<br/>${detailFr}${encadr}${menageFr}`, `Monthly rent inclusive of charges: <strong>${fmtEur(total)}</strong>.<br/>${detailEn}${encadrEn}${menageEn}`)
-    + clause(depotFr, depotEn)
+    + (hasDepot ? clause(`Dépôt de garantie : ${fmtEur(lease.depot_garantie)}.`, `Security deposit: ${fmtEur(lease.depot_garantie)}.`) : '')
     + clause(`Loyer payable mensuellement et d'avance par virement bancaire.`, `Rent payable monthly in advance by bank transfer.`);
 }
 
@@ -343,9 +350,14 @@ function buildLeaseHtml(lease) {
   rows.push(head('Assurance', 'Insurance'));
   rows.push(clause(lease.locataire?.kind === 'societe' ? `Le Preneur souscrit une assurance RC professionnelle.` : `Le Locataire souscrit une assurance multirisque habitation pour toute la durée du bail et en remet l'attestation avant la remise des clés.`,
     lease.locataire?.kind === 'societe' ? `The Tenant subscribes to professional liability insurance.` : `The Tenant subscribes to multi-risk home insurance for the full term and provides the certificate before key handover.`));
-  rows.push(head('Sous-location · Destination', 'Subletting · Use'));
-  rows.push(clause(`Sous-location et cession interdites (notamment toute annonce de location touristique). Les lieux sont à usage de résidence ${lease.type === 'mobilite' ? 'temporaire' : 'secondaire'} et ne constituent pas la résidence principale.`,
-    `Subletting and assignment prohibited (including any tourist rental listing). The premises are for ${lease.type === 'mobilite' ? 'temporary' : 'secondary'} residential use and do not constitute the principal residence.`));
+  // La destination (résidence secondaire/temporaire) reste toujours présente ;
+  // l'interdiction de sous-location est optionnelle (clause_sous_location === false → exclue).
+  const excludeSL = lease.clause_sous_location === false;
+  const slFr = excludeSL ? '' : ` Sous-location et cession interdites (notamment toute annonce de location touristique).`;
+  const slEn = excludeSL ? '' : ` Subletting and assignment prohibited (including any tourist rental listing).`;
+  rows.push(head('Destination & sous-location', 'Use & Subletting'));
+  rows.push(clause(`Les lieux sont à usage de résidence ${lease.type === 'mobilite' ? 'temporaire' : 'secondaire'} et ne constituent pas la résidence principale.${slFr}`,
+    `The premises are for ${lease.type === 'mobilite' ? 'temporary' : 'secondary'} residential use and do not constitute the principal residence.${slEn}`));
   rows.push(head('Droit applicable', 'Governing Law'));
   rows.push(clause(`Droit français${lease.type === 'mobilite' ? ' — loi n° 89-462 du 6 juillet 1989 (titre Ier ter)' : ' — Code civil'}. Seule la version française fait foi. Tribunaux du lieu de situation des locaux compétents.`,
     `French law${lease.type === 'mobilite' ? ' — Law No. 89-462 of 6 July 1989 (Title I ter)' : ' — Civil Code'}. Only the French version is authoritative. Courts of the premises\' location have jurisdiction.`));
