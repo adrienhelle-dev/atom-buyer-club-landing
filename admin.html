@@ -8898,6 +8898,9 @@ function statutPill(s) { return `<span class="${s.cls.startsWith('m-stat') ? 'm-
 
 async function loadLeaseTab() {
   const need = document.getElementById('lease-need-save'), wrap = document.getElementById('lease-wrap');
+  // On ferme tout formulaire ouvert : la fenêtre de bail ne doit jamais conserver
+  // les infos d'une autre réalisation. On repart toujours de la liste de CETTE réalisation.
+  closeLeaseForm();
   if (!editingShowroomId) { need.style.display = 'block'; wrap.style.display = 'none'; return; }
   need.style.display = 'none'; wrap.style.display = 'block';
   await loadLeaseCompanies();
