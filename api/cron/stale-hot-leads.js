@@ -163,7 +163,7 @@ async function remindLeaseExpiries() {
     const daysLeft = Math.round((end.getTime() - today.getTime()) / DAY);
 
     if (daysLeft < 0) {
-      if (l.statut === 'actif') { await supabase.from('leases').update({ statut: 'expire', updated_at: new Date().toISOString() }).eq('id', l.id); expired++; }
+      if (['actif', 'contresigne'].includes(l.statut)) { await supabase.from('leases').update({ statut: 'expire', updated_at: new Date().toISOString() }).eq('id', l.id); expired++; }
       continue;
     }
     if (daysLeft <= 15 && !l.reminder_j15) {

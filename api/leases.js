@@ -142,15 +142,19 @@ module.exports = async function handler(req, res) {
     if (!pdfUrl) return res.status(422).json({ error: 'pdf_absent', detail: 'génère le bail d\'abord' });
 
     const loc = lease.locataire || {};
-    const toEmail = b.to || loc.email;
-    if (!toEmail) return res.status(422).json({ error: 'email_locataire_absent' });
+    const ba = lease.bailleur || {};
+    // Destinataires : signature → locataire seul ; partage → locataire + bailleur.
+    const recipients = mode === 'partage'
+      ? [...new Set([b.to || loc.email, ba.email].filter(Boolean))]
+      : [b.to || loc.email].filter(Boolean);
+    if (!recipients.length) return res.status(422).json({ error: 'email_locataire_absent', detail: 'Renseigne l\'email du locataire (et du bailleur pour le partage).' });
 
     let pdfBuf;
     try { pdfBuf = await fetch(pdfUrl).then(r => r.arrayBuffer()).then(ab => Buffer.from(ab)); }
     catch (e) { return res.status(500).json({ error: 'pdf_fetch_echoue' }); }
 
     const founder = getFounder(payload.email);
-    const cc = associateEmails().filter(e => e !== toEmail);
+    const cc = associateEmails().filter(e => !recipients.includes(e));
     const bienAdr = lease.bien?.adresse || '';
     const subject = mode === 'partage'
       ? `Bail signé — ${bienAdr}`
@@ -162,7 +166,7 @@ module.exports = async function handler(req, res) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
         from: NOTAIRE_FROM(), replyTo: associateEmails(),
-        to: [toEmail], cc,
+        to: recipients, cc,
         subject,
         html: `${intro}<p>Bien à vous,<br/><strong>${esc(founder.name || 'Atom')}</strong><br/>Atom</p>`,
         attachments: [{ filename: `Bail-${(bienAdr || 'logement').replace(/[^a-z0-9]/gi, '-').slice(0, 40)}.pdf`, content: pdfBuf.toString('base64') }],
@@ -173,7 +177,7 @@ module.exports = async function handler(req, res) {
     if (mode === 'signature' && lease.statut === 'genere') {
       await supabase.from('leases').update({ statut: 'envoye', updated_at: new Date().toISOString() }).eq('id', b.id);
     }
-    return res.status(200).json({ ok: true, sent_to: toEmail, cc });
+    return res.status(200).json({ ok: true, sent_to: recipients, cc });
   }
 
   return res.status(400).json({ error: 'action inconnue' });
@@ -232,8 +236,14 @@ function leaseShell(titleFr, titleEn, subFr, subEn, rows) {
 
 function partiesRows(lease) {
   const ba = lease.bailleur || {}, lo = lease.locataire || {};
-  const baFr = `<strong>${esc(ba.name || '')}</strong>, ${esc(ba.forme || 'SAS')}, RCS ${esc(ba.rcs_ville || '')} n° ${esc(ba.rcs_numero || '')}, siège ${esc(ba.siege || '')}${ba.representant_nom ? `, représentée par ${esc(ba.representant_nom)}${ba.representant_qualite ? ', ' + esc(ba.representant_qualite) : ''}` : ''}.`;
-  const baEn = `<strong>${esc(ba.name || '')}</strong>, ${esc(ba.forme || 'SAS')}, registered with the ${esc(ba.rcs_ville || '')} Trade Register under n° ${esc(ba.rcs_numero || '')}, registered office ${esc(ba.siege || '')}${ba.representant_nom ? `, represented by ${esc(ba.representant_nom)}${ba.representant_qualite ? ', ' + esc(ba.representant_qualite) : ''}` : ''}.`;
+  let baFr, baEn;
+  if (ba.kind === 'physique') {
+    baFr = `<strong>${esc(ba.name || '')}</strong>${ba.adresse ? `, demeurant ${esc(ba.adresse)}` : ''}.`;
+    baEn = `<strong>${esc(ba.name || '')}</strong>${ba.adresse ? `, residing at ${esc(ba.adresse)}` : ''}.`;
+  } else {
+    baFr = `<strong>${esc(ba.name || '')}</strong>, ${esc(ba.forme || 'SAS')}, RCS ${esc(ba.rcs_ville || '')} n° ${esc(ba.rcs_numero || '')}, siège ${esc(ba.siege || '')}${ba.representant_nom ? `, représentée par ${esc(ba.representant_nom)}${ba.representant_qualite ? ', ' + esc(ba.representant_qualite) : ''}` : ''}.`;
+    baEn = `<strong>${esc(ba.name || '')}</strong>, ${esc(ba.forme || 'SAS')}, registered with the ${esc(ba.rcs_ville || '')} Trade Register under n° ${esc(ba.rcs_numero || '')}, registered office ${esc(ba.siege || '')}${ba.representant_nom ? `, represented by ${esc(ba.representant_nom)}${ba.representant_qualite ? ', ' + esc(ba.representant_qualite) : ''}` : ''}.`;
+  }
   let locFr, locEn;
   if (lo.kind === 'societe') {
     locFr = `<strong>${esc(lo.name || '')}</strong>, ${esc(lo.forme || 'société')}, RCS ${esc(lo.rcs_ville || '')} n° ${esc(lo.rcs_numero || '')}, siège ${esc(lo.siege || '')}${lo.representant_nom ? `, représentée par ${esc(lo.representant_nom)}` : ''}.`;

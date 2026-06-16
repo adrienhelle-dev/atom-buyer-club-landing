@@ -186,6 +186,9 @@
     .acq-toggle-row { display: flex; gap: 8px; margin: 4px 0 14px; }
     .acq-tg { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--dim); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: all .12s; }
     .acq-tg.on-actif   { background: rgba(76,175,125,.16); border-color: var(--green); color: var(--green); }
+    .lease-act { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:7px; border:1px solid var(--border); background:var(--bg3); color:var(--dim); font-family:var(--sans); font-size:12px; cursor:pointer; transition:all .12s; white-space:nowrap; }
+    .lease-act:hover { border-color:var(--gold); color:var(--gold); }
+    .lease-act.is-edit { border-color:rgba(184,151,90,.5); color:var(--gold); }
     .acq-tg.on-tombe   { background: rgba(217,150,80,.16); border-color: #d99650; color: #d99650; }
     .acq-edit-pencil { flex-shrink: 0; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid var(--border); background: var(--bg3); color: var(--dim); cursor: pointer; transition: color .12s, border-color .12s, background .12s; }
     .acq-edit-pencil:hover, .acq-edit-pencil.on { color: var(--gold); border-color: var(--gold); background: rgba(184,151,90,.12); }
@@ -2945,9 +2948,28 @@
                   </div>
                 </div>
 
-                <div class="np-field"><label>Bailleur (société)</label><select id="lease-bailleur-sel" onchange="onLeaseCompanyPick('bailleur')"></select></div>
-                <div class="np-field"><label>Représentant bailleur (éditable)</label><input id="lease-bailleur-rep" placeholder="laisser vide = aucun nom"/></div>
-                <div class="np-field span-2"><input id="lease-bailleur-repq" placeholder="Qualité (ex. Directeur Général)"/></div>
+                <div class="np-field span-2"><label>Bailleur</label>
+                  <div class="acq-toggle-row" style="margin:0">
+                    <button type="button" class="acq-tg" id="lease-bail-societe" onclick="setBailKind('societe')">Société</button>
+                    <button type="button" class="acq-tg" id="lease-bail-physique" onclick="setBailKind('physique')">Personne physique</button>
+                  </div>
+                </div>
+                <div id="lease-bail-societe-fields" class="np-grid-2 span-2" style="display:contents">
+                  <div class="np-field span-2"><label>Société bailleur</label>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <select id="lease-bailleur-sel" onchange="onLeaseCompanyPick('bailleur')" style="flex:1"></select>
+                      <button type="button" class="acq-btn-line" style="width:auto;margin:0;padding:7px 11px" onclick="openCompaniesModal('bailleur')" title="Ajouter une société via Kbis">+ Kbis</button>
+                    </div>
+                  </div>
+                  <div class="np-field"><label>Représentant (éditable)</label><input id="lease-bailleur-rep" placeholder="laisser vide = aucun nom"/></div>
+                  <div class="np-field"><label>Qualité</label><input id="lease-bailleur-repq" placeholder="ex. Directeur Général"/></div>
+                </div>
+                <div id="lease-bail-physique-fields" class="np-grid-2 span-2" style="display:none">
+                  <div class="np-field"><label>Prénom</label><input id="lease-bail-prenom"/></div>
+                  <div class="np-field"><label>Nom</label><input id="lease-bail-nom"/></div>
+                  <div class="np-field span-2"><label>Adresse</label><input id="lease-bail-adresse"/></div>
+                  <div class="np-field span-2"><label>Email (pour le partage du bail)</label><input id="lease-bail-email"/></div>
+                </div>
 
                 <div class="np-field span-2"><label>Locataire</label>
                   <div class="acq-toggle-row" style="margin:0">
@@ -2966,7 +2988,12 @@
                   <div class="np-field"><label>Pièce (passeport/CNI)</label><input id="lease-loc-piece"/></div>
                   <div class="np-field span-2"><label>Adresse</label><input id="lease-loc-adresse"/></div>
                 </div>
-                <div id="lease-loc-societe-fields" class="np-field span-2" style="display:none"><label>Société preneuse</label><select id="lease-loc-societe-sel" onchange="onLeaseCompanyPick('locataire')"></select></div>
+                <div id="lease-loc-societe-fields" class="np-field span-2" style="display:none"><label>Société preneuse</label>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <select id="lease-loc-societe-sel" onchange="onLeaseCompanyPick('locataire')" style="flex:1"></select>
+                    <button type="button" class="acq-btn-line" style="width:auto;margin:0;padding:7px 11px" onclick="openCompaniesModal('locataire')" title="Ajouter une société via Kbis">+ Kbis</button>
+                  </div>
+                </div>
 
                 <div class="np-field span-2" style="border-top:1px solid var(--border);padding-top:10px"><label class="np-section-title" style="font-size:13px">Bien (pré-rempli depuis la réalisation)</label></div>
                 <div class="np-field span-2"><label>Adresse du bien</label><input id="lease-bien-adresse"/></div>
@@ -3007,18 +3034,16 @@
                 <div class="np-footer-left"><span id="lease-form-statut" class="sr-statut-pill draft">Brouillon</span></div>
                 <div class="np-footer-right" style="flex-wrap:wrap;gap:8px;justify-content:flex-end">
                   <button type="button" class="btn-secondary" onclick="closeLeaseForm()">Fermer</button>
-                  <button type="button" class="btn-secondary" onclick="saveLease()">Enregistrer</button>
-                  <button type="button" class="btn-primary" onclick="generateLease()">Générer le PDF</button>
+                  <button type="button" class="btn-secondary" id="lease-btn-save" onclick="saveLease()">Enregistrer</button>
+                  <button type="button" class="btn-primary" id="lease-btn-generate" onclick="generateLease()">Générer le PDF</button>
                 </div>
               </div>
-              <div id="lease-form-actions" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <a id="lease-pdf-link" class="m-doc-link" target="_blank" style="display:none">Voir le PDF ↗</a>
-                <button type="button" class="acq-btn-line" style="width:auto;margin:0" onclick="sendLease('signature')">Envoyer pour signature</button>
-                <input type="file" id="lease-up-loc" accept="application/pdf" style="display:none" onchange="uploadLeaseDoc('signe_locataire',this)"/>
-                <button type="button" class="acq-btn-line" style="width:auto;margin:0" onclick="document.getElementById('lease-up-loc').click()">Upload signé locataire</button>
+              <div id="lease-form-actions" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:12px;flex-wrap:wrap;gap:8px;align-items:center">
+                <a id="lease-pdf-link" class="m-doc-link" target="_blank" style="display:none">Voir le dernier PDF ↗</a>
+                <button type="button" class="acq-btn-line" id="lease-btn-signature" style="width:auto;margin:0" onclick="sendLease('signature')">Envoyer pour signature</button>
                 <input type="file" id="lease-up-cs" accept="application/pdf" style="display:none" onchange="uploadLeaseDoc('contresigne',this)"/>
-                <button type="button" class="acq-btn-line" style="width:auto;margin:0" onclick="document.getElementById('lease-up-cs').click()">Upload contresigné</button>
-                <button type="button" class="acq-btn-line acq-btn-gold" style="width:auto;margin:0" onclick="sendLease('partage')">Partager version signée</button>
+                <button type="button" class="acq-btn-line" id="lease-btn-upcs" style="width:auto;margin:0" onclick="document.getElementById('lease-up-cs').click()">Upload bail contresigné</button>
+                <button type="button" class="acq-btn-line acq-btn-gold" id="lease-btn-partage" style="width:auto;margin:0;display:none" onclick="sendLease('partage')">Partager à toutes les parties</button>
               </div>
             </div>
           </div>
@@ -8826,15 +8851,43 @@ function showSrSection(n) {
 }
 
 /* ══ ONGLET 5 — BAUX ═══════════════════════════════════════════ */
-let _leaseCompanies = [], _leaseList = [], _editingLease = null, _leaseType = 'mobilite', _locKind = 'physique';
-const LEASE_STATUT = { brouillon:['Brouillon','draft'], genere:['Généré','draft'], envoye:['Envoyé','m-stat-offre'], signe_locataire:['Signé locataire','m-stat-mandat'], contresigne:['Contresigné','m-stat-signe'], actif:['Actif','m-stat-actif'], expire:['Expiré','m-stat-abandon'] };
+let _leaseCompanies = [], _leaseList = [], _editingLease = null, _leaseType = 'mobilite', _locKind = 'physique', _bailKind = 'societe', _leaseAsset = null, _companyPickContext = null;
+
+// Un bail est "signé" dès qu'on a uploadé la version contresignée.
+function isLeaseSigned(l) { return ['contresigne', 'actif', 'expire'].includes(l.statut) || !!l.pdf_contresigne_url; }
+// Statut affiché : pour un bail signé, on dérive Actif / À venir / Expiré des dates
+// (on ne stocke jamais "actif" en base prématurément). Sinon état du workflow doc.
+function effLeaseStatus(l) {
+  if (isLeaseSigned(l)) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const d = l.date_debut ? new Date(l.date_debut) : null, f = l.date_fin ? new Date(l.date_fin) : null;
+    if (d) d.setHours(0,0,0,0); if (f) f.setHours(0,0,0,0);
+    if (f && today > f) return { label:'Expiré', cls:'m-stat-abandon' };
+    if (d && today < d) return { label:'Signé · effet ' + fmtDateShort(l.date_debut), cls:'m-stat-signe' };
+    return { label:'Actif', cls:'m-stat-actif' };
+  }
+  const map = { brouillon:['Brouillon','draft'], genere:['Généré','draft'], envoye:['Envoyé','m-stat-offre'], signe_locataire:['À contresigner','m-stat-mandat'] };
+  const [label, cls] = map[l.statut] || [l.statut, 'draft'];
+  return { label, cls };
+}
+function statutPill(s) { return `<span class="${s.cls.startsWith('m-stat') ? 'm-stat ' + s.cls : 'sr-statut-pill ' + s.cls}">${esc(s.label)}</span>`; }
 
 async function loadLeaseTab() {
   const need = document.getElementById('lease-need-save'), wrap = document.getElementById('lease-wrap');
   if (!editingShowroomId) { need.style.display = 'block'; wrap.style.display = 'none'; return; }
   need.style.display = 'none'; wrap.style.display = 'block';
   await loadLeaseCompanies();
+  await loadLeaseAsset();
   await loadLeaseList();
+}
+// Adresse réelle du bien : portée par l'asset lié (registre des mandats), pas par
+// la réalisation showroom (anonymisée par quartier). Sert au préremplissage.
+async function loadLeaseAsset() {
+  _leaseAsset = null;
+  try {
+    const res = await fetch(`/api/showroom?bridge=${editingShowroomId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { const d = await res.json(); _leaseAsset = d.asset || (d.assets && d.assets[0]) || null; }
+  } catch {}
 }
 async function loadLeaseCompanies() {
   try {
@@ -8856,18 +8909,21 @@ async function loadLeaseList() {
   if (!_leaseList.length) { tb.innerHTML = '<tr><td colspan="8" class="asset-msg">Aucun bail. Clique « + Nouveau bail ».</td></tr>'; return; }
   tb.innerHTML = _leaseList.map(l => {
     const lo = l.locataire || {}; const loc = lo.kind === 'societe' ? (lo.name||'—') : `${lo.prenom||''} ${lo.nom||''}`.trim() || '—';
-    const [slbl, scls] = LEASE_STATUT[l.statut] || [l.statut, 'draft'];
     const total = ['loyer_base','complement_loyer','charges','services'].reduce((s,k)=>s+(Number(l[k])||0),0);
-    const docs = [l.pdf_url?`<a class="m-doc-link" href="${esc(l.pdf_url)}" target="_blank">Bail</a>`:'', l.pdf_signe_locataire_url?`<a class="m-doc-link" href="${esc(l.pdf_signe_locataire_url)}" target="_blank">Loc.</a>`:'', l.pdf_contresigne_url?`<a class="m-doc-link" href="${esc(l.pdf_contresigne_url)}" target="_blank">Signé</a>`:''].filter(Boolean).join('') || '—';
+    const signed = isLeaseSigned(l);
+    // On ne montre que le dernier document disponible (signé en priorité).
+    const last = l.pdf_contresigne_url ? { url:l.pdf_contresigne_url, label:'Bail signé' } : (l.pdf_url ? { url:l.pdf_url, label:'Bail' } : null);
+    const docs = last ? `<a class="m-doc-link" href="${esc(last.url)}" target="_blank">${last.label} ↓</a>` : '—';
+    const act = `<button class="lease-act${signed?'':' is-edit'}" onclick="openLeaseForm('${esc(l.id)}')" title="${signed?'Voir et envoyer les documents':'Modifier le bail'}">${signed?'Documents':'Modifier'}</button>`;
     return `<tr>
       <td><strong>${esc(String(l.numero))}</strong></td>
       <td>${l.type==='mobilite'?'Mobilité':'Code civil'}</td>
       <td>${esc(loc)}</td>
       <td class="muted">${l.date_debut?fmtDateShort(l.date_debut):'—'} → ${l.date_fin?fmtDateShort(l.date_fin):'—'}</td>
       <td>${fmtMoney(total)}</td>
-      <td><span class="${scls.startsWith('m-stat')?'m-stat '+scls:'sr-statut-pill draft'}">${esc(slbl)}</span></td>
+      <td>${statutPill(effLeaseStatus(l))}</td>
       <td style="white-space:nowrap">${docs}</td>
-      <td><button class="m-doc-link" onclick="openLeaseForm('${esc(l.id)}')">Ouvrir</button></td>
+      <td>${act}</td>
     </tr>`;
   }).join('');
 }
@@ -8876,18 +8932,19 @@ function newLease() {
   _editingLease = null;
   document.getElementById('lease-form-title').textContent = 'Nouveau bail';
   // reset
-  ['lease-bailleur-rep','lease-bailleur-repq','lease-loc-prenom','lease-loc-nom','lease-loc-email','lease-loc-nat','lease-loc-dob','lease-loc-piece','lease-loc-adresse','lease-loyer-base','lease-complement','lease-charges','lease-services','lease-menage','lease-depot','lease-encadrement','lease-preavis','lease-duree','lease-debut','lease-fin','lease-motif-detail','lease-bien-lot'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['lease-bailleur-rep','lease-bailleur-repq','lease-bail-prenom','lease-bail-nom','lease-bail-adresse','lease-bail-email','lease-loc-prenom','lease-loc-nom','lease-loc-email','lease-loc-nat','lease-loc-dob','lease-loc-piece','lease-loc-adresse','lease-loyer-base','lease-complement','lease-charges','lease-services','lease-menage','lease-depot','lease-encadrement','lease-preavis','lease-duree','lease-debut','lease-fin','lease-motif-detail','lease-bien-lot'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('lease-bailleur-sel').value=''; document.getElementById('lease-loc-societe-sel').value=''; document.getElementById('lease-motif').value='';
-  document.getElementById('lease-leadId')?.remove();
-  // prefill bien depuis la réalisation
+  // prefill bien depuis la réalisation (+ adresse réelle de l'asset lié)
   const g = id => document.getElementById(id)?.value || '';
   document.getElementById('lease-bien-designation').value = g('sr-name');
   document.getElementById('lease-bien-surface').value = g('sr-surface');
-  document.getElementById('lease-bien-adresse').value = '';
-  document.getElementById('lease-bien-etage').value = g('sr-floor') ? g('sr-floor')+'e étage' : '';
+  document.getElementById('lease-bien-adresse').value = _leaseAsset?.address || '';
+  const quartier = g('sr-quartier'), arr = g('sr-arr');
+  document.getElementById('lease-bien-etage').value = quartier ? (quartier + (arr ? ` (${arr}e)` : '')) : '';
   document.getElementById('lease-bien-equip').value = '';
   _leaseLeadId = null;
-  setLeaseType('mobilite'); setLocKind('physique');
+  setLeaseType('mobilite'); setBailKind('societe'); setLocKind('physique');
+  setLeaseFormReadOnly(false);
   document.getElementById('lease-form-statut').textContent = 'Brouillon';
   document.getElementById('lease-form-actions').style.display = 'none';
   document.getElementById('lease-form').style.display = 'block';
@@ -8900,10 +8957,20 @@ function openLeaseForm(id) {
   document.getElementById('lease-form-title').textContent = `Bail n°${l.numero}`;
   setLeaseType(l.type);
   const ba = l.bailleur || {};
-  const baMatch = _leaseCompanies.find(c => c.name === ba.name);
-  document.getElementById('lease-bailleur-sel').value = baMatch?.id || '';
-  document.getElementById('lease-bailleur-rep').value = ba.representant_nom || '';
-  document.getElementById('lease-bailleur-repq').value = ba.representant_qualite || '';
+  if (ba.kind === 'physique') {
+    setBailKind('physique');
+    const parts = (ba.name || '').trim().split(' ');
+    document.getElementById('lease-bail-prenom').value = parts.shift() || '';
+    document.getElementById('lease-bail-nom').value = parts.join(' ');
+    document.getElementById('lease-bail-adresse').value = ba.adresse || '';
+    document.getElementById('lease-bail-email').value = ba.email || '';
+  } else {
+    setBailKind('societe');
+    const baMatch = _leaseCompanies.find(c => c.name === ba.name);
+    document.getElementById('lease-bailleur-sel').value = baMatch?.id || '';
+    document.getElementById('lease-bailleur-rep').value = ba.representant_nom || '';
+    document.getElementById('lease-bailleur-repq').value = ba.representant_qualite || '';
+  }
   const lo = l.locataire || {};
   setLocKind(lo.kind === 'societe' ? 'societe' : (l.lead_id ? 'lead' : 'physique'));
   _leaseLeadId = l.lead_id || null;
@@ -8913,14 +8980,44 @@ function openLeaseForm(id) {
   document.getElementById('lease-bien-adresse').value=bn.adresse||''; document.getElementById('lease-bien-surface').value=bn.surface||''; document.getElementById('lease-bien-etage').value=bn.etage||''; document.getElementById('lease-bien-lot').value=bn.lot_copro||''; document.getElementById('lease-bien-designation').value=bn.designation||''; document.getElementById('lease-bien-equip').value=bn.equipements||'';
   const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=(v??'');};
   sv('lease-loyer-base',l.loyer_base); sv('lease-complement',l.complement_loyer); sv('lease-charges',l.charges); sv('lease-services',l.services); sv('lease-menage',l.frais_menage); sv('lease-depot',l.depot_garantie); sv('lease-encadrement',l.loyer_ref_majore); sv('lease-preavis',l.preavis); sv('lease-duree',l.duree); sv('lease-debut',l.date_debut); sv('lease-fin',l.date_fin); document.getElementById('lease-motif').value=l.motif||''; sv('lease-motif-detail',l.motif_justificatif);
-  const [slbl] = LEASE_STATUT[l.statut] || [l.statut];
-  document.getElementById('lease-form-statut').textContent = slbl;
-  document.getElementById('lease-form-actions').style.display = 'flex';
-  const pl = document.getElementById('lease-pdf-link'); if (l.pdf_url) { pl.href = l.pdf_url; pl.style.display = ''; } else pl.style.display = 'none';
+  const st = effLeaseStatus(l);
+  const pillEl = document.getElementById('lease-form-statut'); pillEl.textContent = st.label; pillEl.className = st.cls.startsWith('m-stat') ? 'm-stat ' + st.cls : 'sr-statut-pill ' + st.cls;
+  // Bail signé → lecture seule (plus de modification possible, uniquement envoi de docs)
+  setLeaseFormReadOnly(isLeaseSigned(l));
+  updateLeaseActions(l);
   document.getElementById('lease-form').style.display = 'block';
   document.getElementById('lease-form').scrollIntoView({ behavior:'smooth', block:'start' });
 }
+// Lecture seule : un bail contresigné ne se modifie plus.
+function setLeaseFormReadOnly(signed) {
+  document.querySelectorAll('#lease-form input, #lease-form select, #lease-form textarea, #lease-form .acq-tg').forEach(el => {
+    if (el.closest('#lease-form-actions')) return;
+    if (el.tagName === 'BUTTON') el.style.pointerEvents = signed ? 'none' : '';
+    else el.disabled = !!signed;
+    el.style.opacity = signed ? 0.7 : '';
+  });
+  document.getElementById('lease-btn-save').style.display = signed ? 'none' : '';
+  document.getElementById('lease-btn-generate').style.display = signed ? 'none' : '';
+}
+// Boutons d'envoi/upload selon l'état du bail.
+function updateLeaseActions(l) {
+  const signed = isLeaseSigned(l);
+  document.getElementById('lease-form-actions').style.display = 'flex';
+  const last = l.pdf_contresigne_url || l.pdf_url;
+  const pl = document.getElementById('lease-pdf-link'); if (last) { pl.href = last; pl.textContent = l.pdf_contresigne_url ? 'Voir le bail signé ↗' : 'Voir le PDF ↗'; pl.style.display = ''; } else pl.style.display = 'none';
+  document.getElementById('lease-btn-signature').style.display = (!signed && l.pdf_url) ? '' : 'none';
+  document.getElementById('lease-btn-upcs').style.display = l.pdf_url ? '' : 'none';
+  document.getElementById('lease-btn-upcs').textContent = signed ? 'Remplacer le bail contresigné' : 'Upload bail contresigné';
+  document.getElementById('lease-btn-partage').style.display = signed ? '' : 'none';
+}
 function closeLeaseForm() { document.getElementById('lease-form').style.display = 'none'; _editingLease = null; }
+function setBailKind(k) {
+  _bailKind = k;
+  document.getElementById('lease-bail-societe').classList.toggle('on-actif', k==='societe');
+  document.getElementById('lease-bail-physique').classList.toggle('on-actif', k==='physique');
+  document.getElementById('lease-bail-societe-fields').style.display = k==='societe' ? 'contents' : 'none';
+  document.getElementById('lease-bail-physique-fields').style.display = k==='physique' ? 'contents' : 'none';
+}
 function setLeaseType(t) {
   _leaseType = t;
   document.getElementById('lease-t-mobilite').classList.toggle('on-actif', t==='mobilite');
@@ -8959,8 +9056,13 @@ function pickLeaseLead(id) {
 function onLeaseDates() {} // hook (durée auto possible plus tard)
 function collectLease() {
   const g = id => document.getElementById(id)?.value.trim() || '';
-  const baSel = _leaseCompanies.find(c => c.id === document.getElementById('lease-bailleur-sel').value);
-  const bailleur = baSel ? { name:baSel.name, forme:baSel.forme, rcs_numero:baSel.rcs_numero, rcs_ville:baSel.rcs_ville, siege:baSel.siege, representant_nom:g('lease-bailleur-rep'), representant_qualite:g('lease-bailleur-repq') } : null;
+  let bailleur;
+  if (_bailKind === 'physique') {
+    bailleur = { kind:'physique', name:`${g('lease-bail-prenom')} ${g('lease-bail-nom')}`.trim(), adresse:g('lease-bail-adresse'), email:g('lease-bail-email') };
+  } else {
+    const baSel = _leaseCompanies.find(c => c.id === document.getElementById('lease-bailleur-sel').value);
+    bailleur = baSel ? { kind:'societe', name:baSel.name, forme:baSel.forme, rcs_numero:baSel.rcs_numero, rcs_ville:baSel.rcs_ville, siege:baSel.siege, representant_nom:g('lease-bailleur-rep'), representant_qualite:g('lease-bailleur-repq'), email:baSel.email } : null;
+  }
   let locataire;
   if (_locKind === 'societe') { const c = _leaseCompanies.find(x => x.id === document.getElementById('lease-loc-societe-sel').value); locataire = c ? { kind:'societe', name:c.name, forme:c.forme, rcs_numero:c.rcs_numero, rcs_ville:c.rcs_ville, siege:c.siege, representant_nom:c.representant_nom, email:c.email } : { kind:'societe' }; }
   else locataire = { kind:'physique', prenom:g('lease-loc-prenom'), nom:g('lease-loc-nom'), email:g('lease-loc-email'), nationalite:g('lease-loc-nat'), dob:g('lease-loc-dob'), piece:g('lease-loc-piece'), adresse:g('lease-loc-adresse') };
@@ -8992,9 +9094,9 @@ async function generateLease() {
   const res = await fetch('/api/leases', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`}, body: JSON.stringify({ action:'generate', id: _editingLease.id }) });
   const d = await res.json();
   if (!res.ok) { showToast(d.detail||d.error||'Échec génération','error'); return; }
-  const pl = document.getElementById('lease-pdf-link'); pl.href = d.pdf_url; pl.style.display = '';
   showToast('PDF généré ✓', 'success');
   await loadLeaseList();
+  const fresh = _leaseList.find(x => x.id === _editingLease.id); if (fresh) { _editingLease = fresh; updateLeaseActions(fresh); }
   window.open(d.pdf_url, '_blank');
 }
 function uploadLeaseDoc(kind, input) {
@@ -9003,28 +9105,30 @@ function uploadLeaseDoc(kind, input) {
   const reader = new FileReader();
   reader.onload = async () => {
     showToast('Upload…','info');
-    const res = await fetch('/api/leases', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`}, body: JSON.stringify({ action:'doc_upload', id:_editingLease.id, kind, content: reader.result, filename: f.name }) });
+    const res = await fetch('/api/leases', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`}, body: JSON.stringify({ action:'doc_upload', id:_editingLease.id, kind:'contresigne', content: reader.result, filename: f.name }) });
     const d = await res.json();
     if (!res.ok) { showToast(d.detail||d.error||'Échec','error'); return; }
-    showToast(kind==='contresigne'?'Version contresignée enregistrée ✓':'Version locataire enregistrée ✓','success');
+    showToast('Bail contresigné enregistré — le bail passe en « signé »', 'success');
     await loadLeaseList();
+    openLeaseForm(_editingLease.id); // re-affiche en lecture seule + actions de partage
   };
   reader.readAsDataURL(f);
   input.value = '';
 }
 async function sendLease(mode) {
   if (!_editingLease) return;
-  const label = mode==='partage' ? 'Partager la version signée à toutes les parties ?' : 'Envoyer le bail au locataire pour signature ?';
+  const label = mode==='partage' ? 'Partager la version signée au locataire et au bailleur ?' : 'Envoyer le bail au locataire pour signature ?';
   if (!confirm(label)) return;
   const res = await fetch('/api/leases', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`}, body: JSON.stringify({ action:'send', id:_editingLease.id, mode }) });
   const d = await res.json();
   if (!res.ok) { showToast(d.detail||d.error||'Échec envoi','error'); return; }
-  showToast(`Envoyé à ${d.sent_to}`, 'success');
+  showToast(`Envoyé à ${(d.sent_to||[]).join(', ')}`, 'success');
   await loadLeaseList();
+  const fresh = _leaseList.find(x => x.id === _editingLease.id); if (fresh) { _editingLease = fresh; updateLeaseActions(fresh); }
 }
 
 /* ── Sociétés (modal) ── */
-function openCompaniesModal() { document.getElementById('companies-overlay').classList.add('on'); document.getElementById('company-form').style.display='none'; renderCompaniesList(); }
+function openCompaniesModal(context) { _companyPickContext = context || null; document.getElementById('companies-overlay').classList.add('on'); document.getElementById('company-form').style.display='none'; renderCompaniesList(); }
 function closeCompaniesModal() { document.getElementById('companies-overlay').classList.remove('on'); }
 function renderCompaniesList() {
   const el = document.getElementById('companies-list');
@@ -9041,8 +9145,15 @@ async function saveCompany() {
   if (!c.name) { showToast('Raison sociale requise','error'); return; }
   const res = await fetch('/api/leases', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`}, body: JSON.stringify({ action:'company_save', company:c }) });
   if (!res.ok) { showToast('Échec','error'); return; }
+  const d = await res.json();
   await loadLeaseCompanies(); renderCompaniesList();
   document.getElementById('company-form').style.display='none';
+  // Si on a ouvert la fenêtre depuis le bailleur/locataire, on sélectionne la nouvelle société.
+  if (_companyPickContext && d.company) {
+    if (_companyPickContext === 'bailleur') { setBailKind('societe'); document.getElementById('lease-bailleur-sel').value = d.company.id; onLeaseCompanyPick('bailleur'); }
+    else if (_companyPickContext === 'locataire') { setLocKind('societe'); document.getElementById('lease-loc-societe-sel').value = d.company.id; }
+    _companyPickContext = null; closeCompaniesModal();
+  }
   showToast('Société enregistrée','success');
 }
 async function loadPdfJs() {
