@@ -143,10 +143,20 @@ module.exports = async function handler(req, res) {
 
     const loc = lease.locataire || {};
     const ba = lease.bailleur || {};
-    // Destinataires : signature → locataire seul ; partage → locataire + bailleur.
-    const recipients = mode === 'partage'
-      ? [...new Set([b.to || loc.email, ba.email].filter(Boolean))]
-      : [b.to || loc.email].filter(Boolean);
+    const assoc = associateEmails(); // 3 associés / fondateurs
+    // Sociétés du groupe : à défaut d'email renseigné, le bail part aux 3 fondateurs
+    // (que la société soit bailleur ou preneur).
+    const { data: groupCos } = await supabase.from('lease_companies').select('name').eq('is_group', true);
+    const groupNames = new Set((groupCos || []).map(c => (c.name || '').trim().toLowerCase()));
+    const resolveParty = (p) => {
+      if (!p) return [];
+      if (p.email) return [p.email];
+      if (p.kind === 'societe' && (p.is_group || groupNames.has((p.name || '').trim().toLowerCase()))) return assoc.slice();
+      return [];
+    };
+    // Destinataires : signature → preneur ; partage → preneur + bailleur.
+    const base = b.to ? [b.to] : resolveParty(loc);
+    const recipients = [...new Set((mode === 'partage' ? base.concat(resolveParty(ba)) : base).filter(Boolean))];
     if (!recipients.length) return res.status(422).json({ error: 'email_locataire_absent', detail: 'Renseigne l\'email du locataire (et du bailleur pour le partage).' });
 
     let pdfBuf;
@@ -154,7 +164,7 @@ module.exports = async function handler(req, res) {
     catch (e) { return res.status(500).json({ error: 'pdf_fetch_echoue' }); }
 
     const founder = getFounder(payload.email);
-    const cc = associateEmails().filter(e => !recipients.includes(e));
+    const cc = assoc.filter(e => !recipients.includes(e));
     const bienAdr = lease.bien?.adresse || '';
     const subject = mode === 'partage'
       ? `Bail signé — ${bienAdr}`
