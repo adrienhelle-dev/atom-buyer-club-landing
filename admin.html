@@ -2963,6 +2963,7 @@
                   </div>
                   <div class="np-field"><label>Représentant (éditable)</label><input id="lease-bailleur-rep" placeholder="laisser vide = aucun nom"/></div>
                   <div class="np-field"><label>Qualité</label><input id="lease-bailleur-repq" placeholder="ex. Directeur Général"/></div>
+                  <div class="np-field span-2"><label>Email du bailleur (pour le partage du bail signé)</label><input id="lease-bailleur-email" placeholder="ex. contact@atom-capital.fr"/></div>
                 </div>
                 <div id="lease-bail-physique-fields" class="np-grid-2 span-2" style="display:none">
                   <div class="np-field"><label>Prénom</label><input id="lease-bail-prenom"/></div>
@@ -2988,11 +2989,14 @@
                   <div class="np-field"><label>Pièce (passeport/CNI)</label><input id="lease-loc-piece"/></div>
                   <div class="np-field span-2"><label>Adresse</label><input id="lease-loc-adresse"/></div>
                 </div>
-                <div id="lease-loc-societe-fields" class="np-field span-2" style="display:none"><label>Société preneuse</label>
-                  <div style="display:flex;gap:6px;align-items:center">
-                    <select id="lease-loc-societe-sel" onchange="onLeaseCompanyPick('locataire')" style="flex:1"></select>
-                    <button type="button" class="acq-btn-line" style="width:auto;margin:0;padding:7px 11px" onclick="openCompaniesModal('locataire')" title="Ajouter une société via Kbis">+ Kbis</button>
+                <div id="lease-loc-societe-fields" class="np-grid-2 span-2" style="display:none">
+                  <div class="np-field span-2"><label>Société preneuse</label>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <select id="lease-loc-societe-sel" onchange="onLeaseCompanyPick('locataire')" style="flex:1"></select>
+                      <button type="button" class="acq-btn-line" style="width:auto;margin:0;padding:7px 11px" onclick="openCompaniesModal('locataire')" title="Ajouter une société via Kbis">+ Kbis</button>
+                    </div>
                   </div>
+                  <div class="np-field span-2"><label>Email du preneur (pour signature / partage)</label><input id="lease-loc-societe-email" placeholder="ex. direction@moira.fr"/></div>
                 </div>
 
                 <div class="np-field span-2" style="border-top:1px solid var(--border);padding-top:10px"><label class="np-section-title" style="font-size:13px">Bien (pré-rempli depuis la réalisation)</label></div>
@@ -8932,7 +8936,7 @@ function newLease() {
   _editingLease = null;
   document.getElementById('lease-form-title').textContent = 'Nouveau bail';
   // reset
-  ['lease-bailleur-rep','lease-bailleur-repq','lease-bail-prenom','lease-bail-nom','lease-bail-adresse','lease-bail-email','lease-loc-prenom','lease-loc-nom','lease-loc-email','lease-loc-nat','lease-loc-dob','lease-loc-piece','lease-loc-adresse','lease-loyer-base','lease-complement','lease-charges','lease-services','lease-menage','lease-depot','lease-encadrement','lease-preavis','lease-duree','lease-debut','lease-fin','lease-motif-detail','lease-bien-lot'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['lease-bailleur-rep','lease-bailleur-repq','lease-bailleur-email','lease-loc-societe-email','lease-bail-prenom','lease-bail-nom','lease-bail-adresse','lease-bail-email','lease-loc-prenom','lease-loc-nom','lease-loc-email','lease-loc-nat','lease-loc-dob','lease-loc-piece','lease-loc-adresse','lease-loyer-base','lease-complement','lease-charges','lease-services','lease-menage','lease-depot','lease-encadrement','lease-preavis','lease-duree','lease-debut','lease-fin','lease-motif-detail','lease-bien-lot'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('lease-bailleur-sel').value=''; document.getElementById('lease-loc-societe-sel').value=''; document.getElementById('lease-motif').value='';
   // prefill bien depuis la réalisation (+ adresse réelle de l'asset lié)
   const g = id => document.getElementById(id)?.value || '';
@@ -8970,11 +8974,12 @@ function openLeaseForm(id) {
     document.getElementById('lease-bailleur-sel').value = baMatch?.id || '';
     document.getElementById('lease-bailleur-rep').value = ba.representant_nom || '';
     document.getElementById('lease-bailleur-repq').value = ba.representant_qualite || '';
+    document.getElementById('lease-bailleur-email').value = ba.email || baMatch?.email || '';
   }
   const lo = l.locataire || {};
   setLocKind(lo.kind === 'societe' ? 'societe' : (l.lead_id ? 'lead' : 'physique'));
   _leaseLeadId = l.lead_id || null;
-  if (lo.kind === 'societe') { const m = _leaseCompanies.find(c => c.name === lo.name); document.getElementById('lease-loc-societe-sel').value = m?.id || ''; }
+  if (lo.kind === 'societe') { const m = _leaseCompanies.find(c => c.name === lo.name); document.getElementById('lease-loc-societe-sel').value = m?.id || ''; document.getElementById('lease-loc-societe-email').value = lo.email || m?.email || ''; }
   else { document.getElementById('lease-loc-prenom').value=lo.prenom||''; document.getElementById('lease-loc-nom').value=lo.nom||''; document.getElementById('lease-loc-email').value=lo.email||''; document.getElementById('lease-loc-nat').value=lo.nationalite||''; document.getElementById('lease-loc-dob').value=lo.dob||''; document.getElementById('lease-loc-piece').value=lo.piece||''; document.getElementById('lease-loc-adresse').value=lo.adresse||''; }
   const bn = l.bien || {};
   document.getElementById('lease-bien-adresse').value=bn.adresse||''; document.getElementById('lease-bien-surface').value=bn.surface||''; document.getElementById('lease-bien-etage').value=bn.etage||''; document.getElementById('lease-bien-lot').value=bn.lot_copro||''; document.getElementById('lease-bien-designation').value=bn.designation||''; document.getElementById('lease-bien-equip').value=bn.equipements||'';
@@ -9032,12 +9037,13 @@ function setLocKind(k) {
   document.getElementById('lease-loc-societe').classList.toggle('on-actif', k==='societe');
   document.getElementById('lease-loc-physique-fields').style.display = (k==='physique'||k==='lead') ? 'contents' : 'none';
   document.getElementById('lease-loc-lead-pick').style.display = k==='lead' ? 'block' : 'none';
-  document.getElementById('lease-loc-societe-fields').style.display = k==='societe' ? 'block' : 'none';
+  document.getElementById('lease-loc-societe-fields').style.display = k==='societe' ? 'contents' : 'none';
 }
 function onLeaseCompanyPick(which) {
   const sel = document.getElementById(which==='bailleur'?'lease-bailleur-sel':'lease-loc-societe-sel');
   const c = _leaseCompanies.find(x => x.id === sel.value); if (!c) return;
-  if (which === 'bailleur') { document.getElementById('lease-bailleur-rep').value = c.representant_nom||''; document.getElementById('lease-bailleur-repq').value = c.representant_qualite||''; }
+  if (which === 'bailleur') { document.getElementById('lease-bailleur-rep').value = c.representant_nom||''; document.getElementById('lease-bailleur-repq').value = c.representant_qualite||''; document.getElementById('lease-bailleur-email').value = c.email||''; }
+  else { document.getElementById('lease-loc-societe-email').value = c.email||''; }
 }
 function searchLeaseLead() {
   const q = document.getElementById('lease-loc-lead-search').value.toLowerCase().trim();
@@ -9061,10 +9067,10 @@ function collectLease() {
     bailleur = { kind:'physique', name:`${g('lease-bail-prenom')} ${g('lease-bail-nom')}`.trim(), adresse:g('lease-bail-adresse'), email:g('lease-bail-email') };
   } else {
     const baSel = _leaseCompanies.find(c => c.id === document.getElementById('lease-bailleur-sel').value);
-    bailleur = baSel ? { kind:'societe', name:baSel.name, forme:baSel.forme, rcs_numero:baSel.rcs_numero, rcs_ville:baSel.rcs_ville, siege:baSel.siege, representant_nom:g('lease-bailleur-rep'), representant_qualite:g('lease-bailleur-repq'), email:baSel.email } : null;
+    bailleur = baSel ? { kind:'societe', name:baSel.name, forme:baSel.forme, rcs_numero:baSel.rcs_numero, rcs_ville:baSel.rcs_ville, siege:baSel.siege, representant_nom:g('lease-bailleur-rep'), representant_qualite:g('lease-bailleur-repq'), email:g('lease-bailleur-email')||baSel.email||'' } : null;
   }
   let locataire;
-  if (_locKind === 'societe') { const c = _leaseCompanies.find(x => x.id === document.getElementById('lease-loc-societe-sel').value); locataire = c ? { kind:'societe', name:c.name, forme:c.forme, rcs_numero:c.rcs_numero, rcs_ville:c.rcs_ville, siege:c.siege, representant_nom:c.representant_nom, email:c.email } : { kind:'societe' }; }
+  if (_locKind === 'societe') { const c = _leaseCompanies.find(x => x.id === document.getElementById('lease-loc-societe-sel').value); const email = g('lease-loc-societe-email')||c?.email||''; locataire = c ? { kind:'societe', name:c.name, forme:c.forme, rcs_numero:c.rcs_numero, rcs_ville:c.rcs_ville, siege:c.siege, representant_nom:c.representant_nom, email } : { kind:'societe', email }; }
   else locataire = { kind:'physique', prenom:g('lease-loc-prenom'), nom:g('lease-loc-nom'), email:g('lease-loc-email'), nationalite:g('lease-loc-nat'), dob:g('lease-loc-dob'), piece:g('lease-loc-piece'), adresse:g('lease-loc-adresse') };
   return {
     id: _editingLease?.id, showroom_item_id: editingShowroomId, type: _leaseType,
