@@ -2952,8 +2952,10 @@
                   <div class="acq-toggle-row" style="margin:0">
                     <button type="button" class="acq-tg" id="lease-bail-societe" onclick="setBailKind('societe')">Société</button>
                     <button type="button" class="acq-tg" id="lease-bail-physique" onclick="setBailKind('physique')">Personne physique</button>
+                    <button type="button" class="acq-tg" id="lease-bail-lead" onclick="setBailKind('lead')">Lead existant</button>
                   </div>
                 </div>
+                <div id="lease-bail-lead-pick" class="np-field span-2" style="display:none"><label>Choisir le lead (bailleur)</label><input id="lease-bail-lead-search" placeholder="Rechercher un lead par nom/email…" oninput="searchBailLead()" autocomplete="off"/><div id="lease-bail-lead-results" style="margin-top:4px"></div></div>
                 <div id="lease-bail-societe-fields" class="np-grid-2 span-2" style="display:contents">
                   <div class="np-field span-2"><label>Société bailleur</label>
                     <div style="display:flex;gap:6px;align-items:center">
@@ -2968,8 +2970,11 @@
                 <div id="lease-bail-physique-fields" class="np-grid-2 span-2" style="display:none">
                   <div class="np-field"><label>Prénom</label><input id="lease-bail-prenom"/></div>
                   <div class="np-field"><label>Nom</label><input id="lease-bail-nom"/></div>
+                  <div class="np-field"><label>Email (pour le partage du bail)</label><input id="lease-bail-email"/></div>
+                  <div class="np-field"><label>Nationalité</label><input id="lease-bail-nat"/></div>
+                  <div class="np-field"><label>Date de naissance</label><input type="date" id="lease-bail-dob"/></div>
+                  <div class="np-field"><label>Pièce (passeport/CNI)</label><input id="lease-bail-piece"/></div>
                   <div class="np-field span-2"><label>Adresse</label><input id="lease-bail-adresse"/></div>
-                  <div class="np-field span-2"><label>Email (pour le partage du bail)</label><input id="lease-bail-email"/></div>
                 </div>
 
                 <div class="np-field span-2"><label>Locataire</label>
@@ -8855,7 +8860,7 @@ function showSrSection(n) {
 }
 
 /* ══ ONGLET 5 — BAUX ═══════════════════════════════════════════ */
-let _leaseCompanies = [], _leaseList = [], _editingLease = null, _leaseType = 'mobilite', _locKind = 'physique', _bailKind = 'societe', _leaseAsset = null, _companyPickContext = null;
+let _leaseCompanies = [], _leaseList = [], _editingLease = null, _leaseType = 'mobilite', _locKind = 'physique', _bailKind = 'societe', _leaseAsset = null, _companyPickContext = null, _bailLeadId = null;
 
 // Un bail est "signé" dès qu'on a uploadé la version contresignée.
 function isLeaseSigned(l) { return ['contresigne', 'actif', 'expire'].includes(l.statut) || !!l.pdf_contresigne_url; }
@@ -8936,7 +8941,7 @@ function newLease() {
   _editingLease = null;
   document.getElementById('lease-form-title').textContent = 'Nouveau bail';
   // reset
-  ['lease-bailleur-rep','lease-bailleur-repq','lease-bailleur-email','lease-loc-societe-email','lease-bail-prenom','lease-bail-nom','lease-bail-adresse','lease-bail-email','lease-loc-prenom','lease-loc-nom','lease-loc-email','lease-loc-nat','lease-loc-dob','lease-loc-piece','lease-loc-adresse','lease-loyer-base','lease-complement','lease-charges','lease-services','lease-menage','lease-depot','lease-encadrement','lease-preavis','lease-duree','lease-debut','lease-fin','lease-motif-detail','lease-bien-lot'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['lease-bailleur-rep','lease-bailleur-repq','lease-bailleur-email','lease-loc-societe-email','lease-bail-prenom','lease-bail-nom','lease-bail-adresse','lease-bail-email','lease-bail-nat','lease-bail-dob','lease-bail-piece','lease-bail-lead-search','lease-loc-prenom','lease-loc-nom','lease-loc-email','lease-loc-nat','lease-loc-dob','lease-loc-piece','lease-loc-adresse','lease-loyer-base','lease-complement','lease-charges','lease-services','lease-menage','lease-depot','lease-encadrement','lease-preavis','lease-duree','lease-debut','lease-fin','lease-motif-detail','lease-bien-lot'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('lease-bailleur-sel').value=''; document.getElementById('lease-loc-societe-sel').value=''; document.getElementById('lease-motif').value='';
   // prefill bien depuis la réalisation (+ adresse réelle de l'asset lié)
   const g = id => document.getElementById(id)?.value || '';
@@ -8946,7 +8951,8 @@ function newLease() {
   const quartier = g('sr-quartier'), arr = g('sr-arr');
   document.getElementById('lease-bien-etage').value = quartier ? (quartier + (arr ? ` (${arr}e)` : '')) : '';
   document.getElementById('lease-bien-equip').value = '';
-  _leaseLeadId = null;
+  _leaseLeadId = null; _bailLeadId = null;
+  document.getElementById('lease-bail-lead-results').innerHTML = ''; document.getElementById('lease-loc-lead-results').innerHTML = '';
   setLeaseType('mobilite'); setBailKind('societe'); setLocKind('physique');
   setLeaseFormReadOnly(false);
   document.getElementById('lease-form-statut').textContent = 'Brouillon';
@@ -8962,12 +8968,17 @@ function openLeaseForm(id) {
   setLeaseType(l.type);
   const ba = l.bailleur || {};
   if (ba.kind === 'physique') {
-    setBailKind('physique');
+    setBailKind(ba.lead_id ? 'lead' : 'physique');
+    _bailLeadId = ba.lead_id || null;
     const parts = (ba.name || '').trim().split(' ');
-    document.getElementById('lease-bail-prenom').value = parts.shift() || '';
-    document.getElementById('lease-bail-nom').value = parts.join(' ');
+    document.getElementById('lease-bail-prenom').value = ba.prenom || parts.shift() || '';
+    document.getElementById('lease-bail-nom').value = ba.nom || parts.join(' ');
     document.getElementById('lease-bail-adresse').value = ba.adresse || '';
     document.getElementById('lease-bail-email').value = ba.email || '';
+    document.getElementById('lease-bail-nat').value = ba.nationalite || '';
+    document.getElementById('lease-bail-dob').value = ba.dob || '';
+    document.getElementById('lease-bail-piece').value = ba.piece || '';
+    if (ba.lead_id) document.getElementById('lease-bail-lead-search').value = (ba.name||'').trim();
   } else {
     setBailKind('societe');
     const baMatch = _leaseCompanies.find(c => c.name === ba.name);
@@ -9020,8 +9031,24 @@ function setBailKind(k) {
   _bailKind = k;
   document.getElementById('lease-bail-societe').classList.toggle('on-actif', k==='societe');
   document.getElementById('lease-bail-physique').classList.toggle('on-actif', k==='physique');
+  document.getElementById('lease-bail-lead').classList.toggle('on-actif', k==='lead');
   document.getElementById('lease-bail-societe-fields').style.display = k==='societe' ? 'contents' : 'none';
-  document.getElementById('lease-bail-physique-fields').style.display = k==='physique' ? 'contents' : 'none';
+  document.getElementById('lease-bail-physique-fields').style.display = (k==='physique'||k==='lead') ? 'contents' : 'none';
+  document.getElementById('lease-bail-lead-pick').style.display = k==='lead' ? 'block' : 'none';
+}
+function searchBailLead() {
+  const q = document.getElementById('lease-bail-lead-search').value.toLowerCase().trim();
+  const box = document.getElementById('lease-bail-lead-results');
+  if (q.length < 2) { box.innerHTML = ''; return; }
+  const res = leadsCache.filter(l => [l.prenom,l.nom,l.email].join(' ').toLowerCase().includes(q)).slice(0,6);
+  box.innerHTML = res.map(l => `<div class="project-item" style="padding:8px 10px" onclick="pickBailLead('${esc(l.id)}')"><div class="project-info"><div class="project-title">${esc(l.prenom)} ${esc(l.nom)}</div><div class="project-addr">${esc(l.email)}</div></div></div>`).join('') || '<div class="project-empty" style="padding:8px">Aucun lead</div>';
+}
+function pickBailLead(id) {
+  const l = leadsCache.find(x => x.id === id); if (!l) return;
+  _bailLeadId = id;
+  document.getElementById('lease-bail-prenom').value=l.prenom||''; document.getElementById('lease-bail-nom').value=l.nom||''; document.getElementById('lease-bail-email').value=l.email||''; document.getElementById('lease-bail-adresse').value=l.adresse_residence||''; document.getElementById('lease-bail-dob').value=l.date_naissance||'';
+  document.getElementById('lease-bail-lead-search').value = `${l.prenom||''} ${l.nom||''}`.trim();
+  document.getElementById('lease-bail-lead-results').innerHTML = '';
 }
 function setLeaseType(t) {
   _leaseType = t;
@@ -9063,8 +9090,8 @@ function onLeaseDates() {} // hook (durée auto possible plus tard)
 function collectLease() {
   const g = id => document.getElementById(id)?.value.trim() || '';
   let bailleur;
-  if (_bailKind === 'physique') {
-    bailleur = { kind:'physique', name:`${g('lease-bail-prenom')} ${g('lease-bail-nom')}`.trim(), adresse:g('lease-bail-adresse'), email:g('lease-bail-email') };
+  if (_bailKind === 'physique' || _bailKind === 'lead') {
+    bailleur = { kind:'physique', name:`${g('lease-bail-prenom')} ${g('lease-bail-nom')}`.trim(), prenom:g('lease-bail-prenom'), nom:g('lease-bail-nom'), adresse:g('lease-bail-adresse'), email:g('lease-bail-email'), nationalite:g('lease-bail-nat'), dob:g('lease-bail-dob'), piece:g('lease-bail-piece'), lead_id: _bailKind==='lead' ? _bailLeadId : null };
   } else {
     const baSel = _leaseCompanies.find(c => c.id === document.getElementById('lease-bailleur-sel').value);
     bailleur = baSel ? { kind:'societe', name:baSel.name, forme:baSel.forme, rcs_numero:baSel.rcs_numero, rcs_ville:baSel.rcs_ville, siege:baSel.siege, representant_nom:g('lease-bailleur-rep'), representant_qualite:g('lease-bailleur-repq'), email:g('lease-bailleur-email')||baSel.email||'' } : null;

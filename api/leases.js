@@ -238,8 +238,11 @@ function partiesRows(lease) {
   const ba = lease.bailleur || {}, lo = lease.locataire || {};
   let baFr, baEn;
   if (ba.kind === 'physique') {
-    baFr = `<strong>${esc(ba.name || '')}</strong>${ba.adresse ? `, demeurant ${esc(ba.adresse)}` : ''}.`;
-    baEn = `<strong>${esc(ba.name || '')}</strong>${ba.adresse ? `, residing at ${esc(ba.adresse)}` : ''}.`;
+    const baName = ba.name || `${ba.prenom || ''} ${ba.nom || ''}`.trim();
+    const idFr = [ba.nationalite ? `de nationalité ${esc(ba.nationalite)}` : '', ba.dob ? `né(e) le ${fmtDateFr(ba.dob)}` : '', ba.adresse ? `demeurant ${esc(ba.adresse)}` : '', ba.piece ? esc(ba.piece) : ''].filter(Boolean).join(', ');
+    const idEn = [ba.nationalite ? `of ${esc(ba.nationalite)} nationality` : '', ba.dob ? `born on ${fmtDateFr(ba.dob)}` : '', ba.adresse ? `residing at ${esc(ba.adresse)}` : '', ba.piece ? esc(ba.piece) : ''].filter(Boolean).join(', ');
+    baFr = `<strong>${esc(baName)}</strong>${idFr ? ', ' + idFr : ''}.`;
+    baEn = `<strong>${esc(baName)}</strong>${idEn ? ', ' + idEn : ''}.`;
   } else {
     baFr = `<strong>${esc(ba.name || '')}</strong>, ${esc(ba.forme || 'SAS')}, RCS ${esc(ba.rcs_ville || '')} n° ${esc(ba.rcs_numero || '')}, siège ${esc(ba.siege || '')}${ba.representant_nom ? `, représentée par ${esc(ba.representant_nom)}${ba.representant_qualite ? ', ' + esc(ba.representant_qualite) : ''}` : ''}.`;
     baEn = `<strong>${esc(ba.name || '')}</strong>, ${esc(ba.forme || 'SAS')}, registered with the ${esc(ba.rcs_ville || '')} Trade Register under n° ${esc(ba.rcs_numero || '')}, registered office ${esc(ba.siege || '')}${ba.representant_nom ? `, represented by ${esc(ba.representant_nom)}${ba.representant_qualite ? ', ' + esc(ba.representant_qualite) : ''}` : ''}.`;
