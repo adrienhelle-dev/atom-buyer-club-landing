@@ -20,6 +20,8 @@ declare
   t text;
   pol record;
   tables text[] := array[
+    'asset_monthly_performance',
+    'manual_bookings',
     'assets',
     'fiche_queue',
     'lead_events',
