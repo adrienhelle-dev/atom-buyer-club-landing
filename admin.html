@@ -154,6 +154,9 @@
     .acq-card-bien { font-size: 12px; color: var(--dim); margin: 2px 0 0; }
     .acq-card-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); margin-top: 8px; }
     .acq-doc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .acq-doc-no      { background: rgba(122,120,116,.25); }
+    .acq-doc-pending { background: var(--gold); }
+    .acq-doc-ok      { background: #4caf7d; }
     .acq-doc-ok { background: var(--green); }
     .acq-doc-no { background: #4a4843; }
     .acq-card-prix { font-size: 14px; color: var(--gold); font-weight: 600; }
@@ -202,6 +205,9 @@
     .acq-btn-line:hover { border-color: var(--gold); }
     .acq-btn-gold { background: var(--gold); border-color: var(--gold); color: #1a1a1a; font-weight: 600; }
     .acq-btn-gold:disabled { opacity: .4; cursor: not-allowed; }
+    .acq-immat-drop { border: 1px dashed rgba(184,151,90,.4); border-radius: 7px; padding: 12px 14px; text-align: center; font-size: 12px; color: var(--dim); cursor: pointer; transition: border-color .15s, background .15s; }
+    .acq-immat-drop:hover, .acq-immat-drop.drag { border-color: var(--gold); background: rgba(184,151,90,.06); color: var(--cream); }
+    .acq-immat-drop.has-file { border-color: #4caf7d; color: #4caf7d; background: rgba(76,175,125,.06); }
     /* Documents — groupes multi-fichiers + drag & drop */
     .docgrp { margin: 0 0 14px; }
     .docgrp-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--cream); margin: 0 0 6px; }
@@ -509,11 +515,13 @@
       background-repeat: no-repeat; background-position: right 9px center;
       white-space: nowrap;
     }
-    /* Viewer mode select : chip style */
-    .viewer-mode-select {
-      background: rgba(76,175,125,.1) !important; border-color: rgba(76,175,125,.3) !important;
-      color: var(--green) !important;
-    }
+    /* View mode tab buttons */
+    .vf-group { display: flex; gap: 2px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 3px; flex-shrink: 0; }
+    .vf-btn { background: none; border: none; color: var(--dim); font-family: var(--sans); font-size: 12px; padding: 4px 12px; border-radius: 5px; cursor: pointer; transition: color .15s, background .15s; white-space: nowrap; line-height: 1.4; }
+    .vf-btn:hover { color: var(--cream); }
+    .vf-btn.active { background: var(--bg3); color: var(--cream); }
+    .vf-btn.active.vf-hot { color: var(--gold); }
+    .vf-btn.active.vf-buyers { color: #4caf7d; }
 
     .toolbar-right { display: flex; gap: 8px; flex-shrink: 0; }
 
@@ -1342,6 +1350,14 @@
       }
     }
 
+    /* ── iPhone paysage (large ≤ 1024px, hauteur ≤ 500px) — 4 stats en ligne ── */
+    @media (max-width: 1024px) and (orientation: landscape) and (max-height: 500px) {
+      .stats { grid-template-columns: repeat(4, 1fr); }
+      .stat { padding: 8px 12px; }
+      .stat-value { font-size: 22px; }
+      .stat-label { font-size: 9px; margin-top: 2px; }
+    }
+
     /* ── iPad (≤ 1024px) ── */
     @media (max-width: 1024px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
@@ -1573,14 +1589,15 @@
     .int-table-wrap { overflow-x: hidden; }
 
     /* Type badges */
+    .int-badge-stack { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; }
     .int-type-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 500; padding: 3px 9px;
-      border-radius: 20px; white-space: nowrap; letter-spacing: .02em;
+      display: inline-flex; align-items: center;
+      font-size: 10px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px; white-space: nowrap; letter-spacing: .05em; text-transform: uppercase;
     }
-    .int-type-badge.projet    { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.25); }
-    .int-type-badge.showroom  { background: rgba(184,151,90,.12); color: var(--gold); border: 1px solid rgba(184,151,90,.25); }
-    .int-type-badge.cta       { background: rgba(91,91,214,.12); color: #5B5BD6; border: 1px solid rgba(91,91,214,.25); }
+    .int-type-badge.projet    { background: rgba(76,175,125,.1); color: #4caf7d; border: 1px solid rgba(76,175,125,.2); }
+    .int-type-badge.showroom  { background: rgba(184,151,90,.1); color: var(--gold); border: 1px solid rgba(184,151,90,.2); }
+    .int-type-badge.cta       { background: rgba(91,91,214,.1); color: #5B5BD6; border: 1px solid rgba(91,91,214,.2); }
 
     /* Source cell */
     .int-source-name {
@@ -2121,10 +2138,11 @@
     </div>
     <div class="toolbar-filters">
       <!-- Vue viewer : sélecteur en 1ère position pour être visible en premier sur mobile -->
-      <select class="filter-select viewer-mode-select" id="score-view-filter" onchange="applyScoreViewFilter()" style="display:none">
-        <option value="hot">🔥 Chauds</option>
-        <option value="all">Tous</option>
-      </select>
+      <div class="vf-group" id="view-filter-group" style="display:none">
+        <button class="vf-btn active" id="vf-all" onclick="setViewMode('all')">Tous</button>
+        <button class="vf-btn vf-hot" id="vf-hot" onclick="setViewMode('hot')">Chauds</button>
+        <button class="vf-btn vf-buyers" id="vf-buyers" onclick="setViewMode('buyers')">Buyers</button>
+      </div>
       <select class="filter-select" id="src-filter" onchange="applyLeadFilters()">
         <option value="">Source</option>
         <option value="google">Google Ads</option>
@@ -2721,6 +2739,10 @@
               <label for="sr-slug">Slug URL</label>
               <input type="text" id="sr-slug" placeholder="studio-marais-temple"/>
               <span class="np-field-help">Généré automatiquement depuis le nom. Modifiable.</span>
+            </div>
+            <div class="np-field span-2">
+              <label for="sr-address">Adresse interne <span style="font-size:10px;font-weight:400;color:var(--dim);letter-spacing:0">(non affichée publiquement)</span></label>
+              <input type="text" id="sr-address" placeholder="27 rue de Lécluse 75017"/>
             </div>
             <div class="np-field">
               <label for="sr-quartier">Quartier</label>
@@ -3588,6 +3610,18 @@
             <label>Adresse de résidence <span class="req">*</span></label>
             <input class="offer-modal-input" id="offer-buyer-adresse" placeholder="12 rue de la Paix, 75009 Paris" oninput="syncBuyerState('offer')"/>
           </div>
+          <div class="om-field">
+            <label>Structure d'achat</label>
+            <select class="offer-modal-input" id="offer-buyer-struct">
+              <option value="personnel">En nom propre</option>
+              <option value="sci">SCI</option>
+              <option value="sas">SAS</option>
+            </select>
+          </div>
+          <div class="om-field">
+            <label>Nom de la structure</label>
+            <input class="offer-modal-input" id="offer-buyer-nom-struct" placeholder="SCI Stamina…"/>
+          </div>
         </div>
         <div class="om-grid" id="offer-conjoint-fields" style="display:none;margin-top:10px">
           <div class="om-field">
@@ -3619,6 +3653,10 @@
               <option value="sans_comptant">Sans condition — comptant</option>
               <option value="sans_renonciation">Sans condition — renonciation</option>
             </select>
+          </div>
+          <div class="om-field">
+            <label>Valable jusqu'au <span class="req">*</span></label>
+            <input class="offer-modal-input" type="date" id="offer-validity-date" oninput="syncBuyerState('offer')"/>
           </div>
         </div>
       </div>
@@ -3711,6 +3749,21 @@
           </div>
         </div>
         <div style="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.5">Le mandat est envoyé via DocuSign pour signature électronique. Si DocuSign n'est pas configuré, le PDF part par email.</div>
+      </div>
+
+      <div class="om-section">
+        <div class="om-section-title">Pièce d'identité <span style="font-size:10px;font-weight:400;color:var(--dim)">(optionnel)</span></div>
+        <div id="mandat-id-drop"
+          style="border:1px dashed rgba(184,151,90,.4);border-radius:7px;padding:12px 14px;text-align:center;font-size:12px;color:var(--dim);cursor:pointer;transition:border-color .15s,background .15s"
+          onclick="document.getElementById('mandat-id-file').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--gold)';this.style.background='rgba(184,151,90,.06)'"
+          ondragleave="this.style.borderColor='';this.style.background=''"
+          ondrop="event.preventDefault();this.style.borderColor='';this.style.background='';_mandatIdFile=event.dataTransfer.files[0];_updateMandatIdDrop()"
+        >
+          <span id="mandat-id-drop-label">Glisser ou cliquer — CNI, passeport, titre de séjour</span>
+        </div>
+        <input type="file" id="mandat-id-file" accept="image/*,application/pdf" style="display:none"
+          onchange="_mandatIdFile=this.files[0];_updateMandatIdDrop()"/>
       </div>
     </div>
 
@@ -3905,15 +3958,10 @@ function showDashboard(email, isViewer, role = 'admin') {
   // Mode viewer (Thierry & Alexandre) : filtre "leads chauds" actif par défaut
   isViewerMode = !!isViewer;
   {
-    const sel = document.getElementById('score-view-filter');
-    if (sel) {
-      sel.style.display = ''; // toujours visible pour tous les admins
-      if (isViewerMode) {
-        scoreMinFilter = 8;
-        sel.value = 'hot';
-      } else {
-        sel.value = 'all';
-      }
+    const grp = document.getElementById('view-filter-group');
+    if (grp) {
+      grp.style.display = '';
+      if (isViewerMode) setViewMode('hot');
     }
   }
 
@@ -3937,9 +3985,14 @@ function showDashboard(email, isViewer, role = 'admin') {
   startNotifPolling(); // polling maintenu pour le badge onglet Intérêts
 }
 
-function applyScoreViewFilter() {
-  const sel = document.getElementById('score-view-filter');
-  scoreMinFilter = sel?.value === 'hot' ? 8 : 0;
+let viewMode = 'all';
+function setViewMode(mode) {
+  viewMode = mode;
+  ['all','hot','buyers'].forEach(m => {
+    const btn = document.getElementById('vf-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  scoreMinFilter = 0;
   renderTable(leadsCache);
 }
 
@@ -4974,6 +5027,7 @@ function promoteToShowroom() {
 
   const sv = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
   sv('sr-name',        title);
+  sv('sr-address',     g('np-address'));
   sv('sr-arr',         arr);
   sv('sr-surface',     surface);
   sv('sr-desc-longue', desc);
@@ -5435,7 +5489,7 @@ async function loadLeads(_page) {
     let total = 0;
     const MAX_BATCHES = 20; // garde-fou (20 000 leads)
     for (let p = 1; p <= MAX_BATCHES; p++) {
-      const res = await fetch(`/api/leads?page=${p}&pageSize=1000`, {
+      const res = await fetch(`/api/leads?page=${p}&pageSize=1000&include_acquereurs=1`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) { logout(); return; }
@@ -5482,21 +5536,31 @@ function renderStats(leads, total) {
 
 function renderTable(leads) {
   leadsCache = leads;
-  // Filtre score (mode viewer ou filtre manuel)
-  let filtered = scoreMinFilter > 0
-    ? leads.filter(l => computeScore(l) >= scoreMinFilter)
-    : leads;
+  // Lit la recherche en premier : une recherche nominative lève le filtre is_acquereur
+  const fSearch = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+  const searchActive = fSearch.length >= 2;
+  // Filtre vue : Tous / Chauds / Buyers
+  let filtered;
+  if (viewMode === 'buyers') {
+    filtered = leads.filter(l => l.is_acquereur === true);
+  } else if (viewMode === 'hot') {
+    filtered = leads.filter(l => !l.is_acquereur && computeScore(l) >= 8);
+  } else {
+    // En mode Tous, inclure les buyers quand une recherche est active
+    filtered = searchActive ? leads : leads.filter(l => !l.is_acquereur);
+  }
   // Filtre responsable (assigned_to). '_none' = leads sans responsable.
   if (founderFilter === '_none')      filtered = filtered.filter(l => !l.assigned_to);
   else if (founderFilter)             filtered = filtered.filter(l => l.assigned_to === founderFilter);
-  // Filtres source / statut / recherche — côté client (mêmes règles que l'API)
+  // Filtres source / statut / recherche — côté client
   const fSource = document.getElementById('src-filter')?.value || '';
   const fStatus = document.getElementById('status-filter')?.value || '';
-  const fSearch = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
-  if (fSource === 'organic')           filtered = filtered.filter(l => ['organic', 'landing'].includes((l.utm_source || '').toLowerCase()));
-  else if (fSource === 'fiche_projet') filtered = filtered.filter(l => ['fiche_projet', 'projet'].includes(l.utm_source));
-  else if (fSource === 'seloger')      filtered = filtered.filter(l => (l.utm_source || '').toLowerCase().startsWith('seloger'));
-  else if (fSource)                    filtered = filtered.filter(l => l.utm_source === fSource);
+  if (viewMode !== 'buyers') {
+    if (fSource === 'organic')           filtered = filtered.filter(l => ['organic', 'landing'].includes((l.utm_source || '').toLowerCase()));
+    else if (fSource === 'fiche_projet') filtered = filtered.filter(l => ['fiche_projet', 'projet'].includes(l.utm_source));
+    else if (fSource === 'seloger')      filtered = filtered.filter(l => (l.utm_source || '').toLowerCase().startsWith('seloger'));
+    else if (fSource)                    filtered = filtered.filter(l => l.utm_source === fSource);
+  }
   if (fStatus) filtered = filtered.filter(l => l.status === fStatus);
   if (fSearch) filtered = filtered.filter(l =>
     (l.email || '').toLowerCase().includes(fSearch) ||
@@ -6263,6 +6327,25 @@ function _acqFiltered() {
     `${_acqCache.length} dossier${_acqCache.length>1?'s':''} acquéreur` + (q ? ` · ${rows.length} affiché${rows.length>1?'s':''}` : '');
   return rows;
 }
+// Retourne l'état d'un document pour un mandat : 'none' | 'pending' | 'signed'
+// none    = jamais généré / uploadé
+// pending = généré par le système (system:generated / system:registered) mais pas encore signé
+// signed  = version signée uploadée manuellement
+const _SYS = new Set(['system:generated', 'system:registered']);
+function docState(m, kind) {
+  const COL = { offre:'offre_pdf_url', mandat:'mandat_pdf_url', promesse:'promesse_pdf_url', acte:'acte_pdf_url' };
+  const url  = m[COL[kind]];
+  const docs = (m.documents || []).filter(d => d.kind === kind);
+  if (!url && !docs.length) return 'no';
+  // Promesse / Acte : toujours uploadé manuellement → vert si URL
+  if (kind === 'promesse' || kind === 'acte') return url ? 'ok' : 'no';
+  // Offre / Mandat : si aucun doc tracé (legacy import) → considéré signé
+  if (!docs.length) return 'ok';
+  // Sinon : orange si uniquement système, vert si version user présente
+  const hasSigned = docs.some(d => d.uploaded_by && !_SYS.has(d.uploaded_by));
+  return hasSigned ? 'ok' : 'pending';
+}
+
 function renderAcquereursTable() {
   const grid = document.getElementById('acq-grid');
   const rows = _acqFiltered();
@@ -6276,14 +6359,14 @@ function renderAcquereursTable() {
         const l = m.lead || {};
         const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
         const reg = regNum(m) ? `<strong>${regNum(m)}</strong>` : '<span class="m-badge-noreg">à déverser</span>';
-        const dot = ok => `<span class="acq-doc-dot ${ok?'acq-doc-ok':'acq-doc-no'}" title="${ok?'présent':'manquant'}"></span>`;
+        const dot = k => { const s = docState(m,k); return `<span class="acq-doc-dot acq-doc-${s}" title="${k} — ${s==='ok'?'signé':s==='pending'?'généré, en attente signature':'absent'}"></span>`; };
         return `<tr onclick="openAcqDrawer(${_acqCache.indexOf(m)})">
           <td>${reg}</td>
           <td>${name}</td>
           <td class="muted">${esc(bienLabel(m))}</td>
           <td>${fmtMoney(m.commission)}</td>
           <td>${etatBadge(m.etat)}</td>
-          <td style="white-space:nowrap">${dot(!!m.offre_pdf_url)}${dot(!!m.mandat_pdf_url)}${dot(!!m.promesse_pdf_url)}${dot(!!m.acte_pdf_url)}</td>
+          <td style="white-space:nowrap">${dot('offre')}${dot('mandat')}${dot('promesse')}${dot('acte')}</td>
           <td>${m.dossier_notaire_envoye ? '<span class="m-stat m-stat-actif">envoyé</span>' : '<span class="muted" style="font-size:12px">—</span>'}</td>
           <td>${m.fees_paid ? '<span class="m-stat m-stat-actif">payés</span>' : '<span class="muted" style="font-size:12px">—</span>'}</td>
         </tr>`;
@@ -6296,15 +6379,15 @@ function renderAcquereursTable() {
   grid.innerHTML = rows.map(m => {
     const l = m.lead || {};
     const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
-    const dot = ok => `<span class="acq-doc-dot ${ok?'acq-doc-ok':'acq-doc-no'}"></span>`;
-    const reg = regNum(m) ? `n°${regNum(m)}` : '<span class="m-badge-noreg">à déverser</span>';
+    const dot = k => { const s = docState(m,k); return `<span class="acq-doc-dot acq-doc-${s}"></span>`; };
+    const reg = regNum(m) ? `n°${regNum(m)}` : '<span class="m-badge-noreg">à immatriculer</span>';
     return `<div class="acq-card" onclick="openAcqDrawer(${_acqCache.indexOf(m)})">
       <div class="acq-card-top">
         <div><p class="acq-card-name">${name}</p><p class="acq-card-bien">${esc(bienLabel(m))}</p></div>
         ${etatBadge(m.etat)}
       </div>
       <div class="acq-card-row"><span class="acq-card-prix">${fmtMoney(m.commission)}</span>&nbsp;· ${reg}</div>
-      <div class="acq-card-row">${dot(!!m.offre_pdf_url)} Offre&nbsp; ${dot(!!m.mandat_pdf_url)} Mandat&nbsp; ${dot(!!m.promesse_pdf_url)} Promesse&nbsp; ${dot(!!m.acte_pdf_url)} Acte</div>
+      <div class="acq-card-row">${dot('offre')} Offre&nbsp; ${dot('mandat')} Mandat&nbsp; ${dot('promesse')} Promesse&nbsp; ${dot('acte')} Acte</div>
     </div>`;
   }).join('');
 }
@@ -6312,10 +6395,14 @@ function renderAcquereursTable() {
 // ── Drawer dossier acquéreur ──
 let _acqCurrent = null;
 let _acqEdit = false;
+let _acqRelinking = false;
+let _acqImmatPanel = false;
+let _acqImmatSignedUrl = null;
+let _acqImmatSignedFilename = null;
 function openAcqDrawer(i) {
   const m = _acqCache[i];
   if (!m) return;
-  if (_acqCurrent?.id !== m.id) _acqEdit = false; // reset l'édition au changement de dossier
+  if (_acqCurrent?.id !== m.id) { _acqEdit = false; _acqRelinking = false; _acqImmatPanel = false; _acqImmatSignedUrl = null; _acqImmatSignedFilename = null; }
   _acqCurrent = m;
   const l = m.lead || {};
   const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || '—';
@@ -6386,6 +6473,14 @@ function openAcqDrawer(i) {
 
     ${acqSection}
 
+    ${_acqRelinking ? `
+    <div class="acq-dr-section acq-relink-panel">
+      <p class="acq-dr-h" style="margin-bottom:8px">Relier à un lead existant</p>
+      <input class="acq-edit-inp" id="acq-relink-q" placeholder="Nom ou email…" oninput="searchRelinkLeads(this.value)" autocomplete="off" style="width:100%;margin-bottom:8px"/>
+      <div id="acq-relink-results" style="min-height:32px"></div>
+      <button class="acq-btn-line" style="margin-top:8px" onclick="_acqRelinking=false;_acqReopen()">Annuler</button>
+    </div>` : `<button onclick="_acqRelinking=true;_acqReopen()" style="background:none;border:none;color:var(--dim);font-size:11px;font-family:var(--sans);cursor:pointer;padding:0 0 12px;text-decoration:underline;text-underline-offset:2px;display:block" onmouseover="this.style.color='var(--cream)'" onmouseout="this.style.color='var(--dim)'">Relier à un lead existant →</button>`}
+
     <div class="acq-dr-section">
       <p class="acq-dr-h">Bien & honoraires</p>
       ${row('Adresse', esc(bienLabel(m)))}
@@ -6413,7 +6508,22 @@ function openAcqDrawer(i) {
       ${row('Email', esc(m.notaire_email||''))}
     </div>
 
-    ${!inReg ? `<button class="acq-btn-line acq-btn-gold" onclick="deverserRegistre()">Déverser dans le registre</button>` : ''}
+    ${!inReg ? `<button class="acq-btn-line acq-btn-gold" onclick="openImmatPanel()">Immatriculer le mandat →</button>` : ''}
+    ${_acqImmatPanel ? `
+    <div class="acq-dr-section" style="border:1px solid rgba(184,151,90,.3);border-radius:8px;padding:14px 16px;margin:0 0 10px;background:rgba(184,151,90,.04)">
+      <p class="acq-dr-h" style="margin-bottom:10px;color:var(--gold)">Immatriculation au registre</p>
+      <label style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:4px">Date d'enregistrement</label>
+      <input type="date" id="acq-immat-date" class="acq-edit-inp" style="width:100%;margin-bottom:10px" value="${new Date().toISOString().slice(0,10)}"/>
+      <label style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:4px">Mandat signé (optionnel)</label>
+      <div id="acq-immat-drop" class="acq-immat-drop" onclick="document.getElementById('acq-immat-file').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="acqImmatDrop(event)">
+        <span id="acq-immat-drop-label">Déposer ou cliquer pour uploader le PDF signé</span>
+      </div>
+      <input type="file" id="acq-immat-file" accept=".pdf" style="display:none" onchange="acqImmatFile(this)"/>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="acq-btn-line" onclick="_acqImmatPanel=false;_acqReopen()">Annuler</button>
+        <button class="acq-btn-line acq-btn-gold" id="acq-immat-submit" onclick="submitImmatriculation()">Immatriculer</button>
+      </div>
+    </div>` : ''}
     <button class="acq-btn-line acq-btn-gold" onclick="openNotaireModal()" ${canSend?'':'disabled'}>Envoyer le dossier au notaire</button>
     ${canSend?'':'<p style="font-size:12px;color:var(--dim);text-align:center;margin:8px 0 0">Offre + mandat requis avant l\'envoi.</p>'}`;
   document.getElementById('acq-drawer-overlay').classList.add('on');
@@ -6472,7 +6582,107 @@ async function deverserRegistre() {
   const data = await _mandatPost({ action:'deverser_registre', mandat_id:m.id }, null);
   if (data) { m.registre_numero = data.registre_numero; showToast(`Déversé au registre — n°${data.registre_numero}`, 'success'); _acqReopen(); }
 }
-const MAX_DOC_MB = 20; // limite d'upload par fichier
+
+// ── Immatriculation depuis le drawer acquéreurs ──
+function openImmatPanel() { _acqImmatPanel = true; _acqImmatSignedUrl = null; _acqImmatSignedFilename = null; _acqReopen(); }
+
+async function acqImmatFile(input) {
+  const file = input?.files?.[0]; if (!file) return;
+  const m = _acqCurrent; if (!m) return;
+  const drop = document.getElementById('acq-immat-drop');
+  const lbl  = document.getElementById('acq-immat-drop-label');
+  if (drop) drop.classList.add('has-file');
+  if (lbl)  lbl.textContent = 'Chargement…';
+  try {
+    const ext = file.name.match(/\.([a-z0-9]{2,5})$/i)?.[1]?.toLowerCase() || 'pdf';
+    const r1  = await fetch('/api/offers', { method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`}, body: JSON.stringify({ action:'mandat_doc_url', mandat_id:m.id, kind:'mandat', ext }) });
+    const d1  = await r1.json();
+    if (!r1.ok || !d1.signedUrl) throw new Error(d1.error || 'Signed URL failed');
+    await fetch(d1.signedUrl, { method:'PUT', headers:{'Content-Type': file.type||'application/pdf'}, body: file });
+    _acqImmatSignedUrl = d1.publicUrl;
+    _acqImmatSignedFilename = file.name;
+    if (lbl) lbl.textContent = `✓ ${file.name}`;
+  } catch (e) {
+    if (drop) drop.classList.remove('has-file');
+    if (lbl)  lbl.textContent = 'Erreur upload — réessayer';
+    showToast(e.message || 'Erreur upload', 'error');
+  }
+}
+
+function acqImmatDrop(e) {
+  e.preventDefault();
+  const drop = document.getElementById('acq-immat-drop');
+  if (drop) drop.classList.remove('drag');
+  const file = e.dataTransfer?.files?.[0]; if (!file) return;
+  const input = document.getElementById('acq-immat-file');
+  const dt = new DataTransfer(); dt.items.add(file);
+  if (input) { input.files = dt.files; acqImmatFile(input); }
+}
+
+async function submitImmatriculation() {
+  const m = _acqCurrent; if (!m) return;
+  const dateVal = document.getElementById('acq-immat-date')?.value;
+  const btn = document.getElementById('acq-immat-submit');
+  if (btn) { btn.disabled = true; btn.textContent = 'En cours…'; }
+  const body = { action:'mandat_immatriculer', mandat_id: m.id };
+  if (dateVal)              body.date_registre   = dateVal;
+  if (_acqImmatSignedUrl)   body.signed_url      = _acqImmatSignedUrl;
+  if (_acqImmatSignedFilename) body.signed_filename = _acqImmatSignedFilename;
+  const data = await _mandatPost(body, null);
+  if (btn) { btn.disabled = false; btn.textContent = 'Immatriculer'; }
+  if (!data) return;
+  m.registre_numero = data.registre_numero;
+  m.mandat_pdf_url  = data.pdf_url;
+  _acqImmatPanel = false; _acqImmatSignedUrl = null; _acqImmatSignedFilename = null;
+  showToast(`Immatriculé n°${data.registre_numero}`, 'success');
+  await loadAcquereurs();
+  const idx = _acqCache.findIndex(x => x.id === m.id);
+  if (idx >= 0) openAcqDrawer(idx); else _acqReopen();
+}
+
+let _relinkDebounce = null;
+async function searchRelinkLeads(q) {
+  const box = document.getElementById('acq-relink-results');
+  if (!box) return;
+  if (q.trim().length < 2) { box.innerHTML = '<p style="font-size:12px;color:var(--dim);margin:0">Tapez au moins 2 caractères…</p>'; return; }
+  clearTimeout(_relinkDebounce);
+  _relinkDebounce = setTimeout(async () => {
+    box.innerHTML = '<p style="font-size:12px;color:var(--dim);margin:0">Recherche…</p>';
+    try {
+      const res = await fetch(`/api/leads?search=${encodeURIComponent(q)}&include_acquereurs=1&pageSize=8`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      const leads = data.leads || [];
+      if (!leads.length) { box.innerHTML = '<p style="font-size:12px;color:var(--dim);margin:0">Aucun résultat</p>'; return; }
+      box.innerHTML = leads.map(l => {
+        const name = `${esc(l.prenom||'')} ${esc((l.nom||'').toUpperCase())}`.trim() || l.email;
+        const sub  = l.email || '';
+        return `<button onclick="confirmRelink('${esc(l.id)}','${name.replace(/'/g,"\\'")}','${esc(l.email||'')}')"
+          style="display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);
+          padding:8px 6px;cursor:pointer;font-family:var(--sans);color:var(--cream);font-size:13px"
+          onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background='none'">
+          <span style="font-weight:500">${name}</span>
+          ${sub ? `<span style="color:var(--dim);font-size:11px;margin-left:6px">${esc(sub)}</span>` : ''}
+          ${l.is_acquereur ? '<span style="color:#4caf7d;font-size:10px;margin-left:6px">Buyer</span>' : ''}
+        </button>`;
+      }).join('');
+    } catch (e) { box.innerHTML = '<p style="font-size:12px;color:var(--dim);margin:0">Erreur réseau</p>'; }
+  }, 280);
+}
+
+async function confirmRelink(leadId, leadName, leadEmail) {
+  const m = _acqCurrent; if (!m) return;
+  if (!confirm(`Relier ce mandat à ${leadName} (${leadEmail}) ?`)) return;
+  const data = await _mandatPost({ action:'mandat_relink', mandat_id: m.id, lead_id: leadId }, 'Mandat relié');
+  if (data) {
+    m.lead = { ...(m.lead||{}), ...data.lead };
+    _acqRelinking = false;
+    // Recharge le cache pour refléter la suppression éventuelle de l'ancien placeholder
+    await loadAcquereurs();
+    const idx = _acqCache.findIndex(x => x.id === m.id);
+    if (idx >= 0) openAcqDrawer(idx); else closeAcqDrawer();
+  }
+}
+const MAX_DOC_MB = 30; // limite d'upload par fichier
 const DOC_FIELD  = { offre:'offre_pdf_url', mandat:'mandat_pdf_url', promesse:'promesse_pdf_url', acte:'acte_pdf_url', facture:'facture_pdf_url' };
 const DOC_KINDS  = [
   ['offre','Offre', false], ['mandat','Mandat', false], ['identite',"Pièce d'identité", true],
@@ -7517,9 +7727,9 @@ let interestsCache   = [];
 let interestsLoaded  = false;
 
 const INT_TYPE_META = {
-  interet_projet:    { label: 'Projet',    icon: '⭐', cls: 'projet',   short: 'Projet' },
-  showroom_interest: { label: 'Showroom',  icon: '★',  cls: 'showroom', short: 'Showroom' },
-  showroom_cta:      { label: 'CTA',       icon: '◎',  cls: 'cta',      short: 'CTA' },
+  interet_projet:    { label: 'Projet',   cls: 'projet',   short: 'Projet' },
+  showroom_interest: { label: 'Showroom', cls: 'showroom', short: 'Showroom' },
+  showroom_cta:      { label: 'CTA',      cls: 'cta',      short: 'CTA' },
 };
 
 async function loadInterests(force = false) {
@@ -7717,6 +7927,74 @@ function renderInterestsTable() {
 }
 
 // Déversement au registre depuis l'onglet Intérêts (étape finale après mandat généré)
+// ── Immatriculation depuis l'onglet Intérêts ──
+// Ouvre un mini-modal avec date picker avant d'appeler mandat_immatriculer.
+function openImmatModal(evId, mandatId) {
+  if (!mandatId) { showToast('Mandat introuvable — régénère le mandat', 'error'); return; }
+  // Injecte un mini-modal flottant
+  const existing = document.getElementById('immat-modal');
+  if (existing) existing.remove();
+  const today = new Date().toISOString().slice(0, 10);
+  const el = document.createElement('div');
+  el.id = 'immat-modal';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)';
+  el.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px 28px;width:320px;max-width:90vw;font-family:var(--sans)">
+      <p style="font-size:15px;font-weight:600;color:var(--cream);margin:0 0 4px">Immatriculer le mandat</p>
+      <p style="font-size:12px;color:var(--dim);margin:0 0 18px">Le PDF officiel numéroté sera régénéré avec cette date.</p>
+      <label style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:5px">Date d'enregistrement</label>
+      <input type="date" id="immat-modal-date" value="${today}" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--cream);font-family:var(--sans);font-size:13px;padding:8px 10px;margin-bottom:18px"/>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="document.getElementById('immat-modal').remove()" style="background:none;border:1px solid var(--border);border-radius:7px;color:var(--cream);font-family:var(--sans);font-size:13px;padding:8px 16px;cursor:pointer">Annuler</button>
+        <button onclick="confirmImmatFromInterest('${evId}','${mandatId}')" style="background:var(--gold);border:none;border-radius:7px;color:#1a1a1a;font-family:var(--sans);font-size:13px;font-weight:600;padding:8px 20px;cursor:pointer">Immatriculer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+}
+
+async function confirmImmatFromInterest(evId, mandatId) {
+  const dateVal = document.getElementById('immat-modal-date')?.value;
+  document.getElementById('immat-modal')?.remove();
+  try {
+    const body = { action: 'mandat_immatriculer', mandat_id: mandatId };
+    if (dateVal) body.date_registre = dateVal;
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    if (!res.ok || !data.ok) { showToast(data.detail || data.error || 'Échec', 'error'); return; }
+    const ev = interestsCache.find(e => String(e.id) === String(evId));
+    if (ev) ev.content = { ...(ev.content || {}), registre_numero: data.registre_numero };
+    renderInterestsTable();
+    showToast(`Immatriculé n°${data.registre_numero}`, 'success');
+  } catch (e) { showToast('Erreur réseau', 'error'); }
+}
+
+async function resetMandatEvent(evId) {
+  if (!confirm('Réinitialiser le mandat pour cet intérêt ? (le mandat en base doit déjà avoir été supprimé)')) return;
+  try {
+    const res = await fetch('/api/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'reset_mandat_event', event_id: evId }),
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    if (!res.ok || !data.ok) { showToast(data.detail || data.error || 'Échec', 'error'); return; }
+    const ev = interestsCache.find(e => String(e.id) === String(evId));
+    if (ev) {
+      const { mandat_id, mandat_sent_at, registre_numero, ...rest } = ev.content || {};
+      ev.content = rest;
+    }
+    renderInterestsTable();
+    showToast('Mandat réinitialisé', 'success');
+  } catch (e) { showToast('Erreur réseau', 'error'); }
+}
+
 async function deverserFromInterest(evId, mandatId) {
   if (!mandatId) { showToast('Mandat introuvable — régénère le mandat', 'error'); return; }
   try {
@@ -7806,11 +8084,9 @@ function _buildInterestRow(ev) {
       const modalArgs  = `'${evIdSafe}','${projIdSafe}','${esc(leadName)}','${esc(source.name)}'`;
       const mandatId  = ev.content?.mandat_id || '';
       const regNo     = ev.content?.registre_numero;
-      // Étape finale : une fois le mandat généré (vert), on déverse au registre.
-      const deverserCta = mandatDone
-        ? (regNo
-            ? `<span class="int-source-link" style="color:var(--gold);cursor:default" title="Au registre">Registre n°${regNo}</span>`
-            : `<button class="int-source-link generate-cta" onclick="deverserFromInterest('${evIdSafe}','${mandatId}')">Déverser au registre ›</button>`)
+      // Étape finale : affiche uniquement le numéro de registre (immatriculation depuis le drawer acquéreur uniquement)
+      const regBadge = regNo
+        ? `<span class="int-source-link" style="color:var(--gold);cursor:default;gap:6px" title="Au registre">Registre n°${regNo}<button onclick="event.stopPropagation();resetMandatEvent('${evIdSafe}')" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:0 0 1px;line-height:1;opacity:.6" title="Réinitialiser">×</button></span>`
         : '';
       pipelineCta =
         (offerDone
@@ -7819,7 +8095,7 @@ function _buildInterestRow(ev) {
         + (mandatDone
           ? `<button class="int-source-link mandat-cta" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`
           : `<button class="int-source-link generate-cta" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`)
-        + deverserCta;
+        + regBadge;
       mobPipelineBtn =
         (offerDone
           ? `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','offre',this)">Offre ›</button>`
@@ -7827,7 +8103,7 @@ function _buildInterestRow(ev) {
         + (mandatDone
           ? `<button class="int-mob-pipeline-btn mandat-done" onclick="showDocPopover('${evIdSafe}','mandat',this)">Mandat ›</button>`
           : `<button class="int-mob-pipeline-btn generate" onclick="openMandatModal(${modalArgs})">Mandat ›</button>`)
-        + (mandatDone && !regNo ? `<button class="int-mob-pipeline-btn generate" onclick="deverserFromInterest('${evIdSafe}','${mandatId}')">Déverser au registre ›</button>` : (regNo ? `<button class="int-mob-pipeline-btn mandat-done" style="cursor:default">Registre n°${regNo}</button>` : ''));
+        + (regNo ? `<button class="int-mob-pipeline-btn mandat-done" style="cursor:default">Registre n°${regNo} <span onclick="event.stopPropagation();resetMandatEvent('${evIdSafe}')" style="opacity:.6;margin-left:4px;cursor:pointer">×</span></button>` : '');
     }
   }
 
@@ -7839,8 +8115,10 @@ function _buildInterestRow(ev) {
     <div class="int-col col-lead">
       <div class="int-lead-row">
         <span class="int-lead-name" onclick="openLeadFromNotif('${esc(lead.id)}')">${esc(leadName)}</span>
-        <span class="int-type-badge ${meta.cls}">${meta.icon} ${meta.short || meta.label}</span>
-        ${lead.assigned_to ? `<span class="int-founder-inline" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>` : ''}
+        <div class="int-badge-stack">
+          <span class="int-type-badge ${meta.cls}">${meta.short || meta.label}</span>
+          ${lead.assigned_to ? `<span class="int-founder-inline" style="background:${assignedColor}22;color:${assignedColor};border:1px solid ${assignedColor}44">${assignedInit}</span>` : ''}
+        </div>
       </div>
       <div class="int-lead-meta">
         <span class="int-score ${scoreCls}">${score}</span>
@@ -8047,12 +8325,14 @@ let _mandatInterestId = null, _mandatProjectId = null;
 /* Pré-remplit la section Acheteur depuis le lead en cache */
 function _fillBuyerFields(prefix, lead) {
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
-  set(prefix + '-buyer-dob',       lead?.date_naissance ? String(lead.date_naissance).slice(0, 10) : '');
-  set(prefix + '-buyer-adresse',   lead?.adresse_residence);
-  set(prefix + '-buyer-situation', lead?.situation_familiale);
-  set(prefix + '-conjoint-prenom', lead?.conjoint_prenom);
-  set(prefix + '-conjoint-nom',    lead?.conjoint_nom);
-  set(prefix + '-conjoint-dob',    lead?.conjoint_dob ? String(lead.conjoint_dob).slice(0, 10) : '');
+  set(prefix + '-buyer-dob',        lead?.date_naissance ? String(lead.date_naissance).slice(0, 10) : '');
+  set(prefix + '-buyer-adresse',    lead?.adresse_residence);
+  set(prefix + '-buyer-situation',  lead?.situation_familiale);
+  set(prefix + '-buyer-struct',     lead?.achat_structure || 'personnel');
+  set(prefix + '-buyer-nom-struct', lead?.nom_structure);
+  set(prefix + '-conjoint-prenom',  lead?.conjoint_prenom);
+  set(prefix + '-conjoint-nom',     lead?.conjoint_nom);
+  set(prefix + '-conjoint-dob',     lead?.conjoint_dob ? String(lead.conjoint_dob).slice(0, 10) : '');
   syncBuyerState(prefix);
 }
 
@@ -8066,7 +8346,7 @@ function syncBuyerState(prefix) {
 
   const buyerOk = !!(dob && adresse);
   let complete  = buyerOk;
-  if (prefix === 'offer') complete = complete && !!val('offer-prix');
+  if (prefix === 'offer') complete = complete && !!val('offer-prix') && !!val('offer-validity-date');
 
   const check = document.getElementById(prefix + '-buyer-check');
   if (check) {
@@ -8086,6 +8366,7 @@ function focusMissingBuyer(prefix) {
   const target = !val(prefix + '-buyer-dob')     ? prefix + '-buyer-dob'
               : !val(prefix + '-buyer-adresse')  ? prefix + '-buyer-adresse'
               : (prefix === 'offer' && !val('offer-prix')) ? 'offer-prix'
+              : (prefix === 'offer' && !val('offer-validity-date')) ? 'offer-validity-date'
               : null;
   if (!target) return;
   const el = document.getElementById(target);
@@ -8103,6 +8384,8 @@ async function _saveBuyerInfo(prefix, leadId) {
     date_naissance:      val(prefix + '-buyer-dob'),
     adresse_residence:   val(prefix + '-buyer-adresse'),
     situation_familiale: val(prefix + '-buyer-situation'),
+    achat_structure:     val(prefix + '-buyer-struct'),
+    nom_structure:       val(prefix + '-buyer-nom-struct'),
     conjoint_prenom:     val(prefix + '-conjoint-prenom'),
     conjoint_nom:        val(prefix + '-conjoint-nom'),
     conjoint_dob:        val(prefix + '-conjoint-dob'),
@@ -8131,6 +8414,8 @@ async function openOfferModal(interestId, projectId, leadName, projectName) {
   // Pré-remplir : prix projet + infos acheteur connues
   const proj = projectsCache.find(p => p.id === projectId);
   document.getElementById('offer-prix').value = proj?.price_fai || '';
+  const d15 = new Date(); d15.setDate(d15.getDate() + 15);
+  document.getElementById('offer-validity-date').value = d15.toISOString().slice(0, 10);
   const ev = interestsCache.find(e => e.id === interestId);
   _fillBuyerFields('offer', ev?.lead);
 
@@ -8165,6 +8450,7 @@ async function submitOffer(delivery) {
       project_id:  _offerProjectId,
       condition_pret:  document.getElementById('offer-condition-pret').value,
       prix:            Number(document.getElementById('offer-prix').value) || undefined,
+      validity_date:   document.getElementById('offer-validity-date').value || undefined,
       notaire_nom:     document.getElementById('offer-notaire-nom').value,
       notaire_email:   document.getElementById('offer-notaire-email').value,
       notaire_adresse: document.getElementById('offer-notaire-adresse').value,
@@ -8192,15 +8478,35 @@ async function submitOffer(delivery) {
   }
 }
 
+let _mandatIdFile = null;
+function _updateMandatIdDrop() {
+  const lbl  = document.getElementById('mandat-id-drop-label');
+  const drop = document.getElementById('mandat-id-drop');
+  if (!lbl || !drop) return;
+  if (_mandatIdFile) {
+    lbl.textContent = '✓ ' + _mandatIdFile.name;
+    drop.style.borderColor = '#4caf7d';
+    drop.style.background  = 'rgba(76,175,125,.06)';
+    drop.style.color       = '#4caf7d';
+  } else {
+    lbl.textContent = 'Glisser ou cliquer — CNI, passeport, titre de séjour';
+    drop.style.borderColor = '';
+    drop.style.background  = '';
+    drop.style.color       = '';
+  }
+}
+
 async function openMandatModal(interestId, projectId, leadName, projectName) {
   _mandatInterestId = interestId;
   _mandatProjectId  = projectId;
+  _mandatIdFile     = null;
 
   document.getElementById('mandat-lead-name').textContent    = leadName;
   document.getElementById('mandat-project-name').textContent = projectName;
   document.getElementById('mandat-modal-alert').classList.remove('on');
   _resetDocBtns('mandat');
   document.getElementById('mandat-commission').value = '8900';
+  _updateMandatIdDrop();
 
   const ev = interestsCache.find(e => e.id === interestId);
   _fillBuyerFields('mandat', ev?.lead);
@@ -8242,6 +8548,20 @@ async function submitMandat(delivery) {
     if (!d.ok) throw new Error(d.error === 'infos_manquantes' ? 'Infos acheteur incomplètes (date de naissance, adresse)' : (d.error || 'erreur serveur'));
 
     if (ev) ev.content = { ...(ev.content || {}), mandat_sent_at: new Date().toISOString(), ...(d.emailed ? { mandat_emailed_at: new Date().toISOString() } : {}) };
+
+    // Upload pièce d'identité si fournie
+    if (_mandatIdFile && d.mandat_id) {
+      try {
+        const ext = (_mandatIdFile.name.split('.').pop() || 'pdf').toLowerCase();
+        const meta = await _mandatPost({ action:'mandat_doc_url', mandat_id: d.mandat_id, kind:'identite', ext }, null);
+        if (meta?.signedUrl) {
+          await fetch(meta.signedUrl, { method:'PUT', body:_mandatIdFile, headers:{ 'Content-Type': _mandatIdFile.type || 'application/octet-stream' } });
+          await _mandatPost({ action:'mandat_doc_set', mandat_id: d.mandat_id, kind:'identite', url: meta.publicUrl, filename: _mandatIdFile.name, size: _mandatIdFile.size }, null);
+        }
+      } catch (e) { showToast('Pièce d\'identité non uploadée — à ajouter manuellement', 'error'); }
+      _mandatIdFile = null;
+    }
+
     closeMandatModal();
     loadInterests(true);
     if (delivery === 'download' && d.pdf_url) window.open(d.pdf_url, '_blank');
@@ -8657,7 +8977,7 @@ function openShowroomEdit(id) {
 }
 
 function resetShowroomForm() {
-  ['sr-name','sr-slug','sr-quartier','sr-arr','sr-surface','sr-style','sr-dpe',
+  ['sr-name','sr-slug','sr-address','sr-quartier','sr-arr','sr-surface','sr-style','sr-dpe',
    'sr-desc-courte','sr-desc-longue','sr-equipements','sr-caracteristiques',
    'sr-cover','sr-video',
    'sr-prix','sr-travaux','sr-loyer','sr-locataire','sr-statut-loc',
@@ -8693,6 +9013,7 @@ function populateShowroomForm(item) {
   const sv = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
   sv('sr-name',         item.name);
   sv('sr-slug',         item.slug);
+  sv('sr-address',      item.address);
   sv('sr-quartier',     item.quartier);
   sv('sr-arr',          item.arrondissement);
   sv('sr-surface',      item.surface);
@@ -8793,7 +9114,24 @@ async function loadShowroomBridge(item) {
            <span style="font-size:11px;color:#4caf7d;font-weight:600">● Devenu un asset</span><br>
            <span style="font-size:13px;color:var(--cream)">${esc(asset.nickname || asset.address || 'Voir les perfs')} →</span>
          </a>`
-      : `<p style="margin:0;font-size:12px;color:var(--dim)">Pas encore lié à un asset. Le lien se fait depuis l'app Assets.</p>`;
+      : (() => {
+          const addr = document.getElementById('sr-address')?.value?.trim() || '';
+          const arr  = document.getElementById('sr-arr')?.value?.trim() || '';
+          const surf = document.getElementById('sr-surface')?.value?.trim() || '';
+          const params = new URLSearchParams({ showroom_item_id: item.id });
+          if (addr) params.set('address', addr);
+          if (arr)  params.set('arrondissement', arr);
+          if (surf) params.set('surface', surf);
+          return `<div style="display:flex;flex-direction:column;gap:8px">
+            <p style="margin:0;font-size:12px;color:var(--dim)">Pas encore lié à un asset.</p>
+            <a href="https://atombuyersclub.fr/admin/assets/new?${params.toString()}" target="_blank" rel="noopener noreferrer"
+               style="display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border-radius:4px;
+                      text-decoration:none;background:rgba(184,151,90,.15);border:1px solid rgba(184,151,90,.3);
+                      font-size:12px;color:var(--gold);font-weight:600">
+              Créer l'asset →
+            </a>
+          </div>`;
+        })();
 
     const leadsBlock = leads.length
       ? `<p style="margin:14px 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold)">
@@ -9175,7 +9513,7 @@ async function generateLease() {
 }
 function uploadLeaseDoc(kind, input) {
   const f = input.files?.[0]; if (!f || !_editingLease) return;
-  if (f.size > 20*1024*1024) { showToast('Fichier > 20 Mo','error'); return; }
+  if (f.size > 30*1024*1024) { showToast('Fichier > 30 Mo','error'); return; }
   const reader = new FileReader();
   reader.onload = async () => {
     showToast('Upload…','info');
@@ -9354,6 +9692,7 @@ function getSrPayload() {
     name:               document.getElementById('sr-name').value.trim(),
     slug:               document.getElementById('sr-slug').value.trim()
                           || slugifySr(document.getElementById('sr-name').value.trim()),
+    address:            document.getElementById('sr-address').value.trim() || null,
     quartier:           document.getElementById('sr-quartier').value.trim() || null,
     arrondissement:     document.getElementById('sr-arr').value || null,
     surface:            parseFloat(document.getElementById('sr-surface').value) || null,
